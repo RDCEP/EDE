@@ -1,4 +1,4 @@
-# Plenar.io
+# EDE
 
 RESTful API for geospatial and time aggregation across multiple open datasets.
 
