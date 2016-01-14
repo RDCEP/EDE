@@ -7,7 +7,7 @@ RESTful API for geospatial and time aggregation across multiple open datasets.
 * Get the EDE source:
 
 ``` bash
-git clone git@github.com:RDCEP/plenario.git
+git clone git@github.com:RDCEP/EDE.git
 ```
 
 Install support libraries for Python:
@@ -20,17 +20,6 @@ pip install -r requirements.txt
 Create a PostgreSQL database for Plenario. (If you aren't already running
 [PostgreSQL](http://www.postgresql.org/), we recommend installing version 9.3 or
 later.) 
-sudo apt-get install -y postgresql postgresql-contrib
-sudo apt-get install libpq-dev
-wget http://download.osgeo.org/geos/geos-3.5.0.tar.bz2
-sudo apt-get install libgeos-dev
-sudo apt-get install libxslt-dev
-sudo apt-get install libxml2 libxslt
-sudo apt-get install libxml2-dev
-
-The following command creates the default database, `quantum`.
-sudo -u postgres createuser -P USER_NAME_HERE
-sudo -u postgres createdb -O USER_NAME_HERE DATABASE_NAME_HERE
 
 This corresponds with the `DB_NAME` setting in your `ede/settings.py` file
 and can be modified.
@@ -38,14 +27,10 @@ and can be modified.
 ```
 createdb quantum
 ```
-Install from https://trac.osgeo.org/postgis/wiki/UsersWikiPostGIS21UbuntuPGSQL93Apt
 Make sure your local database has the [PostGIS](http://postgis.net/) extension:
 
-sudo service postgresql start 9.4
-sudo service postgresql stop 9.4
-got to remove postgres 9.5 change port with netstat -a in /etc/postgresql/9.5/main/postgresql.conf
 ```
-psql plenario_test
+psql quantum
 plenario_test=# CREATE EXTENSION postgis;
 ```
 
@@ -107,8 +92,7 @@ Celery requires quite a few installs
 celery -A plenario.celery_app worker --loglevel=info &
 ```
 
-Initialize the plenario database by running `python init_db.py`.
-important if the user is siiferent: http://www.depesz.com/2007/10/04/ident/
+Initialize the EDE database by running `python init_db.py`.
 Finally, run the server:
 
 ```
