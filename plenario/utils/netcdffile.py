@@ -15,6 +15,6 @@ def import_netcdffile(netcdffile, table_name):
     :param netcdffile: The netcdffile.
     """
     try:
-        import_netcdffile_to_table(netcdffile=netcdffile, table_name=table_name)
+        import_netcdffile_to_table(netcdffile, table_name)
     except OgrError as e:
         raise NetcdffileError('Failed to insert netcdffile into database.\n{}'.format(repr(e)))

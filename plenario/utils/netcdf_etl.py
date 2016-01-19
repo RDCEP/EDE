@@ -71,10 +71,12 @@ class NetcdfETL:
             # Try to save to S3 first so that we have a record of what the dataset looked like
             # even if insertion fails.
             if self.save_to_s3:
-                attempt_save_to_s3(file_helper)
+                attempt_save_to_s3(netcdffile)
 
             # Attempt insertion
             try:
-                    import_netcdffile(netcdffile=netcdffile, table_name=self.table_name)
+                    # TODO: Check filename is correct here (note that from now on we only need filename, not file obj,
+                    # because eventually we just apply ogr2ogr)
+                    import_netcdffile(netcdffile.handle.name, self.table_name)
             except NetcdffileError as e:
                 raise PlenarioETLError("Failed to import NetCDF file.\n{}".format(repr(e)))
