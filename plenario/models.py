@@ -217,3 +217,120 @@ class User(Base):
 
     def get_id(self):
         return self.id
+
+"""
+TODO: change everything within this class from shapefile to netcdf
+"""
+class NetcdfMetadata(Base):
+    __tablename__ = 'meta_netcdf'
+    dataset_name = Column(String, primary_key=True)
+    human_name = Column(String, nullable=False)
+    source_url = Column(String)
+    date_added = Column(Date, nullable=False)
+    is_opendap = Column(Boolean)
+    is_grads = Column(Boolean)
+    # The NetCDF components
+    num_dims = Column(Integer)
+    # String = name of dim, Integer = length of dim
+    # TODO: use appropriate sqlalchemy type
+    dimensions = Column(List[(String, Integer)])
+    # String = name of var, String = data type of var, Integer = number of dims the var depends on
+    # List[String] = names of dims the var depends on, List[Integer] = lengths of dims the var depends on
+    # TODO: use appropriate sqlalchemy type
+    variables = Column((String, String, Integer, List[String], List[Integer]))
+    # String = key of global netcdf attribute, String = corr. value
+    # TODO: use appropriate sqlalchemy type
+    attributes = Column(List[(String, String)])
+    # The bounding box
+    # We always ingest geometric data as 4326
+    bbox = Column(Geometry('POLYGON', srid=4326))
+    # False when admin first submits metadata.
+    # Will become true if ETL completes successfully.
+    is_ingested = Column(Boolean, nullable=False)
+    # foreign key of celery task responsible for netcdffile's ingestion
+    celery_task_id = Column(String)
+
+    """
+    A note on `caller_session`.
+    tasks.py calls on a different scoped_session than the rest of the application.
+    To make these functions usable from the tasks and the regular application code,
+    we need to pass in a session rather than risk grabbing the wrong session from the registry.
+    """
+
+    @classmethod
+    def get_all_with_etl_status(cls, caller_session):
+        """
+        :return: Every row of meta_shape joined with celery task status.
+        """
+        shape_query = '''
+            SELECT meta.*, celery.status
+            FROM meta_shape as meta
+            LEFT JOIN celery_taskmeta as celery
+            ON celery.task_id = meta.celery_task_id;
+        '''
+
+        return list(caller_session.execute(shape_query))
+
+    @classmethod
+    def index(cls, caller_session):
+        result = caller_session.query(cls.dataset_name,
+                                        cls.human_name,
+                                        cls.date_added,
+                                        func.ST_AsGeoJSON(cls.bbox))\
+                                 .filter(cls.is_ingested)
+        field_names = ['dataset_name', 'human_name', 'date_added', 'bounding_box']
+        listing = [dict(zip(field_names, row)) for row in result]
+        for dataset in listing:
+            dataset['date_added'] = str(dataset['date_added'])
+        return listing
+
+    @classmethod
+    def get_metadata_with_etl_result(cls, table_name, caller_session):
+        query = '''
+            SELECT meta.*, celery.status, celery.traceback, celery.date_done
+            FROM meta_shape as meta
+            LEFT JOIN celery_taskmeta as celery
+            ON celery.task_id = meta.celery_task_id
+            WHERE meta.dataset_name='{}';
+        '''.format(table_name)
+
+        metadata = caller_session.execute(query).first()
+        return metadata
+
+    @classmethod
+    def get_by_human_name(cls, human_name, caller_session):
+        caller_session.query(cls).get(cls.make_table_name(human_name))
+
+    @classmethod
+    def make_table_name(cls, human_name):
+        return slugify(human_name)
+
+    @classmethod
+    def add(cls, caller_session, human_name, source_url):
+        table_name = ShapeMetadata.make_table_name(human_name)
+        new_shape_dataset = ShapeMetadata(dataset_name=table_name,
+                                              human_name=human_name,
+                                              is_ingested=False,
+                                              source_url=source_url,
+                                              date_added=datetime.now().date(),
+                                              bbox=None)
+
+        caller_session.add(new_shape_dataset)
+        return new_shape_dataset
+
+    def remove_table(self, caller_session):
+        if self.is_ingested:
+            drop = "DROP TABLE {};".format(self.dataset_name)
+            caller_session.execute(drop)
+        caller_session.delete(self)
+
+    def update_after_ingest(self, caller_session):
+        self.is_ingested = True
+        self.bbox = self._make_bbox(caller_session)
+
+    def _make_bbox(self, caller_session):
+        bbox_query = 'SELECT ST_Envelope(ST_Union(geom)) FROM {};'.format(self.dataset_name)
+        box = caller_session.execute(bbox_query).first().st_envelope
+        return box
+        
+        
