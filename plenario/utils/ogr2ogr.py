@@ -124,3 +124,28 @@ def import_shapefile_to_table(component_path, table_name):
     except subprocess.CalledProcessError as e:
         print 'Failed to import dataset to postgres with ogr2ogr.' + str(args)
         raise OgrError(e.message)
+
+def import_netcdffile_to_table(netcdffile, table_name):
+    """
+    :param netcdffile: Path to netcdffile.
+    :param table_name: Name that we want table to have in the database
+    """
+    args = ['ogr2ogr',
+            '-f', 'PostgreSQL',                 # Use the PostgreSQL driver. Documentation here: http://www.gdal.org/drv_pg.html
+
+            '-lco', 'PRECISION=no',             
+
+            '-nlt', 'PROMOTE_TO_MULTI',         # Import all lines and polygons as multilines and multipolygons
+                                                # We don't know if the source shapefiles will have multi or non-multi geometries,
+                                                # so we need to import the most inclusive set of types.
+            '-s_srs', component_path + '.prj',  # Derive source SRID from Well Known Text in .prj
+            '-t_srs', 'EPSG:4326',              # Always convert to 4326
+            postgres_connection_arg,
+            component_path + '.shp',            
+            '-nln', table_name,                 
+            '-lco', 'GEOMETRY_NAME=geom']       
+    try:
+        subprocess.check_call(args)
+    except subprocess.CalledProcessError as e:
+        print 'Failed to import dataset to postgres with ogr2ogr.' + str(args)
+        raise OgrError(e.message)
