@@ -2,22 +2,15 @@
 
 import tempfile
 from datetime import datetime
-
 import requests
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-
 from plenario.database import session, app_engine as engine
 from plenario.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
-from plenario.utils.shapefile import import_shapefile, ShapefileError
-# TODO: implement
 from plenario.utils.netcdffile import import_netcdffile, NetcdffileError
 # TODO: abstract this ETLFile class into a separate file, e.g. put it into etl.py
 from plenario.utils.shape_etl import ETLFile
-
-# TODO: implement
 from plenario.models import NetcdfMetadata
-
 from plenario.utils.etl import PlenarioETLError
 
 class NetcdfETL:
@@ -29,6 +22,7 @@ class NetcdfETL:
         self.source_url = meta.source_url
         self.meta = meta
 
+    # Gets the metadata of the NetCDF out of the database
     def _get_metadata(self):
         netcdf_meta = session.query(NetcdfMetadata).get(self.table_name)
         if not netcdf_meta:
@@ -38,6 +32,8 @@ class NetcdfETL:
     def _refresh_metadata(self):
         pass
 
+    # Ingests the NetCDF into the database and updates the metadata
+    # (e.g. the updated bounding box)
     def import_netcdffile(self):
         if self.meta.is_ingested:
             raise PlenarioETLError("Table {} has already been ingested.".format(self.table_name))
@@ -47,12 +43,11 @@ class NetcdfETL:
         # If this becomes a problem, we can tweak the ogr2ogr import to return a big SQL string
         # rather than just going ahead and importing the netcdffile.
         # Then we could put both operations in the same transaction.
-
         self._ingest_netcdffile()
         self.meta.update_after_ingest(session)
-
         session.commit()
 
+    # Ingests the NetCDF into the database
     def _ingest_netcdffile(self):
 
         def attempt_save_to_s3(file_helper):
@@ -75,8 +70,9 @@ class NetcdfETL:
 
             # Attempt insertion
             try:
-                    # TODO: Check filename is correct here (note that from now on we only need filename, not file obj,
-                    # because eventually we just apply ogr2ogr)
+                    # TODO: Make sure the filename : netcdffile.handle.name of the downloaded NetCDF
+                    # works with ogr2ogr later. The reason for using the filename instead of the file handle
+                    # is that ogr2ogr ultimately needs a filename
                     import_netcdffile(netcdffile.handle.name, self.table_name)
             except NetcdffileError as e:
                 raise PlenarioETLError("Failed to import NetCDF file.\n{}".format(repr(e)))

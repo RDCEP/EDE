@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, \
     Text, BigInteger, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY
 from geoalchemy2 import Geometry
-from sqlalchemy.orm import synonym
+from sqlalchemy.orm import synonym, composite
 from flask_bcrypt import Bcrypt
 
 from plenario.database import session, Base
@@ -219,7 +219,7 @@ class User(Base):
         return self.id
 
 """
-TODO: change everything within this class from shapefile to netcdf
+TODO: finish this class
 """
 class NetcdfMetadata(Base):
     __tablename__ = 'meta_netcdf'
@@ -230,17 +230,17 @@ class NetcdfMetadata(Base):
     is_opendap = Column(Boolean)
     is_grads = Column(Boolean)
     # The NetCDF components
-    num_dims = Column(Integer)
-    # String = name of dim, Integer = length of dim
-    # TODO: use appropriate sqlalchemy type
-    dimensions = Column(List[(String, Integer)])
-    # String = name of var, String = data type of var, Integer = number of dims the var depends on
-    # List[String] = names of dims the var depends on, List[Integer] = lengths of dims the var depends on
-    # TODO: use appropriate sqlalchemy type
-    variables = Column((String, String, Integer, List[String], List[Integer]))
-    # String = key of global netcdf attribute, String = corr. value
-    # TODO: use appropriate sqlalchemy type
-    attributes = Column(List[(String, String)])
+    num_dims = Column(Integer) # Number of dimensions
+    dims_names = Column(String) # The dimension names, separated by commas
+    dims_lengths = Column(String) # The dimension lengths, separated by commas
+    # Info about the variables of the NetCDF, i.e. the String is :
+    # String = name of var , its data type , number of dims the var depends on ,
+    # names of dims the var depends on (comma-separated too)
+    variables = Column(String)
+    # The attributes of the NetCDF, i.e. the String is :
+    # String = comma separated tuples of the form : key of attribute , corresp. value,
+    # i.e. attr1[key] , attr2[val] , attr2[key] , attr2[val] , . . .
+    attributes = Column(String)
     # The bounding box
     # We always ingest geometric data as 4326
     bbox = Column(Geometry('POLYGON', srid=4326))
@@ -260,16 +260,15 @@ class NetcdfMetadata(Base):
     @classmethod
     def get_all_with_etl_status(cls, caller_session):
         """
-        :return: Every row of meta_shape joined with celery task status.
+        :return: Every row of meta_netcdf joined with celery task status.
         """
-        shape_query = '''
+        netcdf_query = '''
             SELECT meta.*, celery.status
-            FROM meta_shape as meta
+            FROM meta_netcdf as meta
             LEFT JOIN celery_taskmeta as celery
             ON celery.task_id = meta.celery_task_id;
         '''
-
-        return list(caller_session.execute(shape_query))
+        return list(caller_session.execute(netcdf_query))
 
     @classmethod
     def index(cls, caller_session):
@@ -288,7 +287,7 @@ class NetcdfMetadata(Base):
     def get_metadata_with_etl_result(cls, table_name, caller_session):
         query = '''
             SELECT meta.*, celery.status, celery.traceback, celery.date_done
-            FROM meta_shape as meta
+            FROM meta_netcdf as meta
             LEFT JOIN celery_taskmeta as celery
             ON celery.task_id = meta.celery_task_id
             WHERE meta.dataset_name='{}';
@@ -307,16 +306,16 @@ class NetcdfMetadata(Base):
 
     @classmethod
     def add(cls, caller_session, human_name, source_url):
-        table_name = ShapeMetadata.make_table_name(human_name)
-        new_shape_dataset = ShapeMetadata(dataset_name=table_name,
+        table_name = NetcdfMetadata.make_table_name(human_name)
+        new_netcdf_dataset = NetcdfMetadata(dataset_name=table_name,
                                               human_name=human_name,
                                               is_ingested=False,
                                               source_url=source_url,
                                               date_added=datetime.now().date(),
                                               bbox=None)
 
-        caller_session.add(new_shape_dataset)
-        return new_shape_dataset
+        caller_session.add(new_netcdf_dataset)
+        return new_netcdf_dataset
 
     def remove_table(self, caller_session):
         if self.is_ingested:

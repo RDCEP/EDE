@@ -1,7 +1,6 @@
 import os
 import tempfile
 import shutil
-
 from plenario.utils.ogr2ogr import import_netcdffile_to_table, OgrError
 
 class NetcdffileError(Exception):
@@ -10,11 +9,11 @@ class NetcdffileError(Exception):
         self.message = message
 
 
-def import_netcdffile(netcdffile, table_name):
+def import_netcdffile(netcdf_filename, table_name):
     """
-    :param netcdffile: The netcdffile.
+    :param netcdf_filename: The netcdf filename.
     """
     try:
-        import_netcdffile_to_table(netcdffile, table_name)
+        import_netcdffile_to_table(netcdf_filename, table_name)
     except OgrError as e:
         raise NetcdffileError('Failed to insert netcdffile into database.\n{}'.format(repr(e)))

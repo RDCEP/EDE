@@ -3,17 +3,13 @@
 import tempfile
 from datetime import datetime
 import zipfile
-
 import requests
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-
 from plenario.database import session, app_engine as engine
 from plenario.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
 from plenario.utils.shapefile import import_shapefile, ShapefileError
-
 from plenario.models import ShapeMetadata
-
 from plenario.utils.etl import PlenarioETLError
 
 
