@@ -29,15 +29,8 @@ createdb ede_test
 ```
 Make sure your local database has the [PostGIS](http://postgis.net/) extension:
 
-```
-<<<<<<< HEAD
-psql quantum
-ede_test=# CREATE EXTENSION postgis;
-=======
 psql ede_test
 plenario_test=# CREATE EXTENSION postgis;
->>>>>>> upstream/master
-```
 
 You'll need the ogr2ogr utility; it's part of the gdal package (we use it toimport and export shape datasets)
 
