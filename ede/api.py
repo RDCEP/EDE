@@ -11,7 +11,7 @@ from collections import OrderedDict
 import tempfile
 
 from flask import make_response, request, current_app, Blueprint
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from dateutil.parser import parse
 from datetime_truncate import truncate
 from sqlalchemy import func, Table, text
@@ -480,7 +480,7 @@ def dataset():
 
     # if no obs_date given, default to >= 90 days ago
     if not raw_query_params.get('obs_date__ge'):
-        six_months_ago = datetime.now() - timplenariolta(days=90)
+        six_months_ago = datetime.now() - timedelta(days=90)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
 
     if not raw_query_params.get('obs_date__le'):
@@ -633,7 +633,7 @@ def detail():
     # if no obs_date given, default to >= 30 days ago
     obs_dates = [i for i in raw_query_params.keys() if i.startswith('obs_date')]
     if not obs_dates:
-        six_months_ago = datetime.now() - timplenariolta(days=30)
+        six_months_ago = datetime.now() - timedelta(days=30)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
     
     include_weather = False
@@ -777,7 +777,7 @@ def detail_aggregate():
 
     # if no obs_date given, default to >= 90 days ago
     if not raw_query_params.get('obs_date__ge'):
-        six_months_ago = datetime.now() - timplenariolta(days=90)
+        six_months_ago = datetime.now() - timedelta(days=90)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
 
     if not raw_query_params.get('obs_date__le'):
