@@ -25,12 +25,12 @@ This corresponds with the `DB_NAME` setting in your `ede/settings.py` file
 and can be modified.
 
 ```
-createdb quantum
+createdb ede_test
 ```
 Make sure your local database has the [PostGIS](http://postgis.net/) extension:
 
 ```
-psql quantum
+psql ede_test
 plenario_test=# CREATE EXTENSION postgis;
 ```
 
