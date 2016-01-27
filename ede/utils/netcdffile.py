@@ -1,7 +1,7 @@
 import os
 import tempfile
 import shutil
-from plenario.utils.ogr2ogr import import_netcdffile_to_table, OgrError
+from ede.utils.ogr2ogr import import_netcdffile_to_table, OgrError
 
 class NetcdffileError(Exception):
     def __init__(self, message):

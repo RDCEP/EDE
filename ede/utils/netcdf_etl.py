@@ -5,13 +5,13 @@ from datetime import datetime
 import requests
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-from plenario.database import session, app_engine as engine
-from plenario.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
-from plenario.utils.netcdffile import import_netcdffile, NetcdffileError
+from ede.database import session, app_engine as engine
+from ede.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
+from ede.utils.netcdffile import import_netcdffile, NetcdffileError
 # TODO: abstract this ETLFile class into a separate file, e.g. put it into etl.py
-from plenario.utils.shape_etl import ETLFile
-from plenario.models import NetcdfMetadata
-from plenario.utils.etl import PlenarioETLError
+from ede.utils.shape_etl import ETLFile
+from ede.models import NetcdfMetadata
+from ede.utils.etl import EDE_ETLError
 
 class NetcdfETL:
 
@@ -26,7 +26,7 @@ class NetcdfETL:
     def _get_metadata(self):
         netcdf_meta = session.query(NetcdfMetadata).get(self.table_name)
         if not netcdf_meta:
-            raise PlenarioETLError("Table {} is not registered in the metadata.".format(self.table_name))
+            raise EDE_ETLError("Table {} is not registered in the metadata.".format(self.table_name))
         return netcdf_meta
 
     def _refresh_metadata(self):
@@ -36,7 +36,7 @@ class NetcdfETL:
     # (e.g. the updated bounding box)
     def import_netcdffile(self):
         if self.meta.is_ingested:
-            raise PlenarioETLError("Table {} has already been ingested.".format(self.table_name))
+            raise EDE_ETLError("Table {} has already been ingested.".format(self.table_name))
 
         # NB: this function is not atomic.
         # update_after_ingest could fail after _ingest_metadata succeeds, leaving us with inaccurate metadata.
@@ -75,4 +75,4 @@ class NetcdfETL:
                     # is that ogr2ogr ultimately needs a filename
                     import_netcdffile(netcdffile.handle.name, self.table_name)
             except NetcdffileError as e:
-                raise PlenarioETLError("Failed to import NetCDF file.\n{}".format(repr(e)))
+                raise EDE_ETLError("Failed to import NetCDF file.\n{}".format(repr(e)))

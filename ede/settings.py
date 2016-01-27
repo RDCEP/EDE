@@ -1,5 +1,5 @@
 SECRET_KEY = 'abcdefghijklmnop'
-PLENARIO_SENTRY_URL = ''
+EDE_SENTRY_URL = ''
 CELERY_SENTRY_URL = ''
 DATA_DIR = '/tmp'
 
@@ -22,7 +22,7 @@ S3_BUCKET = ''
 
 # Optional dict with attributes for a default web admin
 DEFAULT_USER = {
-    'name': 'plenario_user',
+    'name': 'ede_user',
     'email': 'youremail@example.com',
     'password': 'your password'
 }

@@ -8,8 +8,8 @@ from geoalchemy2 import Geometry
 from sqlalchemy.orm import synonym, composite
 from flask_bcrypt import Bcrypt
 
-from plenario.database import session, Base
-from plenario.utils.helpers import slugify
+from ede.database import session, Base
+from ede.utils.helpers import slugify
 
 bcrypt = Bcrypt()
 
@@ -175,7 +175,7 @@ def get_uuid():
     return unicode(uuid4())
 
 class User(Base):
-    __tablename__ = 'plenario_user'
+    __tablename__ = 'ede_user'
     id = Column(String(36), default=get_uuid, primary_key=True)
     name = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False)

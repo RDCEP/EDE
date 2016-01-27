@@ -1,4 +1,4 @@
-from plenario.settings import DB_PORT, DB_PASSWORD, DB_USER, DB_NAME, DB_HOST
+from ede.settings import DB_PORT, DB_PASSWORD, DB_USER, DB_NAME, DB_HOST
 import subprocess
 import zipfile
 import os

@@ -15,10 +15,10 @@ from shapely.geometry import box
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
 
-from plenario.database import task_session as session, task_engine as engine
-from plenario.models import MetaTable, MasterTable
-from plenario.utils.helpers import slugify, iter_column
-from plenario.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET, DATA_DIR
+from ede.database import task_session as session, task_engine as engine
+from ede.models import MetaTable, MasterTable
+from ede.utils.helpers import slugify, iter_column
+from ede.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET, DATA_DIR
 
 COL_TYPES = {
     'boolean': Boolean,
@@ -33,13 +33,13 @@ COL_TYPES = {
 }
 
 
-class PlenarioETLError(Exception):
+class EDE_ETLError(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
         self.message = message
 
 
-class PlenarioETL(object):
+class EDE_ETL(object):
     
     def __init__(self, meta, data_types=None):
         """ 
@@ -104,7 +104,7 @@ class PlenarioETL(object):
           'timestamp'
         """
 
-        # Add init parameters to PlenarioETL object
+        # Add init parameters to EDE_ETL object
         for k,v in meta.items():
             setattr(self, k, v)
 
@@ -137,7 +137,7 @@ class PlenarioETL(object):
         Set directory to download and process data file as DATA_DIR/dataset_name.csv.gz
         """
 
-        print "PlenarioETL._init_local('%s')" % dataset_name
+        print "EDE_ETL._init_local('%s')" % dataset_name
 
         self.fname = '%s.csv.gz' % dataset_name
         self.data_dir = DATA_DIR
@@ -326,7 +326,7 @@ class PlenarioETL(object):
         Step Three: Insert data directly from CSV
 
         True after this function: self.src_data is populated with the original dataset's values
-        or a PlenarioETLError is triggered that brings the process to a halt.
+        or a EDE_ETLError is triggered that brings the process to a halt.
         """
 
         skip_cols = ['line_num']
@@ -362,7 +362,7 @@ class PlenarioETL(object):
                 conn.commit()
             except Exception, e:  # When the bulk copy fails on _any_ row, roll back the entire operation.
                 conn.rollback()
-                raise PlenarioETLError(e)
+                raise EDE_ETLError(e)
             finally:
                 conn.close()
 

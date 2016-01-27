@@ -1,7 +1,7 @@
 import os
 import tempfile
 import shutil
-from plenario.utils.ogr2ogr import import_shapefile_to_table, OgrError
+from ede.utils.ogr2ogr import import_shapefile_to_table, OgrError
 
 
 class ShapefileError(Exception):

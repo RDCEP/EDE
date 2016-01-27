@@ -20,12 +20,12 @@ from sqlalchemy.types import NullType
 from shapely.wkb import loads
 from shapely.geometry import box, asShape
 
-from plenario.models import MasterTable, MetaTable, ShapeMetadata
-from plenario.database import session, app_engine as engine, Base
-from plenario.utils.helpers import slugify, increment_datetime_aggregate
-from plenario.settings import CACHE_CONFIG, DATA_DIR
-import plenario.settings
-from plenario.utils.ogr2ogr import OgrExport, OgrError
+from ede.models import MasterTable, MetaTable, ShapeMetadata
+from ede.database import session, app_engine as engine, Base
+from ede.utils.helpers import slugify, increment_datetime_aggregate
+from ede.settings import CACHE_CONFIG, DATA_DIR
+import ede.settings
+from ede.utils.ogr2ogr import OgrExport, OgrError
 
 cache = Cache(config=CACHE_CONFIG)
 

@@ -5,9 +5,9 @@ from ede.celery_app import celery_app
 from ede.models import MetaTable, MasterTable, ShapeMetadata
 from ede.database import task_session as session, task_engine as engine, \
     Base
-from ede.utils.etl import PlenarioETL
+from ede.utils.etl import EDE_ETL
 from ede.utils.shape_etl import ShapeETL
-#from plenario.utils.weather import WeatherETL
+#from ede.utils.weather import WeatherETL
 from raven.handlers.logging import SentryHandler
 from raven.conf import setup_logging
 from ede.settings import CELERY_SENTRY_URL
@@ -53,7 +53,7 @@ def add_dataset(self, source_url_hash, s3_path=None, data_types=None):
         c.execute(MetaTable.__table__.update()\
             .where(MetaTable.source_url_hash == source_url_hash)\
             .values(result_ids=ids))
-    etl = PlenarioETL(md.as_dict(), data_types=data_types)
+    etl = EDE_ETL(md.as_dict(), data_types=data_types)
     etl.add(s3_path=s3_path)
     return 'Finished adding {0} ({1})'.format(md.human_name, md.source_url_hash)
 
@@ -97,7 +97,7 @@ def update_dataset(self, source_url_hash, s3_path=None):
         c.execute(MetaTable.__table__.update()\
             .where(MetaTable.source_url_hash == source_url_hash)\
             .values(result_ids=ids))
-    etl = PlenarioETL(md.as_dict())
+    etl = EDE_ETL(md.as_dict())
     etl.update(s3_path=s3_path)
     return 'Finished updating {0} ({1})'.format(md.human_name, md.source_url_hash)
 
