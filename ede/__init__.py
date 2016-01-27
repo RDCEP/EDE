@@ -1,23 +1,23 @@
 from flask import Flask, render_template, redirect, url_for, request
 from raven.contrib.flask import Sentry
-from plenario.database import session as db_session
-from plenario.models import bcrypt
-from plenario.api import api, cache
-from plenario.auth import auth, login_manager
-from plenario.views import views
-from plenario.utils.helpers import mail, slugify as slug
-from plenario.settings import PLENARIO_SENTRY_URL
+from ede.database import session as db_session
+from ede.models import bcrypt
+from ede.api import api, cache
+from ede.auth import auth, login_manager
+from ede.views import views
+from ede.utils.helpers import mail, slugify as slug
+from ede.settings import EDE_SENTRY_URL
 
 
-# Unless PLENARIO_SENTRY_URL specified in settings, don't try to start raven.
+# Unless EDE_SENTRY_URL specified in settings, don't try to start raven.
 sentry = None
-if PLENARIO_SENTRY_URL:
-    sentry = Sentry(dsn=PLENARIO_SENTRY_URL)
+if EDE_SENTRY_URL:
+    sentry = Sentry(dsn=EDE_SENTRY_URL)
 
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('plenario.settings')
+    app.config.from_object('ede.settings')
     app.url_map.strict_slashes = False
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"

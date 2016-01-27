@@ -1,5 +1,5 @@
 SECRET_KEY = 'abcdefghijklmnop'
-PLENARIO_SENTRY_URL = ''
+EDE_SENTRY_URL = ''
 CELERY_SENTRY_URL = ''
 DATA_DIR = '/tmp'
 
@@ -7,7 +7,7 @@ DB_USER = 'postgres'
 DB_PASSWORD = ''
 DB_HOST = 'localhost'
 DB_PORT = '5432'
-DB_NAME = 'plenario_test'
+DB_NAME = 'ede_test'
 DATABASE_CONN = 'postgresql://{}:{}@{}:{}/{}'.format(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
 # See: https://pythonhosted.org/Flask-Cache/#configuring-flask-cache
@@ -22,7 +22,7 @@ S3_BUCKET = ''
 
 # Optional dict with attributes for a default web admin
 DEFAULT_USER = {
-    'name': 'plenario_user',
+    'name': 'ede_user',
     'email': 'youremail@example.com',
     'password': 'your password'
 }

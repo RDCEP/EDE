@@ -17,7 +17,7 @@ cd EDE
 pip install -r requirements.txt
 ```
 
-Create a PostgreSQL database for Plenario. (If you aren't already running
+Create a PostgreSQL database for EDE. (If you aren't already running
 [PostgreSQL](http://www.postgresql.org/), we recommend installing version 9.3 or
 later.) 
 
@@ -30,8 +30,13 @@ createdb ede_test
 Make sure your local database has the [PostGIS](http://postgis.net/) extension:
 
 ```
+<<<<<<< HEAD
+psql quantum
+ede_test=# CREATE EXTENSION postgis;
+=======
 psql ede_test
 plenario_test=# CREATE EXTENSION postgis;
+>>>>>>> upstream/master
 ```
 
 You'll need the ogr2ogr utility; it's part of the gdal package (we use it toimport and export shape datasets)
@@ -61,7 +66,7 @@ You will want to change, at the minimum, the following `settings.py` fields:
 * `DATABASE_CONN`: edit this field to reflect your PostgreSQL
   username, server hostname, port, and database name.
 
-* `DEFAULT_USER`: change the username, email and password on the administrator account you will use on Plenario locally.
+* `DEFAULT_USER`: change the username, email and password on the administrator account you will use on EDE locally.
 
 If you want your datasets hosted on an S3 bucket, edit the fields
 `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, and `S3_BUCKET`. Otherwise,
@@ -89,7 +94,7 @@ redis-server &
 Celery requires quite a few installs
 * To start Celery locally (in the background):
 ```
-celery -A plenario.celery_app worker --loglevel=info &
+celery -A ede.celery_app worker --loglevel=info &
 ```
 
 Initialize the EDE database by running `python init_db.py`.

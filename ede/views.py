@@ -1,9 +1,9 @@
 from flask import make_response, request, redirect, url_for, render_template, current_app, g, \
     Blueprint, flash, session as flask_session
-from plenario.models import MasterTable, MetaTable, User, ShapeMetadata
-from plenario.database import session, Base, app_engine as engine
-from plenario.utils.helpers import get_socrata_data_info, iter_column, send_mail, slugify
-from plenario.tasks import update_dataset as update_dataset_task, \
+from ede.models import MasterTable, MetaTable, User, ShapeMetadata
+from ede.database import session, Base, app_engine as engine
+from ede.utils.helpers import get_socrata_data_info, iter_column, send_mail, slugify
+from ede.tasks import update_dataset as update_dataset_task, \
     delete_dataset as delete_dataset_task, add_dataset as add_dataset_task, \
     add_shape as add_shape_task, delete_shape as delete_shape_task
 from flask_login import login_required
@@ -19,7 +19,7 @@ import re
 from cStringIO import StringIO
 from csvkit.unicsv import UnicodeCSVReader
 from sqlalchemy import Table, select, func, text, and_
-from plenario.settings import CACHE_CONFIG
+from ede.settings import CACHE_CONFIG
 import string
 import sqlalchemy
 from hashlib import md5
@@ -206,7 +206,7 @@ Your dataset has been approved and added to Plenar.io:\r\n
 It should appear on http://plenar.io within 24 hours.\r\n
 \r\n
 Thank you!\r\n
-The Plenario Team\r\n
+The EDE Team\r\n
 http://plenar.io""" % (meta.contributor_name, meta.human_name)
 
     send_mail(subject="Your dataset has been added to Plenar.io", 
@@ -241,7 +241,7 @@ def contrib_view():
         msg_body = """Hello %s,\r\n\r\n
 We received your recent dataset submission to Plenar.io:\r\n\r\n%s\r\n\r\n
 After we review it, we'll notify you when your data is loaded and available.\r\n\r\n
-Thank you!\r\nThe Plenario Team\r\nhttp://plenar.io""" % (request.form.get('contributor_name'), md.human_name)
+Thank you!\r\nThe EDE Team\r\nhttp://plenar.io""" % (request.form.get('contributor_name'), md.human_name)
 
         send_mail(subject="Your dataset has been submitted to Plenar.io", 
             recipient=request.form.get('contributor_email'), body=msg_body)
@@ -275,7 +275,7 @@ def add_table():
         # populate contributor info from session
         user = session.query(User).get(flask_session['user_id'])
         dataset_info['contributor_name'] = user.name
-        dataset_info['contributor_organization'] = 'Plenario Admin'
+        dataset_info['contributor_organization'] = 'EDE Admin'
         dataset_info['contributor_email'] = user.email
 
         # check if dataset with the same URL has already been loaded
@@ -327,7 +327,7 @@ def add_shape():
             # And tell a worker to go ingest it
             add_shape_task.delay(table_name=meta.dataset_name)
 
-            flash('Plenario is now trying to ingest your shapefile.', 'success')
+            flash('EDE is now trying to ingest your shapefile.', 'success')
             return redirect(url_for('views.view_datasets'))
 
     return render_template('submit-shape.html', is_admin=True, errors=errors)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.declarative import declarative_base
 
-from plenario.settings import DATABASE_CONN
+from ede.settings import DATABASE_CONN
 
 
 app_engine = create_engine(DATABASE_CONN, convert_unicode=True)

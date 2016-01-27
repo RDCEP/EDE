@@ -3,18 +3,14 @@
 import tempfile
 from datetime import datetime
 import zipfile
-
 import requests
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-
-from plenario.database import session, app_engine as engine
-from plenario.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
-from plenario.utils.shapefile import import_shapefile, ShapefileError
-
-from plenario.models import ShapeMetadata
-
-from plenario.utils.etl import PlenarioETLError
+from ede.database import session, app_engine as engine
+from ede.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
+from ede.utils.shapefile import import_shapefile, ShapefileError
+from ede.models import ShapeMetadata
+from ede.utils.etl import EDE_ETLError
 
 
 class ETLFile:
@@ -117,7 +113,7 @@ class ShapeETL:
     def _get_metadata(self):
         shape_meta = session.query(ShapeMetadata).get(self.table_name)
         if not shape_meta:
-            raise PlenarioETLError("Table {} is not registered in the metadata.".format(self.table_name))
+            raise EDE_ETLError("Table {} is not registered in the metadata.".format(self.table_name))
         return shape_meta
 
     def _refresh_metadata(self):
@@ -125,7 +121,7 @@ class ShapeETL:
 
     def import_shapefile(self):
         if self.meta.is_ingested:
-            raise PlenarioETLError("Table {} has already been ingested.".format(self.table_name))
+            raise EDE_ETLError("Table {} has already been ingested.".format(self.table_name))
 
         # NB: this function is not atomic.
         # update_after_ingest could fail after _ingest_shapefile succeeds, leaving us with inaccurate metadata.
@@ -163,6 +159,6 @@ class ShapeETL:
                 with zipfile.ZipFile(file_helper.handle) as shapefile_zip:
                     import_shapefile(shapefile_zip=shapefile_zip, table_name=self.table_name)
             except zipfile.BadZipfile:
-                raise PlenarioETLError("Source file was not a valid .zip")
+                raise EDE_ETLError("Source file was not a valid .zip")
             except ShapefileError as e:
-                raise PlenarioETLError("Failed to import shapefile.\n{}".format(repr(e)))
+                raise EDE_ETLError("Failed to import shapefile.\n{}".format(repr(e)))

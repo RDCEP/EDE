@@ -1,4 +1,4 @@
-from plenario.settings import DB_PORT, DB_PASSWORD, DB_USER, DB_NAME, DB_HOST
+from ede.settings import DB_PORT, DB_PASSWORD, DB_USER, DB_NAME, DB_HOST
 import subprocess
 import zipfile
 import os
@@ -119,6 +119,23 @@ def import_shapefile_to_table(component_path, table_name):
             component_path + '.shp',            # Point to .shp so that ogr2ogr knows it's importing a Shapefile.
             '-nln', table_name,                 # (n)ew (l)ayer (n)ame. Set the name of the new table.
             '-lco', 'GEOMETRY_NAME=geom']       # Always name the geometry column 'geom'
+    try:
+        subprocess.check_call(args)
+    except subprocess.CalledProcessError as e:
+        print 'Failed to import dataset to postgres with ogr2ogr.' + str(args)
+        raise OgrError(e.message)
+
+def import_netcdffile_to_table(netcdf_filename, table_name):
+    """
+    :param netcdf_filename: The netcdf filename.
+    :param table_name: Name that we want table to have in the database
+    """
+    args = ['ogr2ogr',
+            '-f', 'PostgreSQL',                 # Use the PostgreSQL driver. Documentation here: http://www.gdal.org/drv_pg.html
+            postgres_connection_arg,
+            netcdf_filename,                    # Point to .nc so that ogr2ogr knows it's importing a Netcdffile.
+            '-nln', table_name]                 # (n)ew (l)ayer (n)ame. Set the name of the new table.
+            
     try:
         subprocess.check_call(args)
     except subprocess.CalledProcessError as e:

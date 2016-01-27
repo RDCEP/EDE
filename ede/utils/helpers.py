@@ -5,9 +5,9 @@ import calendar
 import string
 from datetime import timedelta
 from csvkit.unicsv import UnicodeCSVReader
-from plenario.utils.typeinference import normalize_column_type
+from ede.utils.typeinference import normalize_column_type
 from flask_mail import Mail, Message
-from plenario.settings import MAIL_DISPLAY_NAME, MAIL_USERNAME, ADMIN_EMAIL
+from ede.settings import MAIL_DISPLAY_NAME, MAIL_USERNAME, ADMIN_EMAIL
 from smtplib import SMTPAuthenticationError
 
 mail = Mail()

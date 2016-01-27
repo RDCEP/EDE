@@ -11,7 +11,7 @@ from collections import OrderedDict
 import tempfile
 
 from flask import make_response, request, current_app, Blueprint
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from dateutil.parser import parse
 from datetime_truncate import truncate
 from sqlalchemy import func, Table, text
@@ -20,12 +20,12 @@ from sqlalchemy.types import NullType
 from shapely.wkb import loads
 from shapely.geometry import box, asShape
 
-from plenario.models import MasterTable, MetaTable, ShapeMetadata
-from plenario.database import session, app_engine as engine, Base
-from plenario.utils.helpers import slugify, increment_datetime_aggregate
-from plenario.settings import CACHE_CONFIG, DATA_DIR
-import plenario.settings
-from plenario.utils.ogr2ogr import OgrExport, OgrError
+from ede.models import MasterTable, MetaTable, ShapeMetadata
+from ede.database import session, app_engine as engine, Base
+from ede.utils.helpers import slugify, increment_datetime_aggregate
+from ede.settings import CACHE_CONFIG, DATA_DIR
+import ede.settings
+from ede.utils.ogr2ogr import OgrExport, OgrError
 
 cache = Cache(config=CACHE_CONFIG)
 
@@ -480,7 +480,7 @@ def dataset():
 
     # if no obs_date given, default to >= 90 days ago
     if not raw_query_params.get('obs_date__ge'):
-        six_months_ago = datetime.now() - timplenariolta(days=90)
+        six_months_ago = datetime.now() - timedelta(days=90)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
 
     if not raw_query_params.get('obs_date__le'):
@@ -633,7 +633,7 @@ def detail():
     # if no obs_date given, default to >= 30 days ago
     obs_dates = [i for i in raw_query_params.keys() if i.startswith('obs_date')]
     if not obs_dates:
-        six_months_ago = datetime.now() - timplenariolta(days=30)
+        six_months_ago = datetime.now() - timedelta(days=30)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
     
     include_weather = False
@@ -777,7 +777,7 @@ def detail_aggregate():
 
     # if no obs_date given, default to >= 90 days ago
     if not raw_query_params.get('obs_date__ge'):
-        six_months_ago = datetime.now() - timplenariolta(days=90)
+        six_months_ago = datetime.now() - timedelta(days=90)
         raw_query_params['obs_date__ge'] = six_months_ago.strftime('%Y-%m-%d')
 
     if not raw_query_params.get('obs_date__le'):

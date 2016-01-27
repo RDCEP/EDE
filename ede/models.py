@@ -5,11 +5,11 @@ from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, \
     Text, BigInteger, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY
 from geoalchemy2 import Geometry
-from sqlalchemy.orm import synonym
+from sqlalchemy.orm import synonym, composite
 from flask_bcrypt import Bcrypt
 
-from plenario.database import session, Base
-from plenario.utils.helpers import slugify
+from ede.database import session, Base
+from ede.utils.helpers import slugify
 
 bcrypt = Bcrypt()
 
@@ -175,7 +175,7 @@ def get_uuid():
     return unicode(uuid4())
 
 class User(Base):
-    __tablename__ = 'plenario_user'
+    __tablename__ = 'ede_user'
     id = Column(String(36), default=get_uuid, primary_key=True)
     name = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False)
@@ -217,3 +217,119 @@ class User(Base):
 
     def get_id(self):
         return self.id
+
+"""
+TODO: finish this class
+"""
+class NetcdfMetadata(Base):
+    __tablename__ = 'meta_netcdf'
+    dataset_name = Column(String, primary_key=True)
+    human_name = Column(String, nullable=False)
+    source_url = Column(String)
+    date_added = Column(Date, nullable=False)
+    is_opendap = Column(Boolean)
+    is_grads = Column(Boolean)
+    # The NetCDF components
+    num_dims = Column(Integer) # Number of dimensions
+    dims_names = Column(String) # The dimension names, separated by commas
+    dims_lengths = Column(String) # The dimension lengths, separated by commas
+    # Info about the variables of the NetCDF, i.e. the String is :
+    # String = name of var , its data type , number of dims the var depends on ,
+    # names of dims the var depends on (comma-separated too)
+    variables = Column(String)
+    # The attributes of the NetCDF, i.e. the String is :
+    # String = comma separated tuples of the form : key of attribute , corresp. value,
+    # i.e. attr1[key] , attr2[val] , attr2[key] , attr2[val] , . . .
+    attributes = Column(String)
+    # The bounding box
+    # We always ingest geometric data as 4326
+    bbox = Column(Geometry('POLYGON', srid=4326))
+    # False when admin first submits metadata.
+    # Will become true if ETL completes successfully.
+    is_ingested = Column(Boolean, nullable=False)
+    # foreign key of celery task responsible for netcdffile's ingestion
+    celery_task_id = Column(String)
+
+    """
+    A note on `caller_session`.
+    tasks.py calls on a different scoped_session than the rest of the application.
+    To make these functions usable from the tasks and the regular application code,
+    we need to pass in a session rather than risk grabbing the wrong session from the registry.
+    """
+
+    @classmethod
+    def get_all_with_etl_status(cls, caller_session):
+        """
+        :return: Every row of meta_netcdf joined with celery task status.
+        """
+        netcdf_query = '''
+            SELECT meta.*, celery.status
+            FROM meta_netcdf as meta
+            LEFT JOIN celery_taskmeta as celery
+            ON celery.task_id = meta.celery_task_id;
+        '''
+        return list(caller_session.execute(netcdf_query))
+
+    @classmethod
+    def index(cls, caller_session):
+        result = caller_session.query(cls.dataset_name,
+                                        cls.human_name,
+                                        cls.date_added,
+                                        func.ST_AsGeoJSON(cls.bbox))\
+                                 .filter(cls.is_ingested)
+        field_names = ['dataset_name', 'human_name', 'date_added', 'bounding_box']
+        listing = [dict(zip(field_names, row)) for row in result]
+        for dataset in listing:
+            dataset['date_added'] = str(dataset['date_added'])
+        return listing
+
+    @classmethod
+    def get_metadata_with_etl_result(cls, table_name, caller_session):
+        query = '''
+            SELECT meta.*, celery.status, celery.traceback, celery.date_done
+            FROM meta_netcdf as meta
+            LEFT JOIN celery_taskmeta as celery
+            ON celery.task_id = meta.celery_task_id
+            WHERE meta.dataset_name='{}';
+        '''.format(table_name)
+
+        metadata = caller_session.execute(query).first()
+        return metadata
+
+    @classmethod
+    def get_by_human_name(cls, human_name, caller_session):
+        caller_session.query(cls).get(cls.make_table_name(human_name))
+
+    @classmethod
+    def make_table_name(cls, human_name):
+        return slugify(human_name)
+
+    @classmethod
+    def add(cls, caller_session, human_name, source_url):
+        table_name = NetcdfMetadata.make_table_name(human_name)
+        new_netcdf_dataset = NetcdfMetadata(dataset_name=table_name,
+                                              human_name=human_name,
+                                              is_ingested=False,
+                                              source_url=source_url,
+                                              date_added=datetime.now().date(),
+                                              bbox=None)
+
+        caller_session.add(new_netcdf_dataset)
+        return new_netcdf_dataset
+
+    def remove_table(self, caller_session):
+        if self.is_ingested:
+            drop = "DROP TABLE {};".format(self.dataset_name)
+            caller_session.execute(drop)
+        caller_session.delete(self)
+
+    def update_after_ingest(self, caller_session):
+        self.is_ingested = True
+        self.bbox = self._make_bbox(caller_session)
+
+    def _make_bbox(self, caller_session):
+        bbox_query = 'SELECT ST_Envelope(ST_Union(geom)) FROM {};'.format(self.dataset_name)
+        box = caller_session.execute(bbox_query).first().st_envelope
+        return box
+        
+        
