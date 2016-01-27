@@ -1,16 +1,16 @@
 import os
 from urlparse import urlparse
 import sys
-from plenario.celery_app import celery_app
-from plenario.models import MetaTable, MasterTable, ShapeMetadata
-from plenario.database import task_session as session, task_engine as engine, \
+from ede.celery_app import celery_app
+from ede.models import MetaTable, MasterTable, ShapeMetadata
+from ede.database import task_session as session, task_engine as engine, \
     Base
-from plenario.utils.etl import PlenarioETL
-from plenario.utils.shape_etl import ShapeETL
+from ede.utils.etl import PlenarioETL
+from ede.utils.shape_etl import ShapeETL
 #from plenario.utils.weather import WeatherETL
 from raven.handlers.logging import SentryHandler
 from raven.conf import setup_logging
-from plenario.settings import CELERY_SENTRY_URL
+from ede.settings import CELERY_SENTRY_URL
 from sqlalchemy import Table
 from sqlalchemy.exc import NoSuchTableError, InternalError
 from datetime import datetime, timedelta

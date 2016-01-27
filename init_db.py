@@ -1,12 +1,12 @@
-from plenario.database import session, app_engine, Base
-import plenario.models
-import plenario.settings
+from ede.database import session, app_engine, Base
+import ede.models
+import ede.settings
 from sqlalchemy.exc import IntegrityError
 import datetime
 from argparse import ArgumentParser
-from plenario.utils.shape_etl import ShapeETL
+from ede.utils.shape_etl import ShapeETL
 
-from plenario.tasks import hello_world
+from ede.tasks import hello_world
 
 
 def init_db(args={}):
@@ -23,9 +23,9 @@ def init_db(args={}):
 def init_master_meta_user():
     print 'creating master, meta and user tables'
     Base.metadata.create_all(bind=app_engine)
-    if plenario.settings.DEFAULT_USER:
-        print 'creating default user %s' % plenario.settings.DEFAULT_USER['name']
-        user = plenario.models.User(**plenario.settings.DEFAULT_USER)
+    if ede.settings.DEFAULT_USER:
+        print 'creating default user %s' % ede.settings.DEFAULT_USER['name']
+        user = ede.models.User(**ede.settings.DEFAULT_USER)
         session.add(user)
         try:
             session.commit()
