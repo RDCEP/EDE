@@ -1,19 +1,14 @@
-import os
-from urlparse import urlparse
-import sys
 from ede.celery_app import celery_app
 from ede.models import MetaTable, MasterTable, ShapeMetadata
 from ede.database import task_session as session, task_engine as engine, \
     Base
 from ede.utils.etl import EDE_ETL
 from ede.utils.shape_etl import ShapeETL
-#from ede.utils.weather import WeatherETL
 from raven.handlers.logging import SentryHandler
 from raven.conf import setup_logging
 from ede.settings import CELERY_SENTRY_URL
 from sqlalchemy import Table
 from sqlalchemy.exc import NoSuchTableError, InternalError
-from datetime import datetime, timedelta
 
 if CELERY_SENTRY_URL:
     handler = SentryHandler(CELERY_SENTRY_URL)
@@ -59,7 +54,6 @@ def add_dataset(self, source_url_hash, s3_path=None, data_types=None):
 
 @celery_app.task(bind=True)
 def add_shape(self, table_name):
-
     # Associate the dataset with this celery task so we can check on the task's status
     meta = session.query(ShapeMetadata).get(table_name)
     meta.celery_task_id = self.request.id

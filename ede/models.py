@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, \
     Text, BigInteger, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY
 from geoalchemy2 import Geometry
-from sqlalchemy.orm import synonym, composite
+from sqlalchemy.orm import synonym
 from flask_bcrypt import Bcrypt
 
 from ede.database import session, Base

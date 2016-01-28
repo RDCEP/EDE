@@ -118,7 +118,7 @@ def get_socrata_data_info(host, path, four_by_four):
 
 def slugify(text, delim=u'_'):
     """
-    Given text, return lowercase ASCII slug that gets as close as possible to the original.
+    Given text, return lower-case ASCII slug that gets as close as possible to the original.
     Will fail on Asian characters.
     Taken from http://flask.pocoo.org/snippets/5/
     """
