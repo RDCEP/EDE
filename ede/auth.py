@@ -14,18 +14,11 @@ auth = Blueprint('auth', __name__)
 login_manager = LoginManager()
 csrf = CsrfProtect()
 
-
-
 def check_admin_status():
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
             api_key = None
-            resp = {
-                'status': 'ok',
-                'message': ''
-            }
-            status_code = 200
             if flask_session.get('user_id'):
                 api_key = flask_session['user_id']
             elif request.form.get('api_key'):
@@ -37,13 +30,10 @@ def check_admin_status():
                     api_key = json.loads(request.data).get('api_key')
                 except ValueError:
                     api_key = None
-            if (api_key):
-                user = db_session.query(User).get(api_key)
             flask_session['user_id'] = api_key
             return f(*args, **kwargs)
         return decorated
     return decorator
-
 
 class LoginForm(Form):
     email = TextField('email', validators=[DataRequired(), Email()])
@@ -58,12 +48,10 @@ class LoginForm(Form):
         if not rv:
             return False
 
-        user = db_session.query(User)\
-            .filter(User.email == self.email.data).first()
+        user = db_session.query(User).filter(User.email == self.email.data).first()
         if user is None:
             self.email.errors.append('Email address is not registered')
             return False
-
         if not user.check_password(user.name, self.password.data):
             self.password.errors.append('Password is not valid')
             return False
@@ -85,14 +73,12 @@ class AddUserForm(Form):
         if not rv:
             return False
 
-        existing_name = db_session.query(User)\
-            .filter(User.name == self.name.data).first()
+        existing_name = db_session.query(User).filter(User.name == self.name.data).first()
         if existing_name:
             self.name.errors.append('Name is already registered')
             return False
 
-        existing_email = db_session.query(User)\
-            .filter(User.email == self.email.data).first()
+        existing_email = db_session.query(User).filter(User.email == self.email.data).first()
         if existing_email:
             self.email.errors.append('Email address is already registered')
             return False

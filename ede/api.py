@@ -151,7 +151,6 @@ def meta():
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
-
 @api.route(API_VERSION + '/api/fields/<dataset_name>/')
 @cache.cached(timeout=CACHE_TIMEOUT)
 @crossdomain(origin="*")
@@ -181,7 +180,6 @@ def dataset_fields(dataset_name):
         }
         status_code = 400
     if table_exists:
-        fields = table.columns.keys()
         for col in table.columns:
             if not isinstance(col.type, NullType):
                 d = {}
@@ -191,7 +189,6 @@ def dataset_fields(dataset_name):
     resp = make_response(json.dumps(data), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
-
 
 @api.route(API_VERSION + '/api/shapes/')
 @crossdomain(origin="*")
@@ -225,7 +222,6 @@ def get_all_shape_datasets():
     resp = make_response(json.dumps(response_skeleton), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
-
 
 @api.route(API_VERSION + '/api/shapes/intersections/<geojson>')
 @crossdomain(origin="*")
@@ -286,7 +282,6 @@ def find_intersecting_shapes(geojson):
     resp = make_response(json.dumps(response_skeleton), 200)
     return resp
 
-
 def extract_first_geometry_fragment(geojson):
     """
     Given a geojson document, return a geojson geometry fragment marked as 4326 encoding.
@@ -306,7 +301,6 @@ def extract_first_geometry_fragment(geojson):
 
     fragment['crs'] = {"type": "name", "properties": {"name": "EPSG:4326"}}
     return json.dumps(fragment)
-
 
 @api.route(API_VERSION + '/api/shapes/<dataset_name>')
 @crossdomain(origin="*")
@@ -357,7 +351,6 @@ def export_shape(dataset_name):
         if os.path.isfile(export_path):
             os.remove(export_path)
 
-
 def _shape_format_to_content_header(requested_format):
 
     format_map = {
@@ -367,7 +360,6 @@ def _shape_format_to_content_header(requested_format):
     }
     return format_map[requested_format]
 
-
 def _shape_format_to_file_extension(requested_format):
     format_map = {
         'json': 'json',
@@ -375,7 +367,6 @@ def _shape_format_to_file_extension(requested_format):
         'shapefile': 'zip'
     }
     return format_map[requested_format]
-
 
 @api.route(API_VERSION + '/api/weather-stations/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -459,7 +450,6 @@ def weather(table):
     resp = make_response(json.dumps(resp, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
-
 
 @api.route(API_VERSION + '/api/timeseries/')
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
@@ -636,7 +626,7 @@ def detail():
     if raw_query_params.get('weather') is not None:
         include_weather = raw_query_params['weather']
         del raw_query_params['weather']
-    agg, datatype, queries = parse_join_query(raw_query_params)
+    _, datatype, queries = parse_join_query(raw_query_params)
     order_by = raw_query_params.get('order_by')
     offset = raw_query_params.get('offset')
     mt = MasterTable.__table__
@@ -902,7 +892,7 @@ def grid():
     if raw_query_params.get('buffer'):
         del raw_query_params['buffer']
 
-    agg, datatype, queries = parse_join_query(raw_query_params)
+    _, _, queries = parse_join_query(raw_query_params)
 
     size_x, size_y = getSizeInDegrees(float(resolution), float(center[0]))
     if location_geom:
@@ -911,7 +901,7 @@ def grid():
             shape = asShape(location_geom)
             lat = shape.centroid.y
             # 100 meters by default
-            x, y = getSizeInDegrees(int(buff), lat)
+            _, y = getSizeInDegrees(int(buff), lat)
             size_x, size_y = getSizeInDegrees(50, lat)
             location_geom = shape.buffer(y).__geo_interface__
         location_geom['crs'] = {"type":"name", "properties":{"name":"EPSG:4326"}}
@@ -1010,7 +1000,7 @@ def make_query(table, raw_query_params):
                 shape = asShape(val)
                 lat = shape.centroid.y
                 # 100 meters by default
-                x, y = getSizeInDegrees(100, lat)
+                _, y = getSizeInDegrees(100, lat)
                 val = shape.buffer(y).__geo_interface__
             val['crs'] = {"type":"name", "properties":{"name":"EPSG:4326"}}
             query = column.ST_Within(func.ST_GeomFromGeoJSON(json.dumps(val)))

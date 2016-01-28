@@ -70,22 +70,19 @@ def fetch_example_queries():
 def fetch_url(url):
     try:
         start = time.time()
-        r = requests.get(url)
         end = time.time()
         diff = end - start
         try:
-            resp = r.json()
             return diff, url
         except ValueError:
             # print 'Junk response'
             return None, url
-    except requests.exceptions.Timeout, e:
+    except requests.exceptions.Timeout, _:
         print 'Request timeout %s' % url
         return None, url
-    except requests.exceptions.ConnectionError, e:
+    except requests.exceptions.ConnectionError, _:
         print 'Connection reset: %s' % url
         return None, url
-
 
 if __name__ == "__main__":
     from multiprocessing import Pool

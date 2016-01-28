@@ -38,7 +38,6 @@ MAIL_DISPLAY_NAME = 'Plenar.io Team'
 MAIL_USERNAME = ''
 MAIL_PASSWORD = ''
 
-
 CENSUS_BLOCKS = {
     'dataset_name': u'census_blocks',
     'business_key': 'geoid',

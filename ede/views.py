@@ -84,7 +84,6 @@ def get_context_for_new_dataset(url):
                 dataset_info['name'] = urlparse(url).path.split('/')[-1]
                 inp = StringIO()
                 line_no = 0
-                lines = []
                 for line in r.iter_lines():
                     try:
                         inp.write(line + '\n')
@@ -119,7 +118,7 @@ def table_row_estimate(table_name):
         ''')
         with engine.begin() as c:
             return list(c.execute(q, table_name=table_name))[0][0]
-    except NoSuchTableError, e:
+    except NoSuchTableError, _:
         print "Table %s doesn't exist" % table_name 
 
 def add_dataset_to_metatable(request, url, dataset_id, dataset_info, socrata_source, approved_status):
@@ -184,8 +183,6 @@ def approve_dataset(source_url_hash):
         json_data_types = json.loads(meta.contributed_data_types)
         
     add_dataset_task.delay(source_url_hash, data_types=json_data_types)
-    
-    upd = { 'approved_status': 'true' }
 
     meta.approved_status = 'true'
     session.commit()
@@ -207,7 +204,6 @@ http://plenar.io""" % (meta.contributor_name, meta.human_name)
 
     send_mail(subject="Your dataset has been added to Plenar.io", 
         recipient=meta.contributor_email, body=msg_body)
-
 
 # /contribute is similar to /admin/add-dataset, but sends an email instead of actually adding
 @views.route('/contribute', methods=['GET','POST'])
@@ -252,7 +248,6 @@ def contrib_thankyou():
     context = {}
     return render_template('contribute_thankyou.html', **context)
 
-
 @views.route('/admin/add-dataset/table', methods=['GET', 'POST'])
 @login_required
 def add_table():
@@ -294,7 +289,6 @@ def add_table():
         
     context = {'dataset_info': dataset_info, 'errors': errors, 'socrata_source': socrata_source, 'is_admin': True}
     return render_template('submit-table.html', **context)
-
 
 @views.route('/admin/add-shape', methods=['GET', 'POST'])
 @login_required
@@ -357,7 +351,7 @@ def view_datasets():
         ''')
         with engine.begin() as c:
             datasets = list(c.execute(q))
-    except NoSuchTableError, e:
+    except NoSuchTableError, _:
         datasets = session.query(MetaTable)\
         .filter(MetaTable.approved_status == 'true')\
         .all()
@@ -374,7 +368,6 @@ def view_datasets():
                            counts=counts,
                            shape_datasets=shape_datasets)
 
-
 @views.route('/admin/shape-status/')
 @login_required
 def shape_status():
@@ -382,15 +375,11 @@ def shape_status():
     shape_meta = ShapeMetadata.get_metadata_with_etl_result(table_name=table_name, caller_session=session)
     return render_template('admin/shape-status.html', shape=shape_meta)
 
-
 @views.route('/admin/dataset-status/')
 @login_required
 def dataset_status():
 
     source_url_hash = request.args.get("source_url_hash")
-    celery_table = Table('celery_taskmeta', Base.metadata, 
-                         autoload=True, autoload_with=engine)
-    results = []
     q = ''' 
         SELECT 
           m.human_name, 
@@ -485,7 +474,6 @@ def approve_dataset_view(source_url_hash):
     
     return redirect(url_for('views.view_datasets'))
 
-
 @views.route('/admin/edit-dataset/<source_url_hash>', methods=['GET', 'POST'])
 @login_required
 def edit_dataset(source_url_hash):
@@ -521,9 +509,8 @@ def edit_dataset(source_url_hash):
                                                                                     dat_master.c.census_block.isnot(None)))
 
             num_rows_w_censusblocks = sel.first()[0]
-
-            
-        except sqlalchemy.exc.NoSuchTableError, e:
+           
+        except sqlalchemy.exc.NoSuchTableError, _:
             # dataset has been approved, but perhaps still processing.
             pass
 
@@ -569,13 +556,11 @@ def edit_dataset(source_url_hash):
     }
     return render_template('admin/edit-dataset.html', **context)
 
-
 @views.route('/admin/delete-shape/<table_name>')
 @login_required
 def delete_shape(table_name):
     result = delete_shape_task.delay(table_name)
     return make_response(json.dumps({'status': 'success', 'task_id': result.id}))
-
 
 @views.route('/admin/delete-dataset/<source_url_hash>')
 @login_required
