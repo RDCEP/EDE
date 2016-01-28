@@ -1,6 +1,6 @@
-from flask import make_response, request, redirect, url_for, render_template, current_app, g, \
+from flask import make_response, request, redirect, url_for, render_template, \
     Blueprint, flash, session as flask_session
-from ede.models import MasterTable, MetaTable, User, ShapeMetadata
+from ede.models import MetaTable, User, ShapeMetadata
 from ede.database import session, Base, app_engine as engine
 from ede.utils.helpers import get_socrata_data_info, iter_column, send_mail, slugify
 from ede.tasks import update_dataset as update_dataset_task, \
@@ -11,19 +11,15 @@ from datetime import datetime, timedelta
 from urlparse import urlparse
 import requests
 from flask_wtf import Form
-from wtforms import TextField, PasswordField, DateField, SelectField
-from wtforms.validators import DataRequired, Email
-from dateutil import parser
+from wtforms import TextField, SelectField
+from wtforms.validators import DataRequired
 import json
 import re
 from cStringIO import StringIO
 from csvkit.unicsv import UnicodeCSVReader
-from sqlalchemy import Table, select, func, text, and_
-from ede.settings import CACHE_CONFIG
-import string
+from sqlalchemy import Table, func, text, and_
 import sqlalchemy
 from hashlib import md5
-import traceback
 from sqlalchemy.exc import NoSuchTableError
 
 views = Blueprint('views', __name__)

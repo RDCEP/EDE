@@ -9,7 +9,6 @@ from cStringIO import StringIO
 import csv
 from collections import OrderedDict
 import tempfile
-
 from flask import make_response, request, current_app, Blueprint
 from flask_cache import Cache
 from dateutil.parser import parse
@@ -19,19 +18,17 @@ from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.types import NullType
 from shapely.wkb import loads
 from shapely.geometry import box, asShape
-
 from ede.models import MasterTable, MetaTable, ShapeMetadata
 from ede.database import session, app_engine as engine, Base
 from ede.utils.helpers import slugify, increment_datetime_aggregate
-from ede.settings import CACHE_CONFIG, DATA_DIR
-import ede.settings
-from ede.utils.ogr2ogr import OgrExport, OgrError
+from ede.settings import CACHE_CONFIG
+from ede.utils.ogr2ogr import OgrExport
 
 cache = Cache(config=CACHE_CONFIG)
 
 API_VERSION = '/v1'
 RESPONSE_LIMIT = 1000
-CACHE_TIMEOUT = 60*60*6
+CACHE_TIMEOUT = 60 * 60 * 6
 VALID_DATA_TYPE = ['csv', 'json', 'geojson']
 VALID_AGG = ['day', 'week', 'month', 'quarter', 'year']
 
@@ -56,7 +53,7 @@ dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 # http://flask.pocoo.org/snippets/56/
 def crossdomain(origin=None, methods=None, headers=None,
                 max_age=21600, attach_to_all=True,
-                automatic_options=True): # pragma: no cover
+                automatic_options=True):  # pragma: no cover
     if methods is not None:
         methods = ', '.join(sorted(x.upper() for x in methods))
     if headers is not None and not isinstance(headers, basestring):
@@ -83,7 +80,6 @@ def crossdomain(origin=None, methods=None, headers=None,
                 return resp
 
             h = resp.headers
-
             h['Access-Control-Allow-Origin'] = origin
             h['Access-Control-Allow-Methods'] = get_methods()
             h['Access-Control-Max-Age'] = str(max_age)
@@ -109,7 +105,7 @@ def flush_cache():
     return resp
 
 @api.route(API_VERSION + '/api/datasets')
-#@cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
+# @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 @crossdomain(origin="*")
 def meta():
     status_code = 200
@@ -385,13 +381,13 @@ def _shape_format_to_file_extension(requested_format):
 @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
 @crossdomain(origin="*")
 def weather_stations():
-    #print "weather_stations()"
+    # print "weather_stations()"
     raw_query_params = request.args.copy()
-    #print "weather_stations(): raw_query_params=", raw_query_params
+    # print "weather_stations(): raw_query_params=", raw_query_params
 
-    stations_table = Table('weather_stations', Base.metadata, 
+    stations_table = Table('weather_stations', Base.metadata,
         autoload=True, autoload_with=engine, extend_existing=True)
-    valid_query, query_clauses, resp, status_code = make_query(stations_table,raw_query_params)
+    valid_query, query_clauses, resp, status_code = make_query(stations_table, raw_query_params)
     if valid_query:
         resp['meta']['status'] = 'ok'
         base_query = session.query(stations_table)
@@ -418,13 +414,13 @@ def weather(table):
 
     weather_table = Table('dat_weather_observations_%s' % table, Base.metadata,
         autoload=True, autoload_with=engine, extend_existing=True)
-    stations_table = Table('weather_stations', Base.metadata, 
+    stations_table = Table('weather_stations', Base.metadata,
         autoload=True, autoload_with=engine, extend_existing=True)
-    valid_query, query_clauses, resp, status_code = make_query(weather_table,raw_query_params)
+    valid_query, query_clauses, resp, status_code = make_query(weather_table, raw_query_params)
     if valid_query:
         resp['meta']['status'] = 'ok'
         base_query = session.query(weather_table, stations_table)\
-            .join(stations_table, 
+            .join(stations_table,
             weather_table.c.wban_code == stations_table.c.wban_code)
         for clause in query_clauses:
             base_query = base_query.filter(clause)
@@ -433,7 +429,7 @@ def weather(table):
             base_query = base_query.order_by(getattr(weather_table.c, 'date').desc())
         except AttributeError:
             base_query = base_query.order_by(getattr(weather_table.c, 'datetime').desc())
-        base_query = base_query.limit(RESPONSE_LIMIT) # returning the top 1000 records
+        base_query = base_query.limit(RESPONSE_LIMIT)  # returning the top 1000 records
         if raw_query_params.get('offset'):
             offset = raw_query_params['offset']
             base_query = base_query.offset(int(offset))
@@ -513,7 +509,7 @@ def dataset():
         raw_query_params['dataset_name__in'] = ','.join(dataset_names)
 
     mt = MasterTable.__table__
-    valid_query, query_clauses, resp, status_code = make_query(mt,raw_query_params)
+    valid_query, query_clauses, resp, status_code = make_query(mt, raw_query_params)
     
     # check for valid output format
     if datatype not in VALID_DATA_TYPE:
@@ -533,7 +529,7 @@ def dataset():
 
     if valid_query:
         time_agg = func.date_trunc(agg, mt.c['obs_date'])
-        base_query = session.query(time_agg, 
+        base_query = session.query(time_agg,
             func.count(mt.c['obs_date']),
             mt.c['dataset_name'])
         base_query = base_query.filter(mt.c['current_flag'] == True)
@@ -553,7 +549,7 @@ def dataset():
 
         # build the response
         results = sorted(values, key=itemgetter(2))
-        for k,g in groupby(results, key=itemgetter(2)):
+        for k, g in groupby(results, key=itemgetter(2)):
             d = {'dataset_name': k}
 
             items = []
@@ -605,7 +601,7 @@ def dataset():
  
             csv_resp = []
             i = 0
-            for k,g in groupby(resp['objects'], key=itemgetter('dataset_name')):
+            for k, g in groupby(resp['objects'], key=itemgetter('dataset_name')):
                 l_g = list(g)[0]
                 
                 j = 0
@@ -673,7 +669,7 @@ def detail():
                 weather_tname = 'hourly'
             else:
                 weather_tname = 'daily'
-            weather_table = Table('dat_weather_observations_%s' % weather_tname, Base.metadata, 
+            weather_table = Table('dat_weather_observations_%s' % weather_tname, Base.metadata,
                 autoload=True, autoload_with=engine, extend_existing=True)
             weather_fields = weather_table.columns.keys()
             base_query = session.query(mt, dataset, weather_table)
@@ -689,7 +685,7 @@ def detail():
             if include_weather:
                 w_q = {}
                 if queries['weather']:
-                    for k,v in queries['weather'].items():
+                    for k, v in queries['weather'].items():
                         try:
                             fname, operator = k.split('__')
                         except ValueError:
@@ -898,7 +894,7 @@ def grid():
     
     center = request.args.getlist('center[]')
     if not center:
-        center = [41.880517,-87.644061]
+        center = [41.880517, -87.644061]
     else:
         del raw_query_params['center[]']
     location_geom = request.args.get('location_geom__within')
@@ -918,12 +914,12 @@ def grid():
             x, y = getSizeInDegrees(int(buff), lat)
             size_x, size_y = getSizeInDegrees(50, lat)
             location_geom = shape.buffer(y).__geo_interface__
-        location_geom['crs'] = {"type":"name","properties":{"name":"EPSG:4326"}}
+        location_geom['crs'] = {"type":"name", "properties":{"name":"EPSG:4326"}}
     mt = MasterTable.__table__
     valid_query, base_clauses, resp, status_code = make_query(mt, queries['base'])
 
     if valid_query:
-        base_query = session.query(func.count(mt.c.dataset_row_id), 
+        base_query = session.query(func.count(mt.c.dataset_row_id),
                 func.ST_SnapToGrid(mt.c.location_geom, size_x, size_y))
         dname = raw_query_params['dataset_name']
         dataset = Table('dat_%s' % dname, Base.metadata,
@@ -943,14 +939,14 @@ def grid():
             resp = {'type': 'FeatureCollection', 'features': []}
             for value in values:
                 d = {
-                    'type': 'Feature', 
+                    'type': 'Feature',
                     'properties': {
-                        'count': value[0], 
+                        'count': value[0],
                     },
                 }
                 if value[1]:
                     pt = loads(value[1].decode('hex'))
-                    south, west = (pt.x - (size_x / 2)), (pt.y - (size_y /2))
+                    south, west = (pt.x - (size_x / 2)), (pt.y - (size_y / 2))
                     north, east = (pt.x + (size_x / 2)), (pt.y + (size_y / 2))
                     d['geometry'] = box(south, west, north, east).__geo_interface__
                 
@@ -975,7 +971,7 @@ def make_query(table, raw_query_params):
     query_clauses = []
     valid_query = True
 
-    #print "make_query(): args_keys = ", args_keys
+    # print "make_query(): args_keys = ", args_keys
     
     if 'offset' in args_keys:
         args_keys.remove('offset')
@@ -988,7 +984,7 @@ def make_query(table, raw_query_params):
     for query_param in args_keys:
         try:
             field, operator = query_param.split('__')
-            #print "make_query(): field, operator =", field, operator
+            # print "make_query(): field, operator =", field, operator
         except ValueError:
             field = query_param
             operator = 'eq'
@@ -1003,7 +999,7 @@ def make_query(table, raw_query_params):
             query_clauses.append(query)
         elif operator == 'within':
             geo = json.loads(query_value)
-            #print "make_query(): geo is", geo.items()
+            # print "make_query(): geo is", geo.items()
             if 'features' in geo.keys():
                 val = geo['features'][0]['geometry']
             elif 'geometry' in geo.keys():
@@ -1016,10 +1012,10 @@ def make_query(table, raw_query_params):
                 # 100 meters by default
                 x, y = getSizeInDegrees(100, lat)
                 val = shape.buffer(y).__geo_interface__
-            val['crs'] = {"type":"name","properties":{"name":"EPSG:4326"}}
+            val['crs'] = {"type":"name", "properties":{"name":"EPSG:4326"}}
             query = column.ST_Within(func.ST_GeomFromGeoJSON(json.dumps(val)))
-            #print "make_query: val=", val
-            #print "make_query(): query = ", query
+            # print "make_query: val=", val
+            # print "make_query(): query = ", query
             query_clauses.append(query)
         elif operator.startswith('time_of_day'):
             if operator.endswith('ge'):
@@ -1038,17 +1034,17 @@ def make_query(table, raw_query_params):
                 status_code = 400
                 valid_query = False
                 break
-            if query_value == 'null': # pragma: no cover
+            if query_value == 'null':  # pragma: no cover
                 query_value = None
             query = getattr(column, attr)(query_value)
             query_clauses.append(query)
 
-    #print "make_query(): query_clauses=", query_clauses
+    # print "make_query(): query_clauses=", query_clauses
     return valid_query, query_clauses, resp, status_code
 
 def getSizeInDegrees(meters, latitude):
 
-    earth_circumference = 40041000.0 # meters, average circumference
+    earth_circumference = 40041000.0  # meters, average circumference
     degrees_per_meter = 360.0 / earth_circumference
     
     degrees_at_equator = meters * degrees_per_meter
@@ -1075,8 +1071,8 @@ def parse_join_query(params):
     agg = 'day'
     datatype = 'json'
     master_columns = [
-        'obs_date', 
-        'location_geom', 
+        'obs_date',
+        'location_geom',
         'dataset_name',
         'weather_observation_id',
         'census_block',

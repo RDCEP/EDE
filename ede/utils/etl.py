@@ -6,7 +6,7 @@ from cStringIO import StringIO
 import requests
 from csvkit.unicsv import UnicodeCSVReader
 from sqlalchemy import Boolean, Float, Date, String, Column, \
-    Integer, Table, text, func, select, or_, and_, cast, UniqueConstraint, \
+    Integer, Table, text, func, select, and_, cast, UniqueConstraint, \
     join, outerjoin, BigInteger, MetaData
 from sqlalchemy.dialects.postgresql import TIMESTAMP, ARRAY, TIME
 from sqlalchemy.exc import NoSuchTableError

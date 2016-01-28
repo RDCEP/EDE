@@ -47,5 +47,5 @@ CENSUS_BLOCKS = {
     'human_name': u'Plenario Census Blocks'
 }
 
-# Toggle maintenence mode
+# Toggle maintenance mode
 MAINTENANCE = False

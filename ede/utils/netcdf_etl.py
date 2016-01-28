@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-
-import tempfile
 from datetime import datetime
-import requests
-from boto.s3.connection import S3Connection, S3ResponseError
-from boto.s3.key import Key
-from ede.database import session, app_engine as engine
-from ede.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
+from boto.s3.connection import S3ResponseError
+from ede.database import session
 from ede.utils.netcdffile import import_netcdffile, NetcdffileError
 # TODO: abstract this ETLFile class into a separate file, e.g. put it into etl.py
 from ede.utils.shape_etl import ETLFile

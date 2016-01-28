@@ -8,12 +8,10 @@ from ede.views import views
 from ede.utils.helpers import mail, slugify as slug
 from ede.settings import EDE_SENTRY_URL
 
-
 # Unless EDE_SENTRY_URL specified in settings, don't try to start raven.
 sentry = None
 if EDE_SENTRY_URL:
     sentry = Sentry(dsn=EDE_SENTRY_URL)
-
 
 def create_app():
     app = Flask(__name__)
@@ -26,6 +24,7 @@ def create_app():
     
     if sentry:
         sentry.init_app(app)
+
     app.register_blueprint(api)
     app.register_blueprint(views)
     app.register_blueprint(auth)
@@ -35,7 +34,7 @@ def create_app():
     def check_maintenance_mode():
         """
         If maintenance mode is turned on in settings.py,
-        Disable the API and the interactive pages in the explorer.
+        disable the API and the interactive pages in the explorer.
         """
         maint = app.config.get('MAINTENANCE')
         maint_pages = ['/v1/api', '/explore', '/admin']
@@ -76,4 +75,3 @@ def create_app():
             return '0'
 
     return app
-

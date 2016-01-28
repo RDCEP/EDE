@@ -1,6 +1,3 @@
-import os
-from urlparse import urlparse
-import sys
 from ede.celery_app import celery_app
 from ede.models import MetaTable, MasterTable, ShapeMetadata
 from ede.database import task_session as session, task_engine as engine, \
@@ -13,7 +10,6 @@ from raven.conf import setup_logging
 from ede.settings import CELERY_SENTRY_URL
 from sqlalchemy import Table
 from sqlalchemy.exc import NoSuchTableError, InternalError
-from datetime import datetime, timedelta
 
 if CELERY_SENTRY_URL:
     handler = SentryHandler(CELERY_SENTRY_URL)

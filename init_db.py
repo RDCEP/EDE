@@ -2,12 +2,8 @@ from ede.database import session, app_engine, Base
 import ede.models
 import ede.settings
 from sqlalchemy.exc import IntegrityError
-import datetime
 from argparse import ArgumentParser
-from ede.utils.shape_etl import ShapeETL
-
 from ede.tasks import hello_world
-
 
 def init_db(args={}):
     if args.everything:
@@ -18,7 +14,6 @@ def init_db(args={}):
             init_master_meta_user()
         if args.celery:
             init_celery()
-
 
 def init_master_meta_user():
     print 'creating master, meta and user tables'
@@ -32,14 +27,15 @@ def init_master_meta_user():
         except IntegrityError:
             pass
 
-
 def init_celery():
     hello_world.delay()
 
 def build_arg_parser():
-    '''Creates an argument parser for this script. This is helpful in the event
+    """
+    Creates an argument parser for this script. This is helpful in the event
     that a user needs to only run a portion of the setup script.
-    '''
+    """
+
     description = 'Set up your development environment with this script. It \
     creates tables.'
     parser = ArgumentParser(description=description)

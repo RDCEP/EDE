@@ -1,6 +1,3 @@
-import os
-import tempfile
-import shutil
 from ede.utils.ogr2ogr import import_netcdffile_to_table, OgrError
 
 class NetcdffileError(Exception):

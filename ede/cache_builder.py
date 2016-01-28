@@ -1,8 +1,7 @@
 import sys
 import time
 import requests
-import json
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 from dateutil import parser
 
 longest_request_ms = 0

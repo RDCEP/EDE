@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 import tempfile
 from datetime import datetime
 import zipfile
 import requests
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-from ede.database import session, app_engine as engine
+from ede.database import session
 from ede.settings import AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
 from ede.utils.shapefile import import_shapefile, ShapefileError
 from ede.models import ShapeMetadata
@@ -74,7 +72,7 @@ class ETLFile:
                 self.handle.write(chunk)
                 self.handle.flush()
 
-    def _seek_to_start(function):
+    def _seek_to_start(self, function):
         """
         In case the client has has done some read()s on self.handle,
         seek to the start of the file before methods that do reads.

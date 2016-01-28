@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-
 import datetime
-
 from dateutil.parser import parse
 from sqlalchemy import Boolean, Integer, BigInteger, Float, Date, \
     String
