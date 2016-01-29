@@ -71,7 +71,7 @@ class ETLFile:
                 self.handle.write(chunk)
                 self.handle.flush()
 
-    def _seek_to_start(self, function):
+    def _seek_to_start(function):
         """
         In case the client has has done some read()s on self.handle,
         seek to the start of the file before methods that do reads.
