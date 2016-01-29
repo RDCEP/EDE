@@ -1,18 +1,15 @@
 from uuid import uuid4
 from datetime import datetime
-
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, \
     Text, BigInteger, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY
 from geoalchemy2 import Geometry
 from sqlalchemy.orm import synonym
 from flask_bcrypt import Bcrypt
-
 from ede.database import session, Base
 from ede.utils.helpers import slugify
 
 bcrypt = Bcrypt()
-
 
 class MetaTable(Base):
     __tablename__ = 'meta_master'
@@ -34,11 +31,11 @@ class MetaTable(Base):
     latitude = Column(String)
     longitude = Column(String)
     location = Column(String)
-    approved_status = Column(String) # if False, then do not display without first getting administrator approval
+    approved_status = Column(String)  # if False, then do not display without first getting administrator approval
     contributor_name = Column(String)
     contributor_organization = Column(String)
     contributor_email = Column(String)
-    contributed_data_types = Column(Text) # Temporarily store user-submitted data types for later approval
+    contributed_data_types = Column(Text)  # Temporarily store user-submitted data types for later approval
     is_socrata_source = Column(Boolean, default=False)
     result_ids = Column(ARRAY(String))
 
@@ -47,7 +44,6 @@ class MetaTable(Base):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
 
 class MasterTable(Base):
     __tablename__ = 'dat_master'
@@ -71,7 +67,6 @@ class MasterTable(Base):
 
     def __repr__(self):
         return '<Master %r (%r)>' % (self.dataset_row_id, self.dataset_name)
-
 
 class ShapeMetadata(Base):
     __tablename__ = 'meta_shape'
@@ -230,9 +225,9 @@ class NetcdfMetadata(Base):
     is_opendap = Column(Boolean)
     is_grads = Column(Boolean)
     # The NetCDF components
-    num_dims = Column(Integer) # Number of dimensions
-    dims_names = Column(String) # The dimension names, separated by commas
-    dims_lengths = Column(String) # The dimension lengths, separated by commas
+    num_dims = Column(Integer)  # Number of dimensions
+    dims_names = Column(String)  # The dimension names, separated by commas
+    dims_lengths = Column(String)  # The dimension lengths, separated by commas
     # Info about the variables of the NetCDF, i.e. the String is :
     # String = name of var , its data type , number of dims the var depends on ,
     # names of dims the var depends on (comma-separated too)

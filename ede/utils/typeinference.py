@@ -14,7 +14,6 @@ DEFAULT_DATETIME = datetime.datetime(2999, 12, 31, 0, 0, 0)
 NULL_DATE = datetime.date(2999, 12, 31)
 NULL_TIME = datetime.time(0, 0, 0)
 
-
 def normalize_column_type(l):
     """
     Docs to come...
@@ -82,8 +81,6 @@ def normalize_column_type(l):
         for i, x in enumerate(l):
             if x == '' or x is None:
                 continue
-
-            float_x  = float(x.replace(',', ''))
 
         return Float, null_values
     except ValueError:

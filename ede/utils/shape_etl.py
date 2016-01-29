@@ -10,7 +10,6 @@ from ede.utils.shapefile import import_shapefile, ShapefileError
 from ede.models import ShapeMetadata
 from ede.utils.etl import EDE_ETLError
 
-
 class ETLFile:
     """
     Encapsulates whether a file has been downloaded temporarily
@@ -97,7 +96,6 @@ class ETLFile:
 
         # Upload to S3
         s3_key.set_contents_from_file(self.handle)
-
 
 class ShapeETL:
 

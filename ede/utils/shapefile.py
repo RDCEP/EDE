@@ -3,12 +3,10 @@ import tempfile
 import shutil
 from ede.utils.ogr2ogr import import_shapefile_to_table, OgrError
 
-
 class ShapefileError(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
         self.message = message
-
 
 def import_shapefile(shapefile_zip, table_name):
     """
@@ -23,7 +21,6 @@ def import_shapefile(shapefile_zip, table_name):
         raise e
     except Exception as e:
         raise ShapefileError("Shapefile import failed.\n{}".format(repr(e)))
-
 
 class Shapefile:
     """

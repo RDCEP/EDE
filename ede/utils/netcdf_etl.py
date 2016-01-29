@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime
 from boto.s3.connection import S3ResponseError
 from ede.database import session

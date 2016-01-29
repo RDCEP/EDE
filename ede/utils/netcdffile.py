@@ -5,7 +5,6 @@ class NetcdffileError(Exception):
         Exception.__init__(self, message)
         self.message = message
 
-
 def import_netcdffile(netcdf_filename, table_name):
     """
     :param netcdf_filename: The netcdf filename.
