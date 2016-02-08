@@ -17,8 +17,10 @@ class aggregation:
         agg_grid = np.apply_over_axes(np.nanmean,cube,2)
         return agg_grid
 
-    def grid_to_poly(self):
-        return
+    def grid_to_poly(self, cube):
+        # Operation that aggregates on latitude and longitude, resulting on an array per time
+        agg_grid = np.apply_over_axes(np.sum,cube,[0,1])
+        return agg_grid
 
 class binning:
     def grid_to_grid(self, cube, bin_range):
