@@ -1085,3 +1085,5 @@ def parse_join_query(params):
         else:
             queries['detail'][key] = value
     return agg, datatype, queries
+
+#Todo: Implement API call to the operations module
