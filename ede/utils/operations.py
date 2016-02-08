@@ -10,6 +10,10 @@ __author__ = "rlourenc@mail.depaul.edu"
 class abstraction:
 # Implements the user abstractions of spatial operations. Currently related to use cases.
 
+    def AggregationGADM(self):
+        aggregated_region =
+        return aggregated_region
+
     def HarvestIndex(self, simulation, bounding_box, time_slice):
         # Implements the Harvest Index for a crop. HI = yield / biomass .
     # Todo: Make query for obtaining a 'yield matrix', and other for a 'biomass' matrix.
