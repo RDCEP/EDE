@@ -2,8 +2,8 @@ from uuid import uuid4
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, \
     Text, BigInteger, func
-from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY
-from geoalchemy2 import Geometry
+from sqlalchemy.dialects.postgresql import TIMESTAMP, DOUBLE_PRECISION, ARRAY, TEXT
+from geoalchemy2 import Geometry, Raster
 from sqlalchemy.orm import synonym
 from flask_bcrypt import Bcrypt
 from ede.database import session, Base
@@ -212,3 +212,20 @@ class User(Base):
 
     def get_id(self):
         return self.id
+
+class NetCDF_Meta(Base):
+    __tablename__ = 'netcdf_meta'
+    dataset_name = Column(TEXT, primary_key=True) # We use the dataset name = file name of NetCDF as a primary key
+    dims_names = Column(ARRAY(String)) # Names of dimensions
+    dims_sizes = Column(ARRAY(Integer)) # Sizes of dimensions, must be in same order
+    vars_names = Column(ARRAY(String)) # Names of variables
+    vars_dims = Column(ARRAY(String)) # Dimensions the variables depend on, must be in same order + same order as in NetCDF for a fixed variable
+    vars_dims_nums = Column(ARRAY(Integer)) # Number of dimensions the variables depend on, must be in the same order
+    vars_attrs = Column(ARRAY(String)) # Key-value attributes of variables, must be in same order + same order as in NetCDF for a fixed variable
+    vars_attrs_nums = Column(ARRAY(Integer)) # Number of key-value attributes of variables, must be in same order
+    
+class NetCDF_Data(Base):
+    __tablename__ = 'netcdf_data'
+    rid = Column(Integer, primary_key=True) # Just a global raster id field, produced by raster2pgsql anyway
+    rast = Column(Raster) # Tiles of the NetCDFs. Tiles = partition on (lat,lon) but each tile contains all bands where band = time frame
+    dataset_name = Column(TEXT) # This field will be used to join to the netcdf_meta table

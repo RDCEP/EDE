@@ -22,3 +22,4 @@ datetime_truncate
 pyshp
 Flask-Mail
 lxml
+netcdf4
