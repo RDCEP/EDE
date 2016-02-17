@@ -12,7 +12,6 @@ from smtplib import SMTPAuthenticationError
 
 mail = Mail()
 
-
 def iter_column(idx, f):
     """
 
@@ -85,9 +84,9 @@ def get_socrata_data_info(host, path, four_by_four):
                 d = {
                     'human_name': column['name'],
                     'machine_name': column['fieldName'],
-                    #'field_name': column['fieldName'], # duplicate definition for code compatibility
-                    #'field_name': column['name'], # duplicate definition for code compatibility
-                    'field_name': slugify(column['name']), # duplicate definition for code compatibility
+                    # 'field_name': column['fieldName'], # duplicate definition for code compatibility
+                    # 'field_name': column['name'], # duplicate definition for code compatibility
+                    'field_name': slugify(column['name']),  # duplicate definition for code compatibility
                     'data_type': column['dataTypeName'],
                     'description': column.get('description', ''),
                     'width': column['width'],
@@ -115,7 +114,6 @@ def get_socrata_data_info(host, path, four_by_four):
             errors.append('Views endpoint not structured as expected')
     return dataset_info, errors, status_code
 
-
 def slugify(text, delim=u'_'):
     """
     Given text, return lower-case ASCII slug that gets as close as possible to the original.
@@ -135,8 +133,6 @@ def slugify(text, delim=u'_'):
 
 def increment_datetime_aggregate(sourcedate, time_agg):
     delta = None
-    # if time_agg == 'hour':
-    #     delta = timedelta(hours=1)
     if time_agg == 'day':
         delta = timedelta(days=1)
     elif time_agg == 'week':
@@ -146,8 +142,8 @@ def increment_datetime_aggregate(sourcedate, time_agg):
         delta = timedelta(days=days_to_add)
     elif time_agg == 'quarter':
         _, days_to_add_1 = calendar.monthrange(sourcedate.year, sourcedate.month)
-        _, days_to_add_2 = calendar.monthrange(sourcedate.year, sourcedate.month+1)
-        _, days_to_add_3 = calendar.monthrange(sourcedate.year, sourcedate.month+2)
+        _, days_to_add_2 = calendar.monthrange(sourcedate.year, sourcedate.month + 1)
+        _, days_to_add_3 = calendar.monthrange(sourcedate.year, sourcedate.month + 2)
         delta = timedelta(days=(days_to_add_1 + days_to_add_2 + days_to_add_3))
     elif time_agg == 'year':
         days_to_add = 366 if calendar.isleap(sourcedate.year) else 365
@@ -161,8 +157,8 @@ def send_mail(subject, recipient, body):
               recipients=[recipient], bcc=[ADMIN_EMAIL])
 
     msg.body = body
-    msg.html = string.replace(msg.body,'\r\n','<br />')
+    msg.html = string.replace(msg.body, '\r\n', '<br />')
     try: 
         mail.send(msg)
-    except SMTPAuthenticationError, e:
+    except SMTPAuthenticationError, _:
         print "error sending email"

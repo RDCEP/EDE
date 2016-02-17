@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 import gzip
 from cStringIO import StringIO
-
 import requests
 from csvkit.unicsv import UnicodeCSVReader
 from sqlalchemy import Boolean, Float, Date, String, Column, \
@@ -14,7 +13,6 @@ from geoalchemy2.shape import from_shape
 from shapely.geometry import box
 from boto.s3.connection import S3Connection, S3ResponseError
 from boto.s3.key import Key
-
 from ede.database import task_session as session, task_engine as engine
 from ede.models import MetaTable, MasterTable
 from ede.utils.helpers import slugify, iter_column
@@ -32,12 +30,10 @@ COL_TYPES = {
     'datetime': TIMESTAMP,
 }
 
-
 class EDE_ETLError(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
         self.message = message
-
 
 class EDE_ETL(object):
     
@@ -105,7 +101,7 @@ class EDE_ETL(object):
         """
 
         # Add init parameters to EDE_ETL object
-        for k,v in meta.items():
+        for k, v in meta.items():
             setattr(self, k, v)
 
         if data_types:
@@ -118,7 +114,7 @@ class EDE_ETL(object):
         # AWS_ACCESS_KEY as empty string is signal to operate locally.
         if AWS_ACCESS_KEY != '':
             # Name of file in S3 bucket will be dataset name appended with current time.
-            s3_path = '%s/%s.csv.gz' % (self.dataset_name, 
+            s3_path = '%s/%s.csv.gz' % (self.dataset_name,
                                         datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
             try:
                 s3conn = S3Connection(AWS_ACCESS_KEY, AWS_SECRET_KEY)
@@ -174,10 +170,6 @@ class EDE_ETL(object):
         if new:
             self._insert_data_table()
             self._update_master()
-           #changes = self._find_changes()
-           #if changes:
-           #    self._update_dat_current_flag()
-           #    self._update_master_current_flag()
         self._update_meta()
         self._update_geotags()
         self._cleanup_temp_tables()
@@ -230,7 +222,7 @@ class EDE_ETL(object):
         """
 
         try:  # Maybe this table already exists in the database.
-            self.dat_table = Table('dat_%s' % self.dataset_name, self.metadata, 
+            self.dat_table = Table('dat_%s' % self.dataset_name, self.metadata,
                                    autoload=True, autoload_with=engine, extend_existing=True)
 
         except NoSuchTableError:  # Nope, we'll need to create it.
@@ -278,7 +270,7 @@ class EDE_ETL(object):
             ]
 
             # Generate columns for each column in the source dataset.
-            for col_name,d_type in zip(header, col_types):
+            for col_name, d_type in zip(header, col_types):
                 dt, nullable = d_type
                 cols.append(Column(col_name, dt, nullable=nullable))
 
@@ -376,7 +368,7 @@ class EDE_ETL(object):
                      """ % (self.dataset_name,
                             slugify(self.latitude), slugify(self.longitude),
                             slugify(self.business_key), self.dataset_name, slugify(self.latitude), slugify(self.longitude),
-                            self.dataset_name, slugify(self.business_key),slugify(self.business_key))
+                            self.dataset_name, slugify(self.business_key), slugify(self.business_key))
             with engine.begin() as conn:
                 conn.execute(upd_st)
         elif self.location:
@@ -393,7 +385,7 @@ class EDE_ETL(object):
                             slugify(self.location),
                             slugify(self.location),
                             self.dataset_name,
-                            self.dataset_name,slugify(self.business_key),slugify(self.business_key))
+                            self.dataset_name, slugify(self.business_key), slugify(self.business_key))
             with engine.begin() as conn:
                 conn.execute(upd_st)
 
@@ -471,7 +463,7 @@ class EDE_ETL(object):
         bk = slugify(self.business_key)
 
         # Align on line_num and bk (Shouldn't that include every entry of both tables?)
-        j = join(self.src_table, self.dup_table, 
+        j = join(self.src_table, self.dup_table,
                  and_(self.src_table.c['line_num'] == self.dup_table.c['line_num'],
                       self.src_table.c[bk] == self.dup_table.c[bk]))
 
@@ -514,7 +506,7 @@ class EDE_ETL(object):
         by joining the references in new_table to the actual data living in src_table.
         """
         # Take all columns from src_table (excluding most of the 'meta' columns)
-        skip_cols = ['%s_row_id' % self.dataset_name,'end_date', 'current_flag', 'line_num']
+        skip_cols = ['%s_row_id' % self.dataset_name, 'end_date', 'current_flag', 'line_num']
         from_vals = []
         from_vals.append(text("'%s' AS start_date" % datetime.now().isoformat()))
         from_vals.append(self.new_table.c.dup_ver)
@@ -527,8 +519,8 @@ class EDE_ETL(object):
         bk = slugify(self.business_key)
         ins = self.dat_table.insert()\
             .from_select(
-                [c for c in self.dat_table.columns if c.name not in skip_cols], 
-                sel.select_from(self.src_table.join(self.new_table, 
+                [c for c in self.dat_table.columns if c.name not in skip_cols],
+                sel.select_from(self.src_table.join(self.new_table,
                         and_(
                             self.src_table.c.line_num == self.new_table.c.line_num,
                             getattr(self.src_table.c, bk) == getattr(self.new_table.c, bk),
@@ -576,7 +568,7 @@ class EDE_ETL(object):
             dat_cols.append(text(
                 "ST_PointFromText('POINT(' || dat_%s.%s || ' ' || dat_%s.%s || ')', 4326) \
                       as location_geom" % (
-                          self.dataset_name, slugify(self.longitude), 
+                          self.dataset_name, slugify(self.longitude),
                           self.dataset_name, slugify(self.latitude),
                       )))
         elif self.location:
@@ -602,7 +594,7 @@ class EDE_ETL(object):
             # just throw everything in.
             ins = mt.insert()\
                 .from_select(
-                    [c for c in mt.columns.keys() if c != 'master_row_id'], 
+                    [c for c in mt.columns.keys() if c != 'master_row_id'],
                     select(dat_cols)
                 )
         else:  # If we're updating,
@@ -611,7 +603,7 @@ class EDE_ETL(object):
                 .from_select(
                     [c for c in mt.columns.keys() if c != 'master_row_id'],
                     select(dat_cols)\
-                        .select_from(self.dat_table.join(self.new_table, 
+                        .select_from(self.dat_table.join(self.new_table,
                             and_(
                                 getattr(self.dat_table.c, bk) == getattr(self.new_table.c, bk),
                                 self.dat_table.c.dup_ver == self.new_table.c.dup_ver
@@ -675,7 +667,7 @@ class EDE_ETL(object):
                 ORDER BY d.master_row_id, diff
               ) as subq
             WHERE dat_master.master_row_id = subq.master_id
-            """ % (date_col_name, weather_table, 
+            """ % (date_col_name, weather_table,
                    date_col_name, weather_table, temp_col,
                    date_col_name, weather_table, temp_col,)
         )
@@ -726,7 +718,7 @@ class EDE_ETL(object):
             md.date_added = now
         obs_date_col = getattr(self.dat_table.c, slugify(self.observed_date))
         obs_from, obs_to = session.query(
-                               func.min(obs_date_col), 
+                               func.min(obs_date_col),
                                func.max(obs_date_col))\
                                .first()
         md.obs_from = obs_from
@@ -745,15 +737,15 @@ class EDE_ETL(object):
         elif self.location:
             loc_col = getattr(self.dat_table.c, slugify(self.location))
             subq = session.query(
-                cast(func.regexp_matches(loc_col, '\((.*),.*\)'), 
-                    ARRAY(Float)).label('lat'), 
-                cast(func.regexp_matches(loc_col, '\(.*,(.*)\)'), 
+                cast(func.regexp_matches(loc_col, '\((.*),.*\)'),
+                    ARRAY(Float)).label('lat'),
+                cast(func.regexp_matches(loc_col, '\(.*,(.*)\)'),
                     ARRAY(Float)).label('lon'))\
                 .subquery()
             try:
-                xmin, ymin, xmax, ymax = session.query(func.min(subq.c.lon), 
-                                                       func.min(subq.c.lat), 
-                                                       func.max(subq.c.lon), 
+                xmin, ymin, xmax, ymax = session.query(func.min(subq.c.lon),
+                                                       func.min(subq.c.lat),
+                                                       func.max(subq.c.lon),
                                                        func.max(subq.c.lat))\
                                                 .first()
                 xmin, ymin, xmax, ymax = xmin[0], ymin[0], xmax[0], ymax[0]

@@ -5,7 +5,6 @@ import os
 import tempfile
 import shutil
 
-
 postgres_connection_arg = 'PG:host={} user={} port={} dbname={} password={}'.format(
                                   DB_HOST,
                                   DB_USER,
@@ -13,12 +12,10 @@ postgres_connection_arg = 'PG:host={} user={} port={} dbname={} password={}'.for
                                   DB_NAME,
                                   DB_PASSWORD)
 
-
 class OgrError(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
         self.message = message
-
 
 class OgrExport(object):
     """
@@ -27,7 +24,6 @@ class OgrExport(object):
     There must not already be a file at the path.
     It is the caller's responsibility to clean up the file we create there.
     """
-
     def __init__(self, export_format, export_path, table_name):
         self.ogr_format = self._requested_format_to_ogr_format_name(export_format)
         self.table_name = table_name
@@ -93,7 +89,6 @@ class OgrExport(object):
 
         return ogr_format_name
 
-
 def import_shapefile_to_table(component_path, table_name):
     """
 
@@ -104,38 +99,21 @@ def import_shapefile_to_table(component_path, table_name):
     """
 
     args = ['ogr2ogr',
-            '-f', 'PostgreSQL',                 # Use the PostgreSQL driver. Documentation here: http://www.gdal.org/drv_pg.html
+            '-f', 'PostgreSQL',  # Use the PostgreSQL driver. Documentation here: http://www.gdal.org/drv_pg.html
 
-            '-lco', 'PRECISION=no',             # Many .dbf files don't obey their precision headers.
+            '-lco', 'PRECISION=no',  # Many .dbf files don't obey their precision headers.
                                                 # So importing as precision-marked types like NUMERIC(width, precision) often fails.
                                                 # Instead, import as INTEGER, VARCHAR, FLOAT8.
 
-            '-nlt', 'PROMOTE_TO_MULTI',         # Import all lines and polygons as multilines and multipolygons
+            '-nlt', 'PROMOTE_TO_MULTI',  # Import all lines and polygons as multilines and multipolygons
                                                 # We don't know if the source shapefiles will have multi or non-multi geometries,
                                                 # so we need to import the most inclusive set of types.
             '-s_srs', component_path + '.prj',  # Derive source SRID from Well Known Text in .prj
-            '-t_srs', 'EPSG:4326',              # Always convert to 4326
+            '-t_srs', 'EPSG:4326',  # Always convert to 4326
             postgres_connection_arg,
-            component_path + '.shp',            # Point to .shp so that ogr2ogr knows it's importing a Shapefile.
-            '-nln', table_name,                 # (n)ew (l)ayer (n)ame. Set the name of the new table.
-            '-lco', 'GEOMETRY_NAME=geom']       # Always name the geometry column 'geom'
-    try:
-        subprocess.check_call(args)
-    except subprocess.CalledProcessError as e:
-        print 'Failed to import dataset to postgres with ogr2ogr.' + str(args)
-        raise OgrError(e.message)
-
-def import_netcdffile_to_table(netcdf_filename, table_name):
-    """
-    :param netcdf_filename: The netcdf filename.
-    :param table_name: Name that we want table to have in the database
-    """
-    args = ['ogr2ogr',
-            '-f', 'PostgreSQL',                 # Use the PostgreSQL driver. Documentation here: http://www.gdal.org/drv_pg.html
-            postgres_connection_arg,
-            netcdf_filename,                    # Point to .nc so that ogr2ogr knows it's importing a Netcdffile.
-            '-nln', table_name]                 # (n)ew (l)ayer (n)ame. Set the name of the new table.
-            
+            component_path + '.shp',  # Point to .shp so that ogr2ogr knows it's importing a Shapefile.
+            '-nln', table_name,  # (n)ew (l)ayer (n)ame. Set the name of the new table.
+            '-lco', 'GEOMETRY_NAME=geom']  # Always name the geometry column 'geom'
     try:
         subprocess.check_call(args)
     except subprocess.CalledProcessError as e:
