@@ -11,7 +11,7 @@ from ede.api.utils import ListConverter, IntListConverter
 
 
 app = Flask(__name__)
-app.config.from_object('ede_test.config')
+app.config.from_object('ede.config')
 app.url_map.converters['list'] = ListConverter
 app.url_map.converters['intlist'] = IntListConverter
 app.url_map.strict_slashes = False

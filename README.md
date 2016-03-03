@@ -25,13 +25,13 @@ This corresponds with the `DB_NAME` setting in your `ede/settings.py` file
 and can be modified.
 
 ```
-createdb ede_test
+createdb ede
 ```
 Make sure your local database has the [PostGIS](http://postgis.net/) extension:
 
 ```
-psql ede_test
-ede_test=# CREATE EXTENSION postgis;
+psql ede
+ede=# CREATE EXTENSION postgis;
 ```
 
 You'll need the ogr2ogr utility; it's part of the gdal package (we use it toimport and export shape datasets)

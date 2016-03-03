@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from ede_test.credentials import DB_HOST, DB_NAME, DB_PASS, \
+from ede.credentials import DB_HOST, DB_NAME, DB_PASS, \
     DB_PORT, DB_USER, SECRET_KEY
 
 

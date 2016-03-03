@@ -8,11 +8,11 @@ from datetime import date
 from flask import Blueprint, render_template, make_response, request
 from flask.ext.cache import Cache
 from sqlalchemy import func, Table, text
-from ede_test.database import engine, db_session
-from ede_test.schema.models import Global_Meta
-from ede_test.config import CACHE_CONFIG
-from ede_test.api.crossdomain import crossdomain
-from ede_test.api.cache_key import make_cache_key
+from ede.database import engine, db_session
+from ede.schema.models import Global_Meta
+from ede.config import CACHE_CONFIG
+from ede.api.crossdomain import crossdomain
+from ede.api.cache_key import make_cache_key
 
 
 cache = Cache(config=CACHE_CONFIG)

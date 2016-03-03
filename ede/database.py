@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from ede_test.config import SQLALCHEMY_DATABASE_URI
+from ede.config import SQLALCHEMY_DATABASE_URI
 
 
 engine = create_engine(

@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from ede_test.schema.models import Base
+from ede.schema.models import Base
 
 def main():
     engine = create_engine('postgresql://postgres:postgres@localhost:5432/ede', echo=True)
