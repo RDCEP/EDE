@@ -3,7 +3,7 @@ try:
 except ImportError:
     import json
 from datetime import date
-from flask import Flask, render_template, g, make_response
+from flask import Flask, g, make_response
 from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session

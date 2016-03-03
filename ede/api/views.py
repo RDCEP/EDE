@@ -5,10 +5,9 @@ try:
 except ImportError:
     import json
 from datetime import date
-from flask import Blueprint, render_template, make_response, request
+from flask import Blueprint, make_response
 from flask.ext.cache import Cache
-from sqlalchemy import func, Table, text
-from ede.database import engine, db_session
+from ede.database import db_session
 from ede.schema.models import Global_Meta
 from ede.config import CACHE_CONFIG
 from ede.api.crossdomain import crossdomain
@@ -30,7 +29,8 @@ dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 @api.route('/flush-cache')
 def flush_cache():
     cache.clear()
-    resp = make_response(json.dumps({'status' : 'ok', 'message' : 'cache flushed!'}))
+    resp = {'status': 'ok', 'message': 'cache flushed!'}
+    resp = make_response(json.dumps(resp))
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
