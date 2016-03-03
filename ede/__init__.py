@@ -1,77 +1,53 @@
-from flask import Flask, render_template, redirect, url_for, request
-from raven.contrib.flask import Sentry
-from ede.database import session as db_session
-from ede.models import bcrypt
-from ede.api import api, cache
-from ede.auth import auth, login_manager
-from ede.views import views
-from ede.utils.helpers import mail, slugify as slug
-from ede.settings import EDE_SENTRY_URL
+from flask import Flask, render_template, g
+from flask.ext.cache import Cache
+from ede_test.config import CACHE_CONFIG
+from ede_test.database import engine, db_session
+from ede_test.api.utils import ListConverter, IntListConverter
 
-# Unless EDE_SENTRY_URL specified in settings, don't try to start raven.
-sentry = None
-if EDE_SENTRY_URL:
-    sentry = Sentry(dsn=EDE_SENTRY_URL)
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object('ede.settings')
-    app.url_map.strict_slashes = False
-    login_manager.init_app(app)
-    login_manager.login_view = "auth.login"
-    bcrypt.init_app(app)
-    mail.init_app(app)
-    
-    if sentry:
-        sentry.init_app(app)
+app = Flask(__name__)
+app.config.from_object('ede_test.config')
+app.url_map.converters['list'] = ListConverter
+app.url_map.converters['intlist'] = IntListConverter
+app.url_map.strict_slashes = False
 
-    app.register_blueprint(api)
-    app.register_blueprint(views)
-    app.register_blueprint(auth)
-    cache.init_app(app)
+cache = Cache(app, config=CACHE_CONFIG)
 
-    @app.before_request
-    def check_maintenance_mode():
-        """
-        If maintenance mode is turned on in settings.py,
-        disable the API and the interactive pages in the explorer.
-        """
-        maint = app.config.get('MAINTENANCE')
-        maint_pages = ['/v1/api', '/explore', '/admin']
-        
-        maint_on = False
-        for m in maint_pages:
-            if m in request.path:
-                maint_on = True
 
-        if maint and maint_on and request.path != url_for('views.maintenance'):
-            return redirect(url_for('views.maintenance'))
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('errors/404.html'), 404
 
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
+
+@app.errorhandler(403)
+def not_found(error):
+    return render_template('errors/403.html'), 403
+
+
+@app.errorhandler(500)
+def not_found(error):
+    return render_template('errors/500.html'), 500
+
+
+from ede_test.api.views import api as api_module
+app.register_blueprint(api_module)
+
+
+@app.before_request
+def before_request():
+    g.db = engine.dispose()
+
+
+@app.teardown_request
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    try:
+        g.db.close()
         db_session.remove()
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('404.html'), 404
-
-    @app.errorhandler(500)
-    def page_not_found(e):
-        return render_template('error.html'), 500
-
-    @app.template_filter('slugify')
-    def slugify(s):
-        return slug(s)
-
-    @app.template_filter('format_number')
-    def reverse_filter(s):
-        return '{:,}'.format(s)
-
-    @app.template_filter('format_date_sort')
-    def reverse_filter(s):
-        if s:
-            return s.strftime('%Y%m%d%H%M')
-        else:
-            return '0'
-
-    return app
+    except:
+        try:
+            db_session.rollback()
+            db_session.close()
+            g.db.close()
+        except:
+            pass
