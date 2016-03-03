@@ -1,8 +1,13 @@
-from flask import Flask, render_template, g
+try:
+    import simplejson as json
+except ImportError:
+    import json
+from datetime import date
+from flask import Flask, render_template, g, make_response
 from flask.ext.cache import Cache
-from ede_test.config import CACHE_CONFIG
-from ede_test.database import engine, db_session
-from ede_test.api.utils import ListConverter, IntListConverter
+from ede.config import CACHE_CONFIG
+from ede.database import engine, db_session
+from ede.api.utils import ListConverter, IntListConverter
 
 
 app = Flask(__name__)
@@ -13,23 +18,34 @@ app.url_map.strict_slashes = False
 
 cache = Cache(app, config=CACHE_CONFIG)
 
+dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
+
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template('errors/404.html'), 404
+    resp = {'meta': {'status': '', 'message': '', },
+            'objects': [] }
+    resp = make_response(json.dumps(resp, default=dthandler), 404)
+    return resp
 
 
 @app.errorhandler(403)
 def not_found(error):
-    return render_template('errors/403.html'), 403
+    resp = {'meta': {'status': '', 'message': '', },
+            'objects': [] }
+    resp = make_response(json.dumps(resp, default=dthandler), 403)
+    return resp
 
 
 @app.errorhandler(500)
 def not_found(error):
-    return render_template('errors/500.html'), 500
+    resp = {'meta': {'status': '', 'message': '', },
+            'objects': [] }
+    resp = make_response(json.dumps(resp, default=dthandler), 500)
+    return resp
 
 
-from ede_test.api.views import api as api_module
+from ede.api.views import api as api_module
 app.register_blueprint(api_module)
 
 
