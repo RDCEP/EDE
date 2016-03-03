@@ -1,25 +1,9 @@
-Flask
-Flask-Cache
-flask_sqlalchemy
-gunicorn
-# requires libpq-dev
-psycopg2
+numpy
+sqlalchemy
 geoalchemy2
-celery
-boto
-# requires geos_c
-shapely
-requests
-raven
-blinker
-Flask-WTF
-Flask-Login
-flask-bcrypt
-csvkit
-redis
-pytz
-datetime_truncate
-pyshp
-Flask-Mail
-lxml
 netcdf4
+scrapy
+psycopg2
+flask
+flask-cache
+redis
