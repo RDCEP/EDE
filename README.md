@@ -1,8 +1,8 @@
 # Setup instructions
 
 1. Download<br/>
-`git clone https://github.com/legendOfZelda/ede_test`<br/>
-`cd ede_test`
+`git clone https://github.com/rdcep/ede`<br/>
+`cd ede`
 
 2. Setup virtual environment<br/>
 `virtualenv venv`<br/>
@@ -13,8 +13,8 @@
 
 4. Add project's top-level directory to pythonpath<br/>
 `export PYTHONPATH=$PYTHONPATH:[path where ede_test was cloned into]`<br/>
-( e.g. if you cloned `ede_test` into your home directory, then you need todo: `export PYTHONPATH=$PYTHONPATH:~` )<br/>
-That way imports of the form `from ede_test.schema.models import Base` (in `ingest/create_tables.py`) will work.
+( e.g. if you cloned `ede` into your home directory, then you need todo: `export PYTHONPATH=$PYTHONPATH:~` )<br/>
+That way imports of the form `from ede.schema.models import Base` (in `ingest/create_tables.py`) will work.
 
 5. Have Postgres with PostGIS support running on the default port with an already created database called `ede`.
 
