@@ -104,16 +104,13 @@ def main(netcdf_filename):
     cur = conn.cursor()
     
     # (1) Ingest into global_meta + get gid
-    cur.execute("insert into global_meta (filename, filesize, date_created) values (\'%s\', %s, \'%s\') returning gid" % 
-        (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), time.ctime(os.path.getctime(netcdf_filename))))
+    cur.execute("insert into global_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\') returning gid" % 
+        (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(netcdf_filename))))
     rows = cur.fetchall()
     for row in rows:
         gid = int(row[0])
-
-    # (2) Ingest into netcdf_meta
-    cur.execute("insert into netcdf_meta (gid, meta_data) values (%s, %s)" % (gid, Json(meta_data)))
     
-    # (3) Determine variables to loop over + loop over them
+    # (2) Determine variables to loop over + loop over them
     vnames = []
     subdatasets = []
     gdal_dataset = gdal.Open(netcdf_filename)
@@ -128,7 +125,7 @@ def main(netcdf_filename):
     p = re.compile('\\(\"rast\"\\)')
     q = re.compile('\\);')
     for i, vname in enumerate(vnames):
-        # (4) Ingest into netcdf_vars + get vid
+        # (3) Ingest into netcdf_vars + get vid
         cur.execute("select vid from netcdf_vars where vname = \'%s\'" % (vname)) # check if variable already there
         rows = cur.fetchall()
         if not rows:
@@ -137,8 +134,8 @@ def main(netcdf_filename):
         for row in rows:
             vid = int(row[0])
 
-        # (5) Ingest into netcdf_data
-        # (5.1) Pipe the output of raster2pgsql into memory
+        # (4) Ingest into netcdf_data
+        # (4.1) Pipe the output of raster2pgsql into memory
         # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
         if not subdatasets:
             # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
@@ -148,7 +145,7 @@ def main(netcdf_filename):
             # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
             proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', subdatasets[i], 'netcdf_data'], stdout=subprocess.PIPE)
             
-        # (5.2) Read output of raster2pgsql line by line, append (gid, vid) + run the query into postgres
+        # (4.2) Read output of raster2pgsql line by line, append (gid, vid) + run the query into postgres
         while True:
             line = proc.stdout.readline().rstrip()
             if line == '':

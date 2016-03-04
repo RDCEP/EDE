@@ -11,14 +11,10 @@ class Global_Meta(Base):
     gid = Column(Integer, primary_key=True)
     filename = Column(String)
     filesize = Column(Integer)
+    filetype = Column(String)
+    meta_data = Column(JSONB)
     date_created = Column(DateTime)
     date_inserted = Column(DateTime, server_default=func.now())
-
-class NetCDF_Meta(Base):
-    __tablename__ = 'netcdf_meta'
-    mid = Column(Integer, primary_key=True)
-    gid = Column(Integer, ForeignKey('global_meta.gid'))
-    meta_data = Column(JSONB)
  
 class NetCDF_Var(Base):
     __tablename__ = 'netcdf_vars'
