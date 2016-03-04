@@ -5,6 +5,7 @@ import json
 import psycopg2
 from psycopg2.extras import Json
 import re
+from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 
 def main(netcdf_filename):
     
@@ -100,7 +101,8 @@ def main(netcdf_filename):
     rootgrp.close()
 
     ## Connection to the database ##
-    conn = psycopg2.connect(database="ede", user="postgres", password="", host="127.0.0.1", port="5432")
+    conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
+                            host=DB_HOST, port=DB_PORT)
     cur = conn.cursor()
     
     # (1) Ingest into global_meta + get gid
