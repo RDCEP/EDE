@@ -12,6 +12,6 @@ class NetCDF_Spider(CrawlSpider):
     rules = ( Rule(LinkExtractor(allow=(), restrict_xpaths=('//a',)), callback="parse_item", follow= True), )
 
     def parse_item(self, response):
-        with open(out_file, 'w') as f:
+        with open(out_file, 'a') as f:
             if response.url.endswith(".nc4") or response.url.endswith(".nc"):
                 f.write(response.url + '\n')

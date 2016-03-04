@@ -104,7 +104,7 @@ def main(netcdf_filename):
     cur = conn.cursor()
     
     # (1) Ingest into global_meta + get gid
-    cur.execute("insert into global_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\') returning gid" % 
+    cur.execute("insert into global_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning gid" % 
         (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(netcdf_filename))))
     rows = cur.fetchall()
     for row in rows:

@@ -1,0 +1,6 @@
+#!/bin/bash           
+
+for filename in ../data/atlas; do
+
+
+done
