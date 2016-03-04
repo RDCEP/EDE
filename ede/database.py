@@ -16,11 +16,7 @@ db_session = scoped_session(
 
 
 class EDEBase(object):
-    id = Column(Integer, primary_key=True)
-
-    @declared_attr
-    def __tablename__(cls):
-        return re.sub(r'(.)([A-Z])', r'\1_\2', cls.__name__).lower()
+    uid = Column(Integer, primary_key=True)
 
 
 Base = declarative_base(cls=EDEBase)
