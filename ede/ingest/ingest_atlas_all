@@ -1,6 +1,5 @@
 #!/bin/bash           
 
-for filename in ../data/atlas; do
-
-
+for filename in ../data/atlas/*; do
+	python ingest.py $filename
 done
