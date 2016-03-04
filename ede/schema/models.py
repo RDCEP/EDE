@@ -6,9 +6,9 @@ from sqlalchemy.sql import func
 
 Base = declarative_base()
 
-class Global_Meta(Base):
-    __tablename__ = 'global_meta'
-    gid = Column(Integer, primary_key=True)
+class Grid_Meta(Base):
+    __tablename__ = 'grid_meta'
+    uid = Column(Integer, primary_key=True)
     filename = Column(String)
     filesize = Column(Integer)
     filetype = Column(String)
@@ -16,14 +16,14 @@ class Global_Meta(Base):
     date_created = Column(DateTime)
     date_inserted = Column(DateTime, server_default=func.now())
  
-class NetCDF_Var(Base):
-    __tablename__ = 'netcdf_vars'
-    vid = Column(Integer, primary_key=True)
+class Grid_Var(Base):
+    __tablename__ = 'grid_vars'
+    uid = Column(Integer, primary_key=True)
     vname = Column(String, nullable=False, unique=True, index=True)
    
-class NetCDF_Data(Base):
-    __tablename__ = 'netcdf_data'
-    rid = Column(Integer, primary_key=True)
-    gid = Column(Integer, ForeignKey('global_meta.gid'))
-    vid = Column(Integer, ForeignKey('netcdf_vars.vid'))
+class Grid_Data(Base):
+    __tablename__ = 'grid_data'
+    uid = Column(Integer, primary_key=True)
+    meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
+    var_id = Column(Integer, ForeignKey('grid_vars.uid'))
     rast = Column(Raster)

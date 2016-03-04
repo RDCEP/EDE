@@ -1,7 +1,6 @@
 import os, sys, subprocess, time
 from netCDF4 import Dataset
 from osgeo import gdal
-import json
 import psycopg2
 from psycopg2.extras import Json
 import re
@@ -105,12 +104,12 @@ def main(netcdf_filename):
                             host=DB_HOST, port=DB_PORT)
     cur = conn.cursor()
     
-    # (1) Ingest into global_meta + get gid
-    cur.execute("insert into global_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning gid" % 
+    # (1) Ingest into grid_meta + get meta_id
+    cur.execute("insert into grid_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning meta_id" %
         (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(netcdf_filename))))
     rows = cur.fetchall()
     for row in rows:
-        gid = int(row[0])
+        meta_id = int(row[0])
     
     # (2) Determine variables to loop over + loop over them
     vnames = []
@@ -127,35 +126,35 @@ def main(netcdf_filename):
     p = re.compile('\\(\"rast\"\\)')
     q = re.compile('\\);')
     for i, vname in enumerate(vnames):
-        # (3) Ingest into netcdf_vars + get vid
-        cur.execute("select vid from netcdf_vars where vname = \'%s\'" % (vname)) # check if variable already there
+        # (3) Ingest into grid_vars + get var_id
+        cur.execute("select uid from grid_vars where vname = \'%s\'" % (vname)) # check if variable already there
         rows = cur.fetchall()
         if not rows:
-            cur.execute("insert into netcdf_vars (vname) values (\'%s\') returning vid" % (vname)) # insert if variable not already there
+            cur.execute("insert into grid_vars (vname) values (\'%s\') returning uid" % (vname)) # insert if variable not already there
             rows = cur.fetchall()
         for row in rows:
-            vid = int(row[0])
+            var_id = int(row[0])
 
-        # (4) Ingest into netcdf_data
+        # (4) Ingest into grid_data
         # (4.1) Pipe the output of raster2pgsql into memory
         # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
         if not subdatasets:
             # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
-            proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', netcdf_filename, 'netcdf_data'], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', netcdf_filename, 'grid_data'], stdout=subprocess.PIPE)
         # The case where we do have subdatasets, i.e. NetCDFs from Alison
         else:
             # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
-            proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', subdatasets[i], 'netcdf_data'], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
             
-        # (4.2) Read output of raster2pgsql line by line, append (gid, vid) + run the query into postgres
+        # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
         while True:
             line = proc.stdout.readline().rstrip()
             if line == '':
                 break
             elif line.startswith('INSERT INTO'):
                 m = p.findall(line)
-                subst_cols = p.subn('(\"rast\", \"gid\", \"vid\")', line)[0]
-                subst_all = q.subn(', %s, %s);' % (gid, vid), subst_cols)[0]
+                subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\")', line)[0]
+                subst_all = q.subn(', %s, %s);' % (meta_id, var_id), subst_cols)[0]
                 cur.execute(subst_all)
 
     conn.commit()
