@@ -1,25 +1,69 @@
-# Setup instructions
+# Setup instructions (WIP)
 
-1. Download<br/>
-`git clone https://github.com/rdcep/ede`<br/>
-`cd ede`
+1. Download
 
-2. Setup virtual environment<br/>
-`virtualenv venv`<br/>
-`source venv/bin/activate`
+   ```
+   git clone https://github.com/rdcep/ede
+   cd ede
+   ```
 
-3. Download requirements<br/>
-`pip install -r requirements.txt`
+2. Setup virtual environment
 
-4. Add project's top-level directory to pythonpath<br/>
-`export PYTHONPATH=$PYTHONPATH:[path where ede_test was cloned into]`<br/>
-( e.g. if you cloned `ede` into your home directory, then you need todo: `export PYTHONPATH=$PYTHONPATH:~` )<br/>
-That way imports of the form `from ede.schema.models import Base` (in `ingest/create_tables.py`) will work.
+   ```
+   virtualenv venv
+   source venv/bin/activate
+   ```
 
-5. Have Postgres with PostGIS support running on the default port with an already created database called `ede`.
+3. Add project's top-level directory to pythonpath
 
-6. Create `netcdf_meta` and `netcdf_data` tables through SQLAlchemy by running
-`python create_tables.py`
+   ```
+   export PYTHONPATH=$(pwd):$PYTHONPATH
+   ```
 
-7. Ingest a NetCDF into Postgres (its metadata into `netcdf_meta` and its actual data into `netcdf_data`) using
-`python ingest.py [path to netcdf to be ingested]`
+4. Install PostgreSQL, PostGIS, and dependencies.
+
+   Eg, for Ubuntu:
+   ```
+   sudo apt-get update
+   sudo apt-get install postgresql
+   sudo apt-get install gdal-bin
+
+   ```
+
+5. Download requirements
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+6. Start PostgreSQL and create a database called `ede` with PostGIS
+   support.
+
+   ```
+   createdb ede
+   psql ede
+   > CREATE EXTENSION postgis;
+   ```
+
+7. Create an `credentials.py` file in the `ede` package.
+
+   ```
+   DB_USER = 'postgres'
+   DB_PASS = ''
+   DB_HOST = 'localhost'
+   DB_NAME = 'ede'
+   DB_PORT = '5432'
+   SECRET_KEY = 'avc7o9EIXhJVa9JnlLa0voxf'
+   ```
+
+8. Initialize database tables.
+
+   ```
+   python ede/schema/create_tables.py
+   ```
+
+9. Ingest a NetCDF into Postgres
+
+   ```
+   python ede/ingest/ingest.py <path to netCDF>
+   ```
