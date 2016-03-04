@@ -105,7 +105,7 @@ def main(netcdf_filename):
     cur = conn.cursor()
     
     # (1) Ingest into grid_meta + get meta_id
-    cur.execute("insert into grid_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning meta_id" %
+    cur.execute("insert into grid_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning uid" %
         (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(netcdf_filename))))
     rows = cur.fetchall()
     for row in rows:

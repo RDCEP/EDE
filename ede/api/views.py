@@ -8,7 +8,7 @@ from datetime import date
 from flask import Blueprint, make_response
 from flask.ext.cache import Cache
 from ede.database import db_session
-from ede.schema.models import Global_Meta
+from ede.schema.models import Grid_Meta
 from ede.config import CACHE_CONFIG
 from ede.api.crossdomain import crossdomain
 from ede.api.cache_key import make_cache_key
@@ -108,9 +108,9 @@ def get_gridmeta(ids):
         'objects': [] }
 
     if ids is None or len(ids) == 0:
-        q = db_session.query(Global_Meta)
+        q = db_session.query(Grid_Meta)
     else:
-        q = db_session.query(Global_Meta).filter(Global_Meta.gid.in_(ids))
+        q = db_session.query(Grid_Meta).filter(Grid_Meta.uid.in_(ids))
     metas = q.all()
 
     for m in metas:
