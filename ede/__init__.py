@@ -8,6 +8,7 @@ from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter
+from ede.session.redis_session import RedisSessionInterface
 
 
 app = Flask(__name__)
@@ -15,6 +16,8 @@ app.config.from_object('ede.config')
 app.url_map.converters['list'] = ListConverter
 app.url_map.converters['intlist'] = IntListConverter
 app.url_map.strict_slashes = False
+
+app.session_interface = RedisSessionInterface()
 
 cache = Cache(app, config=CACHE_CONFIG)
 
