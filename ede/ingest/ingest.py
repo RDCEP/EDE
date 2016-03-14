@@ -46,7 +46,11 @@ def main(netcdf_filename):
             "attributes":attributes
         })
 
-    print date_field
+    date_fields = date_field.split("since")
+    date_unit = date_fields[0].strip()
+    date_start = date_fields[1].strip()
+    print date_unit
+    print date_start
     
     # The global attributes
     attributes = []
