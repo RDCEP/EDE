@@ -42,9 +42,8 @@ def main(netcdf_filename):
             "dimensions":dimensions,
             "attributes":attributes
         })
-        print var
-        if var == "time":
-            print var
+        if var.name == "time":
+            print "found"
 
     
     # The global attributes
