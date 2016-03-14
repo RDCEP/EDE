@@ -5,7 +5,7 @@ import psycopg2
 from psycopg2.extras import Json
 import re
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def main(netcdf_filename):
     
@@ -46,14 +46,21 @@ def main(netcdf_filename):
             "dimensions":dimensions,
             "attributes":attributes
         })
+        print var[:]
 
+    # Get the starting date and the time increment as time objects
     date_fields_str = date_field_str.split("since")
     date_unit_str = date_fields_str[0].strip()
     date_start_str = date_fields_str[1].strip()
-
     date_start = datetime.strptime(date_start_str, "%Y-%m-%d %H:%M:%S")
-    print date_start.strftime("%Y-%m-%d %H:%M:%S")
-    
+    date_delta = None
+    if date_unit_str == "days":
+        date_delta = timedelta(days=1)
+    elif date_unit_str == "growing seasons":
+        date_delta = timedelta(days=365)
+
+
+
     # The global attributes
     attributes = []
     for attr_key in rootgrp.ncattrs():
