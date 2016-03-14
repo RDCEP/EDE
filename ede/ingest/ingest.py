@@ -17,7 +17,7 @@ def main(netcdf_filename):
         dimensions.append({
             "name":dim.name,
             "size":dim.size
-        }) 
+        })
     
     # The variables        
     variables=[]
@@ -42,6 +42,7 @@ def main(netcdf_filename):
             "dimensions":dimensions,
             "attributes":attributes
         })
+        print var
     
     # The global attributes
     attributes = []
