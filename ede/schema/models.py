@@ -24,4 +24,5 @@ class Grid_Data(Base):
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
     var_id = Column(Integer, ForeignKey('grid_vars.uid'))
+    time = Column(DateTime(timezone=True))
     rast = Column(Raster)
