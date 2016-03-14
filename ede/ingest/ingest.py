@@ -36,7 +36,7 @@ def main(netcdf_filename):
                 "value": str(var.getncattr(attr))
             })
             if var.name == "time" and attr == "units":
-                date_field = str(var.getncattr(attr))
+                date_field_str = str(var.getncattr(attr))
         # The variable's info
         variables.append({
             "name":var.name,
