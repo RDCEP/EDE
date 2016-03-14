@@ -21,8 +21,7 @@ def main(netcdf_filename):
     
     # The variables        
     variables=[]
-    date_start = None
-    date_unit = None
+    date_field = None
     for var in rootgrp.variables.values():
         # The dimensions the variable depends on
         dimensions=[]
@@ -36,8 +35,7 @@ def main(netcdf_filename):
                 "value": str(var.getncattr(attr))
             })
             if var.name == "time" and attr == "units":
-                print "found"
-                print var.getncattr(attr)
+                date_field = str(var.getncattr(attr))
         # The variable's info
         variables.append({
             "name":var.name,
@@ -48,6 +46,7 @@ def main(netcdf_filename):
             "attributes":attributes
         })
 
+    print date_field
     
     # The global attributes
     attributes = []
