@@ -178,7 +178,7 @@ def main(netcdf_filename):
                 elif line.startswith('INSERT INTO'):
                     m = p.findall(line)
                     subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"time\")', line)[0]
-                    subst_all = q.subn(', %s, %s, %s);' % (meta_id, var_id, dates[band]), subst_cols)[0]
+                    subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, dates[band]), subst_cols)[0]
                     cur.execute(subst_all)
 
     conn.commit()
