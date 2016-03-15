@@ -53,20 +53,22 @@ def main(netcdf_filename):
         if var.name == "time":
             dates_offset = var[0]
 
-    # Get the starting date and the time increment as time objects
-    date_fields_str = date_field_str.split("since")
-    date_unit_str = date_fields_str[0].strip()
-    date_delta = None
-    if date_unit_str == "days":
-        date_delta = timedelta(days=1)
-    elif date_unit_str == "growing seasons":
-        date_delta = timedelta(days=365)
-    date_start_str = date_fields_str[1].strip()
-    date_start = datetime.strptime(date_start_str, "%Y-%m-%d %H:%M:%S") +\
-                 timedelta(seconds=dates_offset * date_delta.total_seconds())
-    # Compute the dates
-    dates_obj = [date_start + t * date_delta for t in range(num_dates)]
-    dates = [t.strftime("%Y-%m-%d %H:%M:%S") for t in dates_obj]
+    has_time = date_field_str and dates_offset
+    if has_time:
+        # Get the starting date and the time increment as time objects
+        date_fields_str = date_field_str.split("since")
+        date_unit_str = date_fields_str[0].strip()
+        date_delta = None
+        if date_unit_str == "days":
+            date_delta = timedelta(days=1)
+        elif date_unit_str == "growing seasons":
+            date_delta = timedelta(days=365)
+        date_start_str = date_fields_str[1].strip()
+        date_start = datetime.strptime(date_start_str, "%Y-%m-%d %H:%M:%S") +\
+                     timedelta(seconds=dates_offset * date_delta.total_seconds())
+        # Compute the dates
+        dates_obj = [date_start + t * date_delta for t in range(num_dates)]
+        dates = [t.strftime("%Y-%m-%d %H:%M:%S") for t in dates_obj]
 
     # The global attributes
     attributes = []
@@ -160,18 +162,42 @@ def main(netcdf_filename):
         for row in rows:
             var_id = int(row[0])
 
-        for band in range(num_dates):
+        # In case the NetCDF does have a time dimension
+        if has_time:
+            for band in range(num_dates):
+                # (4) Ingest into grid_data
+                # (4.1) Pipe the output of raster2pgsql into memory
+                # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
+                if not subdatasets:
+                    # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
+                    proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), netcdf_filename, 'grid_data'], stdout=subprocess.PIPE)
+                # The case where we do have subdatasets, i.e. NetCDFs from Alison
+                else:
+                    # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
+                    proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
 
+                # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
+                while True:
+                    line = proc.stdout.readline().rstrip()
+                    if line == '':
+                        break
+                    elif line.startswith('INSERT INTO'):
+                        m = p.findall(line)
+                        subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"time\")', line)[0]
+                        subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, dates[band]), subst_cols)[0]
+                        cur.execute(subst_all)
+        # In case the NetCDF does not have a time dimension
+        else:
             # (4) Ingest into grid_data
             # (4.1) Pipe the output of raster2pgsql into memory
             # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
             if not subdatasets:
                 # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
-                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), netcdf_filename, 'grid_data'], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', netcdf_filename, 'grid_data'], stdout=subprocess.PIPE)
             # The case where we do have subdatasets, i.e. NetCDFs from Alison
             else:
                 # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
-                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
 
             # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
             while True:
@@ -180,8 +206,8 @@ def main(netcdf_filename):
                     break
                 elif line.startswith('INSERT INTO'):
                     m = p.findall(line)
-                    subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"time\")', line)[0]
-                    subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, dates[band]), subst_cols)[0]
+                    subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\")', line)[0]
+                    subst_all = q.subn(', %s, %s);' % (meta_id, var_id), subst_cols)[0]
                     cur.execute(subst_all)
 
     conn.commit()
