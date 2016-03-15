@@ -61,7 +61,7 @@ def main(netcdf_filename):
     elif date_unit_str == "growing seasons":
         date_delta = timedelta(days=365)
     # Use scaling to compute the dates
-    dates_obj = [date_start + t * date_delta for t in dates_vals]
+    dates_obj = [date_start + timedelta(seconds=t * date_delta.total_seconds()) for t in dates_vals]
     dates = [t.strftime("%Y-%m-%d %H:%M:%S") for t in dates_obj]
     num_dates = len(dates)
 
