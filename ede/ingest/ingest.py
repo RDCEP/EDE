@@ -23,7 +23,7 @@ def main(netcdf_filename):
     # The variables        
     variables=[]
     date_field_str = None
-    dates_raw = None
+    dates_vals = None
     for var in rootgrp.variables.values():
         # The dimensions the variable depends on
         dimensions=[]
@@ -48,7 +48,7 @@ def main(netcdf_filename):
             "attributes":attributes
         })
         if var.name == "time":
-            times = var[:]
+            dates_vals = var[:]
 
     # Get the starting date and the time increment as time objects
     date_fields_str = date_field_str.split("since")
@@ -61,9 +61,7 @@ def main(netcdf_filename):
     elif date_unit_str == "growing seasons":
         date_delta = timedelta(days=365)
     # Use scaling to compute the dates
-    print "attention"
-    print date_delta
-    dates_obj = [date_start + t * date_delta for t in dates_raw]
+    dates_obj = [date_start + t * date_delta for t in dates_vals]
     dates = [t.strftime("%Y-%m-%d %H:%M:%S") for t in dates_obj]
     num_dates = len(dates)
 
