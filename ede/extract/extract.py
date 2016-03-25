@@ -53,6 +53,7 @@ def return_within_region_fixed_time(meta_id, var_id, rec, time):
         lon = row[0]
         lat = row[1]
         val = row[2]
+        print lon, lat, val
 
 
 # Q3: compute average of var(t, lat, lon) over (lat,lon) within some
