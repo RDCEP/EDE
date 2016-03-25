@@ -15,14 +15,10 @@ def return_all_metadata():
         new_doc['filename'] = row[0]
         new_doc['filesize'] = row[1]
         new_doc['filetype'] = row[2]
-        #print type(row[3])
-        #print row[3]
-        #new_doc['meta_data'] = datetime.strftime(row[3])
+        new_doc['meta_data'] = row[3]
         new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
-        #new_doc['date_inserted'] = row[5]
-        #print new_doc
+        new_doc['date_inserted'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
         output.append(new_doc)
-        #break
     print output
 
 
