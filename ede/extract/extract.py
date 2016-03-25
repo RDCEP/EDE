@@ -68,9 +68,14 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time):
             (poly_str, meta_id, var_id, time)
     cur.execute(query)
     rows = cur.fetchall()
-    print rows[0][0]
-
-
+    res = rows[0][0]
+    count = res[0]
+    sum = res[1]
+    avg = res[2]
+    stddev = res[3]
+    min = res[4]
+    max = res[5]
+    print count, sum, avg, stddev, min, max
 
 # Q4: compute average of var(t, lat, lon) over t in [t_0, t_1] + (lat, lon)
 # within some polygon (temporal average within some region) aka Map Algebra needed here
