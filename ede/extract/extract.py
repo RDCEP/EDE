@@ -18,8 +18,8 @@ def return_all_metadata():
         new_doc['date_created'] = row[4]
         new_doc['date_inserted'] = row[5]
         #print new_doc
-        output.update(new_doc)
-        break
+        output.append(new_doc)
+        #break
     print output
 
 
