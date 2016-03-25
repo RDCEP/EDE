@@ -34,15 +34,25 @@ def return_within_rectangle_fixed_time(meta_id, var_id, rec, time):
     cur.execute(query)
     rows = cur.fetchall()
     for row in rows:
-        if row[0] < -100:
-            print row[0]
-        #print row[1]
-
+        lon = row[0]
+        lat = row[1]
+        val = row[2]
 
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
 # in some region + time t is fixed (on a region- not tile-basis as in 1)
-def return_within_region_fixed_time():
-    print "todo"
+def return_within_region_fixed_time(meta_id, var_id, rec, time):
+    poly = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (rec[0][0], rec[0][1], rec[1][0], rec[1][1], rec[2][0], rec[2][1], rec[3][0], rec[3][1], rec[4][0], rec[4][1])
+    query = "SELECT ST_X(geom), ST_Y(geom), val " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
+            "grid_data where meta_id=%s and var_id=%s and time='%s') foo;" %\
+            (poly, meta_id, var_id, time)
+    cur.execute(query)
+    rows = cur.fetchall()
+    for row in rows:
+        lon = row[0]
+        lat = row[1]
+        val = row[2]
 
 
 # Q3: compute average of var(t, lat, lon) over (lat,lon) within some
