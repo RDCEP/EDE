@@ -8,7 +8,7 @@ cur = conn.cursor()
 def return_all_metadata():
     cur.execute("select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta")
     rows = cur.fetchall()
-    output = {}
+    output = []
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
