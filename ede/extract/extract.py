@@ -1,6 +1,5 @@
 import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
-import json
 
 conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
                             host=DB_HOST, port=DB_PORT)
@@ -20,7 +19,9 @@ def return_all_metadata():
         new_doc['date_inserted'] = row[5]
         #print new_doc
         output.update(new_doc)
+        break
     print output
+
 
 def main():
     return_all_metadata()
