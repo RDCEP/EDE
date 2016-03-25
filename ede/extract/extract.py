@@ -32,9 +32,10 @@ def return_within_rectangle_fixed_time(meta_id, var_id, rec, time):
             "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time=%s) foo;" %\
             (poly, meta_id, var_id, time)
     print query
-    #cur.execute(query)
-    #rows = cur.fetchall()
-    #output
+    cur.execute(query)
+    rows = cur.fetchall()
+    for row in rows:
+        print row
 
 
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
