@@ -68,10 +68,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time):
             (poly_str, meta_id, var_id, time)
     cur.execute(query)
     rows = cur.fetchall()
-    for row in rows:
-        print row
-        count = row[0]
-        sum = row[1]
+    print rows[0]
 
 
 
