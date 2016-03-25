@@ -18,7 +18,7 @@ def return_all_metadata():
         #print type(row[3])
         #print row[3]
         #new_doc['meta_data'] = datetime.strftime(row[3])
-        new_doc['date_created'] = datetime.strftime(row[4])
+        new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
         #new_doc['date_inserted'] = row[5]
         #print new_doc
         output.append(new_doc)
