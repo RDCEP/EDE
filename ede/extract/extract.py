@@ -62,7 +62,7 @@ def return_all_frames():
 
 def main():
     #return_all_metadata()
-    print return_within_rectangle_fixed_time
+    return_within_rectangle_fixed_time()
 
 if __name__ == "__main__":
     main()
