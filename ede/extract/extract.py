@@ -76,12 +76,21 @@ def main():
     # Q0
     #return_all_metadata()
 
-    # Q1:
+    # Q1
     meta_id = 1
     var_id = 1
     rect = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    return_within_rectangle_fixed_time(meta_id, var_id, rect, time)
+    #return_within_rectangle_fixed_time(meta_id, var_id, rect, time)
+
+    # Q2
+    meta_id = 1
+    var_id = 1
+    rect = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+    time = '1999-12-27 00:00:00-06'
+    return_within_region_fixed_time(meta_id, var_id, rect, time)
+
+    # Q3
 
 if __name__ == "__main__":
     main()
