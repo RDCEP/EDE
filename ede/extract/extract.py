@@ -29,7 +29,7 @@ def return_within_rectangle_fixed_time(meta_id, var_id, rec, time):
     poly = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s)'), 4326))" %\
               (rec[0][0], rec[0][1], rec[1][0], rec[1][1], rec[2][0], rec[2][1], rec[3][0], rec[3][1])
     query = "SELECT ST_AsText(geom), val FROM (SELECT (ST_PixelAsCentroids(rast)).* FROM grid_data" \
-            "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time=%s) foo;" %\
+            "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time='%s') foo;" %\
             (poly, meta_id, var_id, time)
     print query
     cur.execute(query)
