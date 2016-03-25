@@ -34,8 +34,9 @@ def return_within_rectangle_fixed_time(meta_id, var_id, rec, time):
     cur.execute(query)
     rows = cur.fetchall()
     for row in rows:
-        print row[0]
-        print row[1]
+        if row[0] < -100:
+            print row[0]
+        #print row[1]
 
 
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
