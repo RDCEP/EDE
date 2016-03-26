@@ -48,7 +48,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     # the response JSON
     out = {}
     out['response'] = {}
-    out['response']['datetime'] = t.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
@@ -58,7 +58,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     out['response']['metadata']['format'] = 'grid'
     out['response']['data'] = []
     out['request'] = {}
-    out['request']['datetime'] = t.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
