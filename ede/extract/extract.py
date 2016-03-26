@@ -37,28 +37,28 @@ def return_all_metadata():
 
 # Q1: select ( lat, lon, var(t, lat, lon) ) of tiles that intersect with
 # some rectangle + time t is fixed (dragging on leaflet/D3 map)
-def return_tiles_within_region_fixed_time(meta_id, var_id, poly, time):
+def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326))" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "SELECT ST_X(geom), ST_Y(geom), val FROM (SELECT (ST_PixelAsCentroids(rast)).* FROM grid_data " \
             "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time='%s') foo;" %\
-            (poly_str, meta_id, var_id, time)
+            (poly_str, meta_id, var_id, t)
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
     out = {}
     out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['datetime'] = t.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
-    out['response']['metadata']['timesteps'] = [time]
+    out['response']['metadata']['timesteps'] = [t]
     out['response']['metadata']['region'] = poly
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
     out['response']['data'] = []
     out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['datetime'] = t.strftime('%Y-%m-%d %H:%M:%S')
     out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
@@ -74,13 +74,13 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, time):
 
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
 # in some region + time t is fixed (on a region- not tile-basis as in 1)
-def return_within_region_fixed_time(meta_id, var_id, poly, time):
+def return_within_region_fixed_time(meta_id, var_id, poly, t):
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "SELECT ST_X(geom), ST_Y(geom), val " \
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s and time='%s') foo;" %\
-            (poly_str, meta_id, var_id, time)
+            (poly_str, meta_id, var_id, t)
     cur.execute(query)
     rows = cur.fetchall()
     for row in rows:
@@ -91,12 +91,12 @@ def return_within_region_fixed_time(meta_id, var_id, poly, time):
 
 # Q3: compute average of var(t, lat, lon) over (lat,lon) within some
 # polygon + time t is fixed (spatial average at some time) aka Zonal Statistics
-def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time):
+def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, t):
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
             "where meta_id=%s and var_id=%s and time='%s';" %\
-            (poly_str, meta_id, var_id, time)
+            (poly_str, meta_id, var_id, t)
     cur.execute(query)
     rows = cur.fetchall()
     res = rows[0][0].split(',')
