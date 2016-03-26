@@ -8,21 +8,27 @@ conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
 cur = conn.cursor()
 
 
+def base_response():
+    out = dict()
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['data'] = []
+    out['response']['metadata'] = {}
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
+    return out
+
+
 # Q0: return metadata of all grid datasets in DB
 def return_all_metadata():
     query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
+    out = base_response()
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
@@ -46,20 +52,11 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
+    out = base_response()
     out['response']['metadata']['timesteps'] = [t]
     out['response']['metadata']['region'] = poly
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -84,20 +81,11 @@ def return_within_region_fixed_time(meta_id, var_id, poly, t):
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
+    out = base_response()
     out['response']['metadata']['timesteps'] = [t]
     out['response']['metadata']['region'] = poly
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -128,19 +116,10 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, t):
     min = res[4]
     max = res[5]
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
+    out = base_response()
     out['response']['metadata']['timesteps'] = [t]
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'polygon'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     new_data_item = {}
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
@@ -163,19 +142,10 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
+    out = base_response()
     out['response']['metadata']['timesteps'] = [start_time, end_time]
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -197,19 +167,10 @@ def return_all_frames(meta_id, var_id):
     cur.execute(query)
     rows = cur.fetchall()
     # the response JSON
-    out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
+    out = base_response()
     out['response']['metadata']['timesteps'] = []
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
