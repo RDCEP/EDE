@@ -24,11 +24,17 @@ def base_response():
 
 # Q0: return metadata of all grid datasets in DB
 def return_all_metadata():
-    query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
-    cur.execute(query)
-    rows = cur.fetchall()
     # the response JSON
     out = base_response()
+
+    try:
+        query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
+        cur.execute(query)
+        rows = cur.fetchall()
+    except:
+        out['response']['status'] = 'DB Error'
+        out['response']['status_code'] = '500'
+        return out
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
