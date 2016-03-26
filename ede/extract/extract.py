@@ -226,38 +226,44 @@ def return_all_frames(meta_id, var_id):
 
 def main():
     # Q0
-    #print return_all_metadata()
+    print "Testing Q0..."
+    print return_all_metadata()
 
     # Q1
+    print "Testing Q1..."
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    #print return_tiles_within_region_fixed_time(meta_id, var_id, poly, time)
+    print return_tiles_within_region_fixed_time(meta_id, var_id, poly, time)
 
     # Q2
+    print "Testing Q2..."
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    #return_within_region_fixed_time(meta_id, var_id, poly, time)
+    print return_within_region_fixed_time(meta_id, var_id, poly, time)
 
     # Q3
+    print "Testing Q3..."
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    #return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time)
+    print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time)
 
     # Q4
+    print "Testing Q4..."
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     start_time = '1999-12-27 00:00:00-06'
     end_time = '2016-12-27 00:00:00-06'
-    #return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_time)
+    print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_time)
 
     # Q5
+    print "Testing Q5..."
     meta_id = 1
     var_id = 1
     print return_all_frames(meta_id, var_id)
