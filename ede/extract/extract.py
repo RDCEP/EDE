@@ -124,14 +124,14 @@ def return_all_frames(meta_id, var_id):
 
 def main():
     # Q0
-    #return_all_metadata()
+    print return_all_metadata()
 
     # Q1
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    return_within_polygon_fixed_time(meta_id, var_id, poly, time)
+    #print return_within_polygon_fixed_time(meta_id, var_id, poly, time)
 
     # Q2
     meta_id = 1
