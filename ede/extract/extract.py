@@ -102,7 +102,7 @@ def return_all_frames(meta_id, var_id):
     tmp = "with foo as (select st_astext((ST_PixelAsCentroids(rast)).geom) as pos, time, " \
             "(ST_PixelAsCentroids(rast)).val as val from grid_data where meta_id=%s and var_id=%s)" %\
           (meta_id, var_id)
-    query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_string(array_agg((time, val))) from foo group by foo.pos;"
+    query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_string(array_agg((time, val)), ',') from foo group by foo.pos;"
     cur.execute(query)
     rows = cur.fetchall()
     counter = 0
