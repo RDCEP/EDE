@@ -23,8 +23,6 @@ def return_all_metadata():
     out['request'] = {}
     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['request']['url'] = '/api/v0'
-    out['request']['accuracy'] = 2
-    out['request']['geo_accuracy'] = 4
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
@@ -34,7 +32,6 @@ def return_all_metadata():
         new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
         new_doc['date_inserted'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
         out['response']['data'].append(new_doc)
-
     return out
 
 
@@ -48,10 +45,31 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, time):
             (poly_str, meta_id, var_id, time)
     cur.execute(query)
     rows = cur.fetchall()
+    # the response JSON
+    out = {}
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['metadata'] = {}
+    out['response']['metadata']['timesteps'] = [time]
+    out['response']['metadata']['region'] = poly
+    out['response']['metadata']['units'] = 'TKTK'
+    out['response']['metadata']['format'] = 'grid'
+    out['response']['data'] = []
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
         val = row[2]
+        new_data_item = {}
+        new_data_item['type'] = 'Feature'
+        new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
+        new_data_item['properties'] = { 'values': [val] }
+        out['response']['data'].append(new_data_item)
+    return out
 
 
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
@@ -133,7 +151,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    #print return_within_polygon_fixed_time(meta_id, var_id, poly, time)
+    print return_within_polygon_fixed_time(meta_id, var_id, poly, time)
 
     # Q2
     meta_id = 1
