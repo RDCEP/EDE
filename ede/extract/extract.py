@@ -105,8 +105,13 @@ def return_all_frames(meta_id, var_id):
     query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_agg((time, val)) from foo group by foo.pos;"
     cur.execute(query)
     rows = cur.fetchall()
+    counter = 0
     for row in rows:
         print rows
+        counter += 1
+        if counter == 4:
+            break
+
 
 def main():
     # Q0
