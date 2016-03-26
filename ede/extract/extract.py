@@ -214,12 +214,13 @@ def return_all_frames(meta_id, var_id):
         lon = row[0]
         lat = row[1]
         vals = row[2] # list of elems with elem = { 'f1': date as string, 'f2': value as float }
+        new_meta_item = [ v['f1'] for v in vals ]
+        out['response']['metadata']['timesteps'].append(new_meta_item)
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
         new_data_item['properties'] = {'values': [ v['f2'] for v in vals]}
         out['response']['data'].append(new_data_item)
-        print 'number of vals: %s' % len(vals)
     return out
 
 
@@ -259,7 +260,7 @@ def main():
     # Q5
     meta_id = 1
     var_id = 1
-    return_all_frames(meta_id, var_id)
+    print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
