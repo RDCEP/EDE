@@ -109,10 +109,12 @@ def return_all_frames(meta_id, var_id):
     for row in rows:
         lon = row[0]
         lat = row[1]
+        print row[2]
         vals = row[2].split(';')
-        for val in vals:
-            print val[0].strip("\"")
-            print float(val[1])
+        print vals
+        #for val in vals:
+            #print val[0].strip("\"")
+            #print float(val[1])
         counter += 1
         if counter == 1:
             break
