@@ -107,7 +107,7 @@ def return_all_frames(meta_id, var_id):
     rows = cur.fetchall()
     counter = 0
     for row in rows:
-        print rows
+        print row
         counter += 1
         if counter == 4:
             break
