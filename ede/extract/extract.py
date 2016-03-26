@@ -110,9 +110,9 @@ def return_all_frames(meta_id, var_id):
         lon = row[0]
         lat = row[1]
         vals = row[2]
-        print type(vals)
+        print vals
         counter += 1
-        if counter == 4:
+        if counter == 1:
             break
 
 
