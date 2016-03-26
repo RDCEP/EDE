@@ -111,8 +111,8 @@ def return_all_frames(meta_id, var_id):
         lat = row[1]
         vals = row[2].split(';')
         for val in vals:
-            print val[0], type(val[0])
-            print val[1], type(val[1])
+            print val[0].strip("\"")
+            print float(val[1])
         counter += 1
         if counter == 1:
             break
