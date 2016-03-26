@@ -105,15 +105,10 @@ def return_all_frames(meta_id, var_id):
     query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((time, val))) from foo group by foo.pos;"
     cur.execute(query)
     rows = cur.fetchall()
-    counter = 0
     for row in rows:
         lon = row[0]
         lat = row[1]
-        vals = row[2]
-        print vals, type(vals)
-        counter += 1
-        if counter == 1:
-            break
+        vals = row[2] # list of elems with elem = { 'f1': date as string, 'f2': value as float }
 
 
 def main():
