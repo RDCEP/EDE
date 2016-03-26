@@ -1,6 +1,7 @@
 import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from datetime import datetime
+import time
 
 conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
                             host=DB_HOST, port=DB_PORT)
@@ -12,7 +13,16 @@ def return_all_metadata():
     query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
     cur.execute(query)
     rows = cur.fetchall()
-    output = []
+    # the response JSON
+    out = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['data'] = []
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
+    out['request']['accuracy'] = 2
+    out['request']['geo_accuracy'] = 4
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
@@ -21,8 +31,9 @@ def return_all_metadata():
         new_doc['meta_data'] = row[3]
         new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
         new_doc['date_inserted'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
-        output.append(new_doc)
-    return output
+        out['response']['data'].append(new_doc)
+
+    return out
 
 
 # Q1: select ( lat, lon, var(t, lat, lon) ) of tiles that intersect with
@@ -120,7 +131,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     time = '1999-12-27 00:00:00-06'
-    #return_within_polygon_fixed_time(meta_id, var_id, poly, time)
+    return_within_polygon_fixed_time(meta_id, var_id, poly, time)
 
     # Q2
     meta_id = 1
@@ -147,7 +158,7 @@ def main():
     # Q5
     meta_id = 1
     var_id = 1
-    return_all_frames(meta_id, var_id)
+    #return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
