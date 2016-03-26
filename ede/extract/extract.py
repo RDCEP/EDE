@@ -15,10 +15,12 @@ def return_all_metadata():
     rows = cur.fetchall()
     # the response JSON
     out = {}
+    out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['data'] = []
+    out['request'] = {}
     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['request']['url'] = '/api/v0'
     out['request']['accuracy'] = 2
