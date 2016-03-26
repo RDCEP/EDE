@@ -83,10 +83,31 @@ def return_within_region_fixed_time(meta_id, var_id, poly, t):
             (poly_str, meta_id, var_id, t)
     cur.execute(query)
     rows = cur.fetchall()
+    # the response JSON
+    out = {}
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['metadata'] = {}
+    out['response']['metadata']['timesteps'] = [t]
+    out['response']['metadata']['region'] = poly
+    out['response']['metadata']['units'] = 'TKTK'
+    out['response']['metadata']['format'] = 'grid'
+    out['response']['data'] = []
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
         val = row[2]
+        new_data_item = {}
+        new_data_item['type'] = 'Feature'
+        new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
+        new_data_item['properties'] = { 'values': [val] }
+        out['response']['data'].append(new_data_item)
+    return out
 
 
 # Q3: compute average of var(t, lat, lon) over (lat,lon) within some
@@ -106,6 +127,26 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, t):
     stddev = res[3]
     min = res[4]
     max = res[5]
+    # the response JSON
+    out = {}
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['metadata'] = {}
+    out['response']['metadata']['timesteps'] = [t]
+    out['response']['metadata']['units'] = 'TKTK'
+    out['response']['metadata']['format'] = 'polygon'
+    out['response']['data'] = []
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
+    new_data_item = {}
+    new_data_item['type'] = 'Feature'
+    new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
+    new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
+    out['response']['data'].append(new_data_item)
+    return out
 
 
 # Q4: compute average of var(t, lat, lon) over t in [t_0, t_1] + (lat, lon)
@@ -121,11 +162,30 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_
             "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
     cur.execute(query)
     rows = cur.fetchall()
+    # the response JSON
+    out = {}
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['metadata'] = {}
+    out['response']['metadata']['timesteps'] = [start_time, end_time]
+    out['response']['metadata']['units'] = 'TKTK'
+    out['response']['metadata']['format'] = 'grid'
+    out['response']['data'] = []
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
         val = row[2]
-        print lon, lat, val
+        new_data_item = {}
+        new_data_item['type'] = 'Feature'
+        new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
+        new_data_item['properties'] = {'values': [val]}
+        out['response']['data'].append(new_data_item)
+    return out
 
 
 # Q5: return all time frames from a raster
@@ -136,10 +196,31 @@ def return_all_frames(meta_id, var_id):
     query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((time, val))) from foo group by foo.pos;"
     cur.execute(query)
     rows = cur.fetchall()
+    # the response JSON
+    out = {}
+    out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
+    out['response']['metadata'] = {}
+    out['response']['metadata']['timesteps'] = []
+    out['response']['metadata']['units'] = 'TKTK'
+    out['response']['metadata']['format'] = 'grid'
+    out['response']['data'] = []
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
         vals = row[2] # list of elems with elem = { 'f1': date as string, 'f2': value as float }
+        new_data_item = {}
+        new_data_item['type'] = 'Feature'
+        new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
+        new_data_item['properties'] = {'values': [ v['f2'] for v in vals]}
+        out['response']['data'].append(new_data_item)
+        print 'number of vals: %s' % len(vals)
+    return out
 
 
 def main():
