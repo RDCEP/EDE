@@ -71,7 +71,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, time):
     res = rows[0][0].split(',')
     count = res[0]
     sum = res[1]
-    avg = res[2]
+    mean = res[2]
     stddev = res[3]
     min = res[4]
     max = res[5]
@@ -97,10 +97,16 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_
         print lon, lat, val
 
 
-# Q5: return all bands from a raster
-def return_all_frames():
-    print "todo"
-
+# Q5: return all time frames from a raster
+def return_all_frames(meta_id, var_id):
+    tmp = "with foo as (select st_astext((ST_PixelAsCentroids(rast)).geom) as pos, time, " \
+            "(ST_PixelAsCentroids(rast)).val as val from grid_data where meta_id=%s and var_id=%s)" %\
+          (meta_id, var_id)
+    query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_agg((time, val)) from foo group by foo.pos;"
+    cur.execute(query)
+    rows = cur.fetchall()
+    for row in rows:
+        print rows
 
 def main():
     # Q0
@@ -133,7 +139,12 @@ def main():
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     start_time = '1999-12-27 00:00:00-06'
     end_time = '2016-12-27 00:00:00-06'
-    return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_time)
+    #return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_time)
+
+    # Q5
+    meta_id = 1
+    var_id = 1
+    return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
