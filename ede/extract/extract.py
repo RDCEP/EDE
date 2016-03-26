@@ -111,6 +111,7 @@ def return_all_frames(meta_id, var_id):
         lat = row[1]
         vals = row[2]
         print vals
+        print type(vals)
         counter += 1
         if counter == 1:
             break
