@@ -107,7 +107,10 @@ def return_all_frames(meta_id, var_id):
     rows = cur.fetchall()
     counter = 0
     for row in rows:
-        print row
+        lon = row[0]
+        lat = row[1]
+        vals = row[2]
+        print type(vals)
         counter += 1
         if counter == 4:
             break
