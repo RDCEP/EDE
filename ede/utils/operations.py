@@ -1,7 +1,7 @@
 import op_base
 import datetime
-# TODO: PostGIS endpoint
 # Todo: Prior to sending GeoJSON messages, treat all NaN for Null (in adhrence to JSON standard)
+# TODO: Refactor to use aggregations.sql instead of op_base.py
 
 __author__ = "rlourenc@mail.depaul.edu"
 # 2016-02-05 - Initial commit
