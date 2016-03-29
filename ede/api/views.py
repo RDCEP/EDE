@@ -45,6 +45,7 @@ def get_griddata(id):
     :param id:
     :return:
     """
+    print "Hello Sevi!"
     pass
 
 
