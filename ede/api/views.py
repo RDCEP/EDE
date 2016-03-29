@@ -10,6 +10,7 @@ from flask.ext.cache import Cache
 from ede.database import db_session
 from ede.schema.models import Grid_Meta
 from ede.config import CACHE_CONFIG
+from ede.extract.extract import *
 
 cache = Cache(config=CACHE_CONFIG)
 
@@ -32,8 +33,8 @@ def flush_cache():
     return resp
 
 
-@api.route('/griddata/<int:id>', methods=['GET'])
-def get_griddata(id):
+@api.route('/griddata/<int:meta_id>/<int:var_id>', methods=['GET'])
+def get_griddata(meta_id, var_id):
     """Get gridded dataset by the id of its metadata.
 
     Note: because the `id` parameter is converted to an `int`, you can only
@@ -42,7 +43,12 @@ def get_griddata(id):
     :param id:
     :return:
     """
-    return 'Hello Sevi'
+    status_code = 200
+    data = return_all_frames(meta_id, var_id)
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
 
 
 @api.route('/polymeta/<list:ids>', defaults={'ids': None}, methods=['GET'])
