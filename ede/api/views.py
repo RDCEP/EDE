@@ -45,8 +45,7 @@ def get_griddata(id):
     :param id:
     :return:
     """
-    print "Hello Sevi!"
-    pass
+    return 'Hello Sevi'
 
 
 @api.route('/polymeta/<list:ids>', defaults={'ids': None}, methods=['GET'])
