@@ -2,17 +2,13 @@ import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from datetime import datetime
 import time
-
-conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
-                            host=DB_HOST, port=DB_PORT)
-cur = conn.cursor()
+from ede.database import db_session
 
 
 # Q0: return metadata of all grid datasets in DB
 def return_all_metadata():
     query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
-    cur.execute(query)
-    rows = cur.fetchall()
+    rows = db_session.engine.execute(query)
     # the response JSON
     out = {}
     out['response'] = {}

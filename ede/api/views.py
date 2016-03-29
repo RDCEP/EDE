@@ -10,9 +10,6 @@ from flask.ext.cache import Cache
 from ede.database import db_session
 from ede.schema.models import Grid_Meta
 from ede.config import CACHE_CONFIG
-from ede.api.crossdomain import crossdomain
-from ede.api.cache_key import make_cache_key
-
 
 cache = Cache(config=CACHE_CONFIG)
 
