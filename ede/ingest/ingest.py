@@ -153,7 +153,7 @@ def main(netcdf_filename):
     p = re.compile('\\(\"rast\"\\)')
     q = re.compile('\\);')
     for i, vname in enumerate(vnames):
-        # (3) Ingest into grid_vars + get var_id
+        # (3.1) Ingest into grid_vars + get var_id
         cur.execute("select uid from grid_vars where vname = \'%s\'" % (vname)) # check if variable already there
         rows = cur.fetchall()
         if not rows:
@@ -165,6 +165,14 @@ def main(netcdf_filename):
         # In case the NetCDF does have a time dimension
         if has_time:
             for band in range(num_dates):
+                # (3.2) Ingest (meta_id, dates[band]) into grid_dates + get date_id
+                cur.execute("insert into grid_dates (meta_id, date) values (%s, \'%s\') returning uid" % (meta_id, dates[band]))
+                rows = cur.fetchall()
+                for row in rows:
+                    date_id = int(row[0])
+
+                print date_id
+                
                 # (4) Ingest into grid_data
                 # (4.1) Pipe the output of raster2pgsql into memory
                 # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
@@ -184,7 +192,7 @@ def main(netcdf_filename):
                     elif line.startswith('INSERT INTO'):
                         m = p.findall(line)
                         subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"time\")', line)[0]
-                        subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, dates[band]), subst_cols)[0]
+                        subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, date_id), subst_cols)[0]
                         cur.execute(subst_all)
         # In case the NetCDF does not have a time dimension
         else:

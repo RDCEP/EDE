@@ -24,11 +24,11 @@ class Grid_Data(Base):
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
     var_id = Column(Integer, ForeignKey('grid_vars.uid'))
-    date = Column(Integer, ForeignKey('grid_times.uid'))
+    date = Column(Integer, ForeignKey('grid_dates.uid'))
     rast = Column(Raster)
 
 class Grid_Times(Base):
-    __tablename__ = 'grid_times'
+    __tablename__ = 'grid_dates'
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
     date = Column(DateTime(timezone=True))
