@@ -172,7 +172,7 @@ def main(netcdf_filename):
                     date_id = int(row[0])
 
                 print date_id
-                
+
                 # (4) Ingest into grid_data
                 # (4.1) Pipe the output of raster2pgsql into memory
                 # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
@@ -191,7 +191,7 @@ def main(netcdf_filename):
                         break
                     elif line.startswith('INSERT INTO'):
                         m = p.findall(line)
-                        subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"time\")', line)[0]
+                        subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"date\")', line)[0]
                         subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, date_id), subst_cols)[0]
                         cur.execute(subst_all)
         # In case the NetCDF does not have a time dimension
