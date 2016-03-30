@@ -37,7 +37,6 @@ class Regions_Meta(Base):
     __tablename__ = 'regions_meta'
     uid = Column(Integer, primary_key=True)
     name = Column(String)
-    version = Column(String)
     attributes = Column(ARRAY(String))
 
 class Regions(Base):
