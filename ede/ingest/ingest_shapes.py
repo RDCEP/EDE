@@ -22,10 +22,11 @@ def main(shapefile):
 
     print "type of reader..."
     print type(reader)
-    name = reader.GetName()
-    print "name of dataset: %s..." % name
 
     layer = reader.GetLayer(0)
+    name = layer.GetName()
+    print "name of layer: %s..." % name
+
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         print "geometry..."
