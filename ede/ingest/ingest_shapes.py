@@ -21,7 +21,7 @@ def main(shapefile):
     reader = ogr.Open(shapefile)
     layer = reader.GetLayer(0)
     for i in range(layer.GetFeatureCount()):
-        feature = layer.GetFeature(i).ExportToJson()
+        feature = layer.GetFeature(i)
         print feature
         print type(feature)
         print "geometry..."
