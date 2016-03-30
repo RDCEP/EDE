@@ -19,13 +19,18 @@ cur = conn.cursor()
 
 def main(shapefile):
     reader = ogr.Open(shapefile)
+
+    print "type of reader..."
+    print type(reader)
+
+
     layer = reader.GetLayer(0)
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         print "geometry..."
-        print feature['geometry']['coordinates']
+        print feature['geometry']['coordinates'] # the coordinates, POLYGON of that + GeomFromText
         print "properties..."
-        print feature['properties']
+        print feature['properties'] # should be ingestable as the meta_data JSON field
 
     '''
     cur.execute("insert into regions_meta (name, attributes) values (%s, %s) returning uid" % ())
