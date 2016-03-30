@@ -171,8 +171,6 @@ def main(netcdf_filename):
                 for row in rows:
                     date_id = int(row[0])
 
-                print date_id
-
                 # (4) Ingest into grid_data
                 # (4.1) Pipe the output of raster2pgsql into memory
                 # The case where we don't have subdatasets, i.e. NetCDFs from Joshua

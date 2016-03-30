@@ -27,7 +27,7 @@ class Grid_Data(Base):
     date = Column(Integer, ForeignKey('grid_dates.uid'))
     rast = Column(Raster)
 
-class Grid_Times(Base):
+class Grid_Dates(Base):
     __tablename__ = 'grid_dates'
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
