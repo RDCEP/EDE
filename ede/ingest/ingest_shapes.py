@@ -22,7 +22,8 @@ def main(shapefile):
 
     print "type of reader..."
     print type(reader)
-
+    name = reader.GetName()
+    print "name of dataset: %s..." % name
 
     layer = reader.GetLayer(0)
     for i in range(layer.GetFeatureCount()):
