@@ -22,10 +22,12 @@ def main(shapefile):
     layer = reader.GetLayer(0)
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson()
+        print feature
+        print type(feature)
         print "geometry..."
-        print feature['geometry']['coordinates']
+        #print feature['geometry']['coordinates']
         print "properties..."
-        print feature['properties']
+        #print feature['properties']
 
     '''
     cur.execute("insert into regions_meta (name, attributes) values (%s, %s) returning uid" % ())
