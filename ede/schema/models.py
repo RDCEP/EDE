@@ -1,7 +1,7 @@
 from ede.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
-from geoalchemy2 import Raster
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from geoalchemy2 import Raster, Geometry
 from sqlalchemy.sql import func
 
 class Grid_Meta(Base):
@@ -24,5 +24,24 @@ class Grid_Data(Base):
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
     var_id = Column(Integer, ForeignKey('grid_vars.uid'))
-    time = Column(DateTime(timezone=True))
+    date = Column(Integer, ForeignKey('grid_times.uid'))
     rast = Column(Raster)
+
+class Grid_Times(Base):
+    __tablename__ = 'grid_times'
+    uid = Column(Integer, primary_key=True)
+    meta_id = Column(Integer, ForeignKey('grid_meta.uid'))
+    date = Column(DateTime(timezone=True))
+
+class Regions_Meta(Base):
+    __tablename__ = 'regions_meta'
+    name = Column(String)
+    version = Column(String)
+    attributes = Column(ARRAY(String))
+
+class Regions(Base):
+    __tablename__ = 'regions'
+    uid = Column(Integer, primary_key=True)
+    meta_id = Column(Integer, ForeignKey('regions_meta.uid'))
+    geom = Column(Geometry('POLYGON'))
+    meta_data = Column(JSONB)
