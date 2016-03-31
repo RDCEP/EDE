@@ -24,6 +24,7 @@ def main(shapefile):
 
     # (1) Insert into regions_meta + return uid as meta_id
     query = "insert into regions_meta (name, attributes) values (\'%s\', \'%s\') returning uid" % (layer_name, attrs)
+    print query
     cur.execute(query)
     rows = cur.fetchall()
     for row in rows:
@@ -36,6 +37,7 @@ def main(shapefile):
         meta_data = feature['properties']
         # (2) Ingest the feature with its geom + meta_data into the regions table
         query = "insert into regions (meta_id, geom, meta_data) values (%s, %s, %s)" % (meta_id, geom, meta_data)
+        print query
         cur.execute(query)
 
     conn.commit()
