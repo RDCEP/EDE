@@ -24,7 +24,6 @@ def main(shapefile):
 
     # (1) Insert into regions_meta + return uid as meta_id
     query = "insert into regions_meta (name, attributes) values (\'%s\', \'%s\') returning uid" % (layer_name, attrs)
-    #print query
     cur.execute(query)
     rows = cur.fetchall()
     for row in rows:
