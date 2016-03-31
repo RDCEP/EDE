@@ -38,8 +38,10 @@ def main(shapefile):
         geom_str = "POLYGON(("
         for pt in geom[0]:
             print ' '.join(pt)
-            geom_str += ' '.join(pt)
+            geom_str += str(pt[0]) # longitude
+            geom_str += str(pt[1]) # latitude
         geom_str = geom_str + "))"
+        print geom_str
         # POLYGON((long1 lat1, long2 lat2, long3 lat3))
         meta_data = feature['properties']
         #print type(meta_data)
