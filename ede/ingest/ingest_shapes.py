@@ -21,7 +21,7 @@ def main(shapefile):
         field_defn = layer_defn.GetFieldDefn(i)
         attrs.append(field_defn.GetName())
 
-    print '\'{' + '\',\''.join(attrs) + '}\''
+    print '\'{\'' + '\',\''.join(attrs) + '\'}\''
 
     # (1) Insert into regions_meta + return uid as meta_id
     cur.execute("insert into regions_meta (name, attributes) values (%s, %s) returning uid" % (layer_name, attrs))
