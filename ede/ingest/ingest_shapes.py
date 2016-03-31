@@ -2,6 +2,7 @@ from osgeo import ogr
 import sys
 import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
+import json
 
 
 def main(shapefile):
@@ -47,7 +48,7 @@ def main(shapefile):
         geom_str += str(pts[num_pts-1][1]) # latitude
         geom_str = geom_str + "))"
         meta_data = feature['properties']
-        print type(meta_data)
+        meta_data = json.dumps(meta_data)
         # (2) Ingest the feature with its geom + meta_data into the regions table
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         print query
