@@ -1,14 +1,7 @@
-import sys
 from osgeo import ogr
-
-import os, sys, subprocess, time
-from netCDF4 import Dataset
-from osgeo import gdal
+import sys
 import psycopg2
-from psycopg2.extras import Json
-import re
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
-from datetime import datetime, timedelta
 
 
 def main(shapefile):
@@ -23,9 +16,12 @@ def main(shapefile):
     layer_name = layer.GetName()
 
     layer_defn = layer.GetLayerDefn()
+    attrs = []
     for i in range(layer_defn.GetFieldCount()):
         field_defn = layer_defn.GetFieldDefn(i)
-        print field_defn.GetName()
+        attrs.append(field_defn.GetName())
+
+    print attrs
 
     # (1) Insert into regions_meta + return uid as meta_id
     cur.execute("insert into regions_meta (name, attributes) values (%s, %s) returning uid" % (layer_name, attrs))
