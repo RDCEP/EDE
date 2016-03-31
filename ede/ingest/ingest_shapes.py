@@ -37,7 +37,6 @@ def main(shapefile):
         # geom = [[[lon1, lat1], [lon2, lat2], ... , [lonN, latN]]]
         geom_str = "POLYGON(("
         for pt in geom[0]:
-            print ' '.join(pt)
             geom_str += str(pt[0]) # longitude
             geom_str += str(pt[1]) # latitude
         geom_str = geom_str + "))"
