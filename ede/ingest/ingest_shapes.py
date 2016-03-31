@@ -36,7 +36,7 @@ def main(shapefile):
         geom = feature['geometry']['coordinates']
         # geom = [[[lon1, lat1], [lon2, lat2], ... , [lonN, latN]]]
         geom_str = "POLYGON(("
-        for pt in geom[0][0]:
+        for pt in geom[0]:
             print pt
         geom_str = geom_str + "))"
         # POLYGON((long1 lat1, long2 lat2, long3 lat3))
