@@ -34,12 +34,17 @@ def main(shapefile):
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         geom = feature['geometry']['coordinates']
-        print geom
+        # geom = [[[lon1, lat1], [lon2, lat2], ... , [lonN, latN]]]
+        geom_str = "POLYGON(("
+        for pt in geom[0][0]:
+            print pt
+        geom_str = geom_str + "))"
+        # POLYGON((long1 lat1, long2 lat2, long3 lat3))
         meta_data = feature['properties']
-        print type(meta_data)
-        print meta_data
+        #print type(meta_data)
+        #print meta_data
         # (2) Ingest the feature with its geom + meta_data into the regions table
-        query = "insert into regions (meta_id, geom, meta_data) values (%s, %s, \'%s\')" % (meta_id, geom, meta_data)
+        query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom, meta_data)
         print query
         cur.execute(query)
 
