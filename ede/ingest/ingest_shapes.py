@@ -37,8 +37,9 @@ def main(shapefile):
         print geom
         meta_data = feature['properties']
         print type(meta_data)
+        print meta_data
         # (2) Ingest the feature with its geom + meta_data into the regions table
-        query = "insert into regions (meta_id, geom, meta_data) values (%s, %s, %s)" % (meta_id, geom, meta_data)
+        query = "insert into regions (meta_id, geom, meta_data) values (%s, %s, \'%s\')" % (meta_id, geom, meta_data)
         print query
         cur.execute(query)
 
