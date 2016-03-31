@@ -32,14 +32,16 @@ def main(shapefile):
 
     # (2) Iterate over features
     for i in range(layer.GetFeatureCount()):
+
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
+
         geom = feature['geometry']['coordinates']
-        print "type of geom: %s" % type(geom)
-        # geom = [[[lon1, lat1], [lon2, lat2], ... , [lonN, latN]]]
         geom_str = "POLYGON(("
         pts = geom[0]
         num_pts = len(pts)
+        print "number of points: %s" % num_pts
         for p in range(num_pts-1):
+            print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
             geom_str += " "
             geom_str += str(pts[p][1]) # latitude
@@ -48,7 +50,9 @@ def main(shapefile):
         geom_str += " "
         geom_str += str(pts[num_pts-1][1]) # latitude
         geom_str = geom_str + "))"
+
         meta_data = json.dumps(feature['properties'])
+
         # (2) Ingest the feature with its geom + meta_data into the regions table
         print geom
         print geom_str
