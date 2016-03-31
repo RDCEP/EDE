@@ -49,10 +49,10 @@ def main(shapefile):
         geom_str = geom_str + "))"
         meta_data = json.dumps(feature['properties'])
         # (2) Ingest the feature with its geom + meta_data into the regions table
-        query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
-        cur.execute(query)
         print geom
         print geom_str
+        query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
+        cur.execute(query)
 
     conn.commit()
 
