@@ -47,7 +47,7 @@ def main(shapefile):
         geom_str += str(pts[num_pts-1][1]) # latitude
         geom_str = geom_str + "))"
         meta_data = feature['properties']
-        print meta_data
+        print type(meta_data)
         # (2) Ingest the feature with its geom + meta_data into the regions table
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         print query
@@ -58,3 +58,4 @@ def main(shapefile):
 if __name__ == "__main__":
     shapefile = sys.argv[1]
     main(shapefile)
+
