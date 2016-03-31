@@ -20,8 +20,7 @@ def main(shapefile):
     for i in range(layer_defn.GetFieldCount()):
         field_defn = layer_defn.GetFieldDefn(i)
         attrs.append(field_defn.GetName())
-
-    print '\'{\'' + '\',\''.join(attrs) + '\'}\''
+    attrs = '\'{\'' + '\',\''.join(attrs) + '\'}\''
 
     # (1) Insert into regions_meta + return uid as meta_id
     cur.execute("insert into regions_meta (name, attributes) values (%s, %s) returning uid" % (layer_name, attrs))
@@ -36,6 +35,8 @@ def main(shapefile):
         meta_data = feature['properties']
         # (2) Ingest the feature with its geom + meta_data into the regions table
         cur.execute("insert into regions (meta_id, geom, meta_data) values (%s, %s, %s)" % (meta_id, geom, meta_data))
+
+    conn.commit()
 
 if __name__ == "__main__":
     shapefile = sys.argv[1]
