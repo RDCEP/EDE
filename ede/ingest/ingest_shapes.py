@@ -34,6 +34,7 @@ def main(shapefile):
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         geom = feature['geometry']['coordinates']
+        print "type of geom: %s" % type(geom)
         # geom = [[[lon1, lat1], [lon2, lat2], ... , [lonN, latN]]]
         geom_str = "POLYGON(("
         pts = geom[0]
