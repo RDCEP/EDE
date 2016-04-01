@@ -32,6 +32,7 @@ def main(shapefile):
 
     # (2) Iterate over features
     for i in range(layer.GetFeatureCount()):
+        print "ingesting feature no. %s" % i
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         geom = feature['geometry']['coordinates']
         depth_fnc = lambda L: isinstance(L, list) and max(map(depth_fnc, L))+1
