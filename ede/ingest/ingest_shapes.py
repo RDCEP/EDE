@@ -41,8 +41,8 @@ def main(shapefile):
 
         for region in regions:
             for poly in region:
-                print "number of points in poly: %s" % len(poly)
-
+                for pt in poly:
+                    print pt
 
         '''
         for p in range(num_pts-1):
