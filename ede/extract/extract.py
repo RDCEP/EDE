@@ -117,7 +117,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     print query
     rows = db_session.execute(query)
     for row in rows:
-        print row
+        print row[0]
     #res = rows[0][0].split(',')
     count = res[0]
     sum = res[1]
@@ -233,7 +233,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
+    #print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q2
     print "Testing Q2..."
@@ -241,7 +241,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_within_region_fixed_time(meta_id, var_id, poly, date)
+    #print return_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q3
     print "Testing Q3..."
