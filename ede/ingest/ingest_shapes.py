@@ -42,7 +42,7 @@ def main(shapefile):
         print "number of regions: %s" % len(regions)
 
 
-
+        '''
         for p in range(num_pts-1):
             #print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
@@ -61,8 +61,9 @@ def main(shapefile):
         #print geom_str
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         cur.execute(query)
+        '''
 
-    conn.commit()
+    #conn.commit()
 
 if __name__ == "__main__":
     shapefile = sys.argv[1]
