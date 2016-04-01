@@ -63,7 +63,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
         out['response']['data'].append(new_data_item)
-    query = "select date from grid_dates where uid=%s" % (date)
+    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
         date_str = row
