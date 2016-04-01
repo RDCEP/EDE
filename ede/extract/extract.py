@@ -198,10 +198,10 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_
 
 # Q5: return all time frames from a raster
 def return_all_frames(meta_id, var_id):
-    tmp = "with foo as (select st_astext((ST_PixelAsCentroids(rast)).geom) as pos, time, " \
+    tmp = "with foo as (select st_astext((ST_PixelAsCentroids(rast)).geom) as pos, date, " \
             "(ST_PixelAsCentroids(rast)).val as val from grid_data where meta_id=%s and var_id=%s)" %\
           (meta_id, var_id)
-    query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((time, val))) from foo group by foo.pos;"
+    query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((date, val))) from foo group by foo.pos;"
     print query
     rows = db_session.execute(query)
     # the response JSON
@@ -268,13 +268,13 @@ def main():
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     start_date = 1
     end_date = 2
-    print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_date)
+    #print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_date)
 
     # Q5
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    print return_all_frames(meta_id, var_id)
+    #print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
