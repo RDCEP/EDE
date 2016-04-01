@@ -35,7 +35,7 @@ def main(shapefile):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         geom = feature['geometry']['coordinates']
         depth_fnc = lambda L: isinstance(L, list) and max(map(depth_fnc, L))+1
-        depth = depth_fnc(polys)
+        depth = depth_fnc(geom)
         geom_str = "POLYGON(("
 
         if depth == 3:
