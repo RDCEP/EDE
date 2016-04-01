@@ -40,7 +40,6 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
             (poly_str, meta_id, var_id, date)
     print query
     rows = db_session.execute(query)
-    rows = db_session.execute(query)
     # the response JSON
     out = {}
     out['response'] = {}
@@ -48,7 +47,6 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
-    out['response']['metadata']['timesteps'] = [date]
     out['response']['metadata']['region'] = poly
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
@@ -65,6 +63,12 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
         out['response']['data'].append(new_data_item)
+    query = "select date from grid_dates where uid=%s" % (date)
+    rows = db_session.execute(query)
+    for row in rows:
+        date_str = row
+    print date_str
+    out['response']['metadata']['timesteps'] = [date_str]
     return out
 
 
@@ -136,7 +140,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     out['response']['metadata']['format'] = 'polygon'
     out['response']['data'] = []
     out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['request']['datetime'] = date.strftime('%Y-%m-%d %H:%M:%S')
     out['request']['url'] = '/api/v0'
     new_data_item = {}
     new_data_item['type'] = 'Feature'
