@@ -53,7 +53,7 @@ def main(shapefile):
                     geom_str += ','
             geom_str += ')'
 
-            print geom_str
+            #print geom_str
 
         # The case of multi-polygons
         elif depth == 4:
@@ -79,7 +79,7 @@ def main(shapefile):
                     geom_str += ','
             geom_str += ')'
 
-            print geom_str
+            #print geom_str
 
         else:
             sys.exit("got unexpected nestedness depth of %s in feature" % depth)
@@ -89,7 +89,7 @@ def main(shapefile):
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         cur.execute(query)
 
-    #conn.commit()
+    conn.commit()
 
 if __name__ == "__main__":
     shapefile = sys.argv[1]
