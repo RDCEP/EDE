@@ -39,7 +39,8 @@ def main(shapefile):
 
         geom_str = "POLYGON(("
 
-        print "number of regions: %s" % len(regions)
+        for region in regions:
+            print "number of polys in region: %s" % len(region)
 
 
         '''
