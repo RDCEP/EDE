@@ -117,7 +117,8 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     print query
     rows = db_session.execute(query)
     for row in rows:
-        res = row[0]
+        res = row[0].split(',')
+
     count = res[0]
     sum = res[1]
     mean = res[2]
@@ -224,7 +225,7 @@ def return_all_frames(meta_id, var_id):
 def main():
     # Q0
     print "Testing Q0..."
-    print return_all_metadata()
+    #print return_all_metadata()
 
     # Q1
     print "Testing Q1..."
