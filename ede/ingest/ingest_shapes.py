@@ -42,7 +42,7 @@ def main(shapefile):
             num_rings = len(geom)
             for i_ring in range(num_rings):
                 geom_str += '('
-                ring = geom(i_ring)
+                ring = geom[i_ring]
                 num_pts = len(ring)
                 for i_pt in range(num_pts):
                     geom_str += ' '.join(map(str, ring[i_pt]))
@@ -61,11 +61,11 @@ def main(shapefile):
             num_polys = len(geom)
             for i_poly in range(num_polys):
                 geom_str += '('
-                poly = geom(i_poly)
+                poly = geom[i_poly]
                 num_rings = len(poly)
                 for i_ring in range(num_rings):
                     geom_str += '('
-                    ring = poly(i_ring)
+                    ring = poly[i_ring]
                     num_pts = len(ring)
                     for i_pt in range(num_pts):
                         geom_str += ' '.join(map(str, ring[i_pt]))
