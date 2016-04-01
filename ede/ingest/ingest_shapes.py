@@ -35,13 +35,14 @@ def main(shapefile):
 
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
 
+        regions = feature['geometry']['coordinates']
 
-        geom = feature['geometry']['coordinates']
-        print "geom: %s" % geom
         geom_str = "POLYGON(("
-        pts = geom[0] # your assumption here is that this the list of points
-        num_pts = len(pts)
-        #print "number of points: %s" % num_pts
+
+        print "number of regions: %s" % len(regions)
+
+
+
         for p in range(num_pts-1):
             #print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
