@@ -34,19 +34,22 @@ def main(shapefile):
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
         polys = feature['geometry']['coordinates']
-        depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
-        print depth(polys)
-
-
-
+        depth_fnc = lambda L: isinstance(L, list) and max(map(depth, L))+1
+        depth = depth_fnc(polys)
         geom_str = "POLYGON(("
 
-        '''
-        for poly in polys:
+        if depth == 3:
             for ring in poly:
                 for pt in ring:
                     print pt
-        '''
+        elif depth == 4:
+            for poly in polys:
+                for ring in poly:
+                    for pt in ring:
+                        print pt
+        else:
+            sys.exit("got unexpected nestedness depth of %s in feature" % depth)
+
 
         '''
         for p in range(num_pts-1):
