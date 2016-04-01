@@ -79,7 +79,7 @@ def main(shapefile):
             sys.exit("got unexpected nestedness depth of %s in feature" % depth)
 
         meta_data = json.dumps(feature['properties'])
-        print type(meta_data)
+        meta_data = meta_data.replace("'", "''")
 
         # (2) Ingest the feature with its geom + meta_data into the regions table
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\', 4326), \'%s\')" % (meta_id, geom_str, meta_data)
