@@ -36,7 +36,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326))" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "SELECT ST_X(geom), ST_Y(geom), val FROM (SELECT (ST_PixelAsCentroids(rast)).* FROM grid_data " \
-            "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time='%s') foo;" %\
+            "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and date='%s') foo;" %\
             (poly_str, meta_id, var_id, t)
     print query
     rows = db_session.execute(query)
