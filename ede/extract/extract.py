@@ -117,8 +117,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     print query
     rows = db_session.execute(query)
     for row in rows:
-        print row[0]
-    #res = rows[0][0].split(',')
+        res = row[0]
     count = res[0]
     sum = res[1]
     mean = res[2]
