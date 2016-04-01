@@ -66,8 +66,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
-        date_str = row
-    print date_str
+        date_str = row[0]
     out['response']['metadata']['timesteps'] = [date_str]
     return out
 
@@ -90,7 +89,6 @@ def return_within_region_fixed_time(meta_id, var_id, poly, date):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
-    out['response']['metadata']['timesteps'] = [date]
     out['response']['metadata']['region'] = poly
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
@@ -107,6 +105,11 @@ def return_within_region_fixed_time(meta_id, var_id, poly, date):
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
         out['response']['data'].append(new_data_item)
+    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    rows = db_session.execute(query)
+    for row in rows:
+        date_str = row[0]
+    out['response']['metadata']['timesteps'] = [date_str]
     return out
 
 
@@ -135,7 +138,6 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
-    out['response']['metadata']['timesteps'] = [date]
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'polygon'
     out['response']['data'] = []
@@ -147,6 +149,11 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
     new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
     out['response']['data'].append(new_data_item)
+    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    rows = db_session.execute(query)
+    for row in rows:
+        date_str = row[0]
+    out['response']['metadata']['timesteps'] = [date_str]
     return out
 
 
@@ -244,7 +251,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    #print return_within_region_fixed_time(meta_id, var_id, poly, date)
+    print return_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q3
     print "Testing Q3..."
@@ -252,7 +259,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    #print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
+    print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
 
     # Q4
     print "Testing Q4..."
@@ -261,13 +268,13 @@ def main():
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     start_date = 1
     end_date = 2
-    #print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_date)
+    print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_date)
 
     # Q5
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    # print return_all_frames(meta_id, var_id)
+    print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
