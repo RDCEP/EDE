@@ -66,7 +66,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
-        date_str = row[0]
+        date_str = str(row[0])
     out['response']['metadata']['timesteps'] = [date_str]
     return out
 
@@ -108,7 +108,7 @@ def return_within_region_fixed_time(meta_id, var_id, poly, date):
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
-        date_str = row[0]
+        date_str = str(row[0])
     out['response']['metadata']['timesteps'] = [date_str]
     return out
 
@@ -152,7 +152,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
-        date_str = row[0]
+        date_str = str(row[0])
     out['response']['metadata']['timesteps'] = [date_str]
     return out
 
