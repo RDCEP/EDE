@@ -32,17 +32,21 @@ def main(shapefile):
 
     # (2) Iterate over features
     for i in range(layer.GetFeatureCount()):
-
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
+        polys = feature['geometry']['coordinates']
+        depth = lambda L: isinstance(L, list) and max(map(depth, L))+1
+        print depth(polys)
 
-        regions = feature['geometry']['coordinates']
+
 
         geom_str = "POLYGON(("
 
-        for region in regions:
-            for poly in region:
-                for pt in poly:
+        '''
+        for poly in polys:
+            for ring in poly:
+                for pt in ring:
                     print pt
+        '''
 
         '''
         for p in range(num_pts-1):
