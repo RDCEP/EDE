@@ -236,7 +236,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    #print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
+    print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q2
     print "Testing Q2..."
@@ -252,7 +252,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
+    #print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
 
     # Q4
     print "Testing Q4..."
