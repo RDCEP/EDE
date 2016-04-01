@@ -1,5 +1,3 @@
-import psycopg2
-from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from datetime import datetime
 import time
 from ede.database import db_session
@@ -39,6 +37,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, t):
     query = "SELECT ST_X(geom), ST_Y(geom), val FROM (SELECT (ST_PixelAsCentroids(rast)).* FROM grid_data " \
             "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and time='%s') foo;" %\
             (poly_str, meta_id, var_id, t)
+    print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -76,6 +75,7 @@ def return_within_region_fixed_time(meta_id, var_id, poly, t):
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s and time='%s') foo;" %\
             (poly_str, meta_id, var_id, t)
+    print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -112,6 +112,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, t):
     query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
             "where meta_id=%s and var_id=%s and time='%s';" %\
             (poly_str, meta_id, var_id, t)
+    print query
     rows = db_session.execute(query)
     res = rows[0][0].split(',')
     count = res[0]
@@ -153,6 +154,7 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, start_time, end_
     query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
             "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
             "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+    print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -186,6 +188,7 @@ def return_all_frames(meta_id, var_id):
             "(ST_PixelAsCentroids(rast)).val as val from grid_data where meta_id=%s and var_id=%s)" %\
           (meta_id, var_id)
     query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((time, val))) from foo group by foo.pos;"
+    print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
