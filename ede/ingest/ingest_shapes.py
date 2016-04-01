@@ -33,17 +33,17 @@ def main(shapefile):
     # (2) Iterate over features
     for i in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
-        polys = feature['geometry']['coordinates']
+        geom = feature['geometry']['coordinates']
         depth_fnc = lambda L: isinstance(L, list) and max(map(depth_fnc, L))+1
         depth = depth_fnc(polys)
         geom_str = "POLYGON(("
 
         if depth == 3:
-            for ring in poly:
+            for ring in geom:
                 for pt in ring:
                     print pt
         elif depth == 4:
-            for poly in polys:
+            for poly in geom:
                 for ring in poly:
                     for pt in ring:
                         print pt
