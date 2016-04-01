@@ -36,22 +36,24 @@ def main(shapefile):
         geom = feature['geometry']['coordinates']
         depth_fnc = lambda L: isinstance(L, list) and max(map(depth_fnc, L))+1
         depth = depth_fnc(geom)
-        geom_str = "POLYGON(("
-
+        # The case of non-multi-polygons
         if depth == 3:
+            geom_str = "POLYGON(("
             for ring in geom:
                 for pt in ring:
-                    print pt
+                    print ' '.join(pt)
+        # The case of multi-polygons
         elif depth == 4:
+            geom_str = "MULTIPOLYGON(("
             for poly in geom:
                 for ring in poly:
                     for pt in ring:
-                        print pt
+                        print ' '.join(pt)
         else:
             sys.exit("got unexpected nestedness depth of %s in feature" % depth)
 
 
-        '''
+
         for p in range(num_pts-1):
             #print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
@@ -70,7 +72,6 @@ def main(shapefile):
         #print geom_str
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         cur.execute(query)
-        '''
 
     #conn.commit()
 
