@@ -41,14 +41,14 @@ def main(shapefile):
             geom_str = "POLYGON(("
             for ring in geom:
                 for pt in ring:
-                    print ' '.join(pt)
+                    print ' '.join(map(str, pt))
         # The case of multi-polygons
         elif depth == 4:
             geom_str = "MULTIPOLYGON(("
             for poly in geom:
                 for ring in poly:
                     for pt in ring:
-                        print ' '.join(pt)
+                        print ' '.join(map(str, pt))
         else:
             sys.exit("got unexpected nestedness depth of %s in feature" % depth)
 
