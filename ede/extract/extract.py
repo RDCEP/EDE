@@ -118,12 +118,12 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     for row in rows:
         res = row[0].lstrip('(').rstrip(')').split(',')
-    count = res[0]
-    sum = res[1]
-    mean = res[2]
-    stddev = res[3]
-    min = res[4]
-    max = res[5]
+    count = int(res[0])
+    sum = float(res[1])
+    mean = float(res[2])
+    stddev = float(res[3])
+    min = float(res[4])
+    max = float(res[5])
     # the response JSON
     out = {}
     out['response'] = {}
