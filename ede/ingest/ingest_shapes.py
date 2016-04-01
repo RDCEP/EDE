@@ -35,12 +35,13 @@ def main(shapefile):
 
         feature = layer.GetFeature(i).ExportToJson(as_object=True)
 
+
         geom = feature['geometry']['coordinates']
         print "geom: %s" % geom
         geom_str = "POLYGON(("
-        pts = geom[0]
+        pts = geom[0] # your assumption here is that this the list of points
         num_pts = len(pts)
-        print "number of points: %s" % num_pts
+        #print "number of points: %s" % num_pts
         for p in range(num_pts-1):
             print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
@@ -55,8 +56,8 @@ def main(shapefile):
         meta_data = json.dumps(feature['properties'])
 
         # (2) Ingest the feature with its geom + meta_data into the regions table
-        print geom
-        print geom_str
+        #print geom
+        #print geom_str
         query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\'), \'%s\')" % (meta_id, geom_str, meta_data)
         cur.execute(query)
 
@@ -65,4 +66,3 @@ def main(shapefile):
 if __name__ == "__main__":
     shapefile = sys.argv[1]
     main(shapefile)
-

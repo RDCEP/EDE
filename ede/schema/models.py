@@ -43,5 +43,5 @@ class Regions(Base):
     __tablename__ = 'regions'
     uid = Column(Integer, primary_key=True)
     meta_id = Column(Integer, ForeignKey('regions_meta.uid'))
-    geom = Column(Geometry('POLYGON'))
+    geom = Column(Geometry('POLYGON', srid=4326))
     meta_data = Column(JSONB)
