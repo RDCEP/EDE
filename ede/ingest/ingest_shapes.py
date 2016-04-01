@@ -43,7 +43,7 @@ def main(shapefile):
         num_pts = len(pts)
         #print "number of points: %s" % num_pts
         for p in range(num_pts-1):
-            print "next point: %s" % pts[p]
+            #print "next point: %s" % pts[p]
             geom_str += str(pts[p][0]) # longitude
             geom_str += " "
             geom_str += str(pts[p][1]) # latitude
