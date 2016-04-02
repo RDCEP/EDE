@@ -23,7 +23,8 @@ class IntListConverter(BaseConverter):
 class RectangleConverter(BaseConverter):
 
     def to_python(self, value):
-        vals = value.split(',')
+        vals = map(float, value.split(','))
+        print len(vals)
         res = []
         for i in range(len(vals)):
             res.append([vals[i], vals[i+1]])
