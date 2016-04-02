@@ -293,8 +293,8 @@ def main():
     print "Testing Q2..."
     meta_id = 1
     var_id = 1
-    poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-    date = 1
+    poly = None
+    date = None
     print return_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q3
