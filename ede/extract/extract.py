@@ -16,18 +16,13 @@ def return_gridmeta(ids):
         query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
     else:
         query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
-    # print query
     rows = db_session.execute(query)
-    # the response JSON
+    # The response JSON
     out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         new_doc = {}
         new_doc['filename'] = row[0]
@@ -36,22 +31,11 @@ def return_gridmeta(ids):
         new_doc['meta_data'] = row[3]
         new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
         new_doc['date_inserted'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
-        out['response']['data'].append(new_doc)
+        out['data'].append(new_doc)
     return out
 
 
-def return_griddata_select(meta_id, var_id, polys, dates):
-    """Get values within specific polygons & dates, by their IDs.
-
-    If no polygons are passed we default to the entire globe.
-    If no dates are passed we default to all dates.
-
-    :param meta_id:
-    :param var_id:
-    :param polys:
-    :param dates:
-    :return:
-    """
+def return_griddata_select(meta_id, var_id, poly, date):
     # poly + date specified
     if poly and date:
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
@@ -86,7 +70,6 @@ def return_griddata_select(meta_id, var_id, polys, dates):
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s) foo;" %\
             (poly_str, meta_id, var_id)
-    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -94,14 +77,7 @@ def return_griddata_select(meta_id, var_id, polys, dates):
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
-    out['response']['metadata']['region'] = poly
-    out['response']['metadata']['units'] = 'TKTK'
-    out['response']['metadata']['format'] = 'grid'
     out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -111,6 +87,9 @@ def return_griddata_select(meta_id, var_id, polys, dates):
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
         out['response']['data'].append(new_data_item)
+
+
+
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
