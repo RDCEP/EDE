@@ -111,7 +111,7 @@ def return_within_region_fixed_time(meta_id, var_id, poly, date):
         query = "SELECT ST_X(geom), ST_Y(geom), val " \
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s) foo;" %\
-            (poly_str, meta_id, var_id, date)
+            (poly_str, meta_id, var_id)
     # print query
     rows = db_session.execute(query)
     # the response JSON
