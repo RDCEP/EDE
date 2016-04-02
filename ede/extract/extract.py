@@ -140,7 +140,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
     new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
-    out['response']['data'].append(new_data_item)
+    out['data'].append(new_data_item)
     if date:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     else:
