@@ -78,11 +78,39 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
 # Q2: select ( lat, lon, var(t, lat, lon) ) with (lat, lon)
 # in some region + time t is fixed (on a region- not tile-basis as in 1)
 def return_within_region_fixed_time(meta_id, var_id, poly, date):
-    poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+    # poly + date specified
+    if poly and date:
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-    query = "SELECT ST_X(geom), ST_Y(geom), val " \
+        query = "SELECT ST_X(geom), ST_Y(geom), val " \
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" %\
+            (poly_str, meta_id, var_id, date)
+    # only poly specified
+    elif poly:
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "SELECT ST_X(geom), ST_Y(geom), val " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
+            "grid_data where meta_id=%s and var_id=%s) foo;" %\
+            (poly_str, meta_id, var_id)
+    # only date specified
+    elif date:
+        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "SELECT ST_X(geom), ST_Y(geom), val " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
+            "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" %\
+            (poly_str, meta_id, var_id, date)
+    # neither poly nor date specified
+    else:
+        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "SELECT ST_X(geom), ST_Y(geom), val " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
+            "grid_data where meta_id=%s and var_id=%s) foo;" %\
             (poly_str, meta_id, var_id, date)
     # print query
     rows = db_session.execute(query)

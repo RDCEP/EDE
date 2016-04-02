@@ -42,6 +42,9 @@ def get_gridmeta(ids):
 
 
 # QUERY 1 + 5
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>', defaults={'date': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>/<int:date>', methods=['GET'])
 def get_griddata_by_points(meta_id, var_id, poly, date):
     status_code = 200
