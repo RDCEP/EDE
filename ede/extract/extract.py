@@ -5,8 +5,11 @@ from ede.database import db_session
 
 # Q0: return metadata of all grid datasets in DB
 def return_all_metadata(ids):
-    ids_str = '(' + ','.join(map(str, ids)) + ')'
-    query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
+    if ids:
+        ids_str = '(' + ','.join(map(str, ids)) + ')'
+        query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
+    else:
+        query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
     # print query
     rows = db_session.execute(query)
     # the response JSON
