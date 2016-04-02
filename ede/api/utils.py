@@ -23,7 +23,12 @@ class IntListConverter(BaseConverter):
 class RectangleConverter(BaseConverter):
 
     def to_python(self, value):
-        return [float(pt.split(',')) for pt in value.split(';')]
+        vals = value.split(',')
+        res = []
+        for i in range(len(vals)):
+            res.append([vals[i], vals[i+1]])
+            i += 2
+        return res
 
     def to_url(self, values):
         return ','.join([BaseConverter.to_url(value) for value in values])
