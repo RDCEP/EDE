@@ -48,21 +48,8 @@ def get_gridmeta(ids):
     :return:
     """
     status_code = 200
-    resp = {
-        'meta': {'status': 'ok', 'message': '', },
-        'objects': [] }
-
-    if ids is None or len(ids) == 0:
-        q = db_session.query(Grid_Meta)
-    else:
-        q = db_session.query(Grid_Meta).filter(Grid_Meta.uid.in_(ids))
-    metas = q.all()
-
-    for m in metas:
-        resp['objects'].append(m.__dict__)
-
-    resp['meta']['total'] = len(resp['objects'])
-    resp = make_response(json.dumps(resp, default=dthandler), status_code)
+    data = return_all_metadata(ids)
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -127,6 +114,21 @@ def get_griddata(meta_id, var_id):
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
