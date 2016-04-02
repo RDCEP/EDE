@@ -35,8 +35,6 @@ def flush_cache():
 # QUERY 0
 @api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
 @api.route('/gridmeta/<intlist:ids>', methods=['GET'])
-# @cache.cached(timeout=CACHE_TIMEOUT, key_prefix=make_cache_key)
-# @crossdomain(origin="*")
 def get_gridmeta(ids):
     """Get metadata from gridded datasets.
 
@@ -44,7 +42,7 @@ def get_gridmeta(ids):
     of ids returns metadata for multiple datasets. A single integer id
     returns metadata for a single dataset.
 
-    If ids is empty, filter resuts by parameters in the body of the request.
+    If ids is empty, filter results by parameters in the body of the request.
 
     :param ids:
     :return:

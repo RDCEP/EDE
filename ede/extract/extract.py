@@ -4,8 +4,9 @@ from ede.database import db_session
 
 
 # Q0: return metadata of all grid datasets in DB
-def return_all_metadata():
-    query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
+def return_all_metadata(ids):
+    ids_str = '(' + ','.join(map(str, ids)) + ')'
+    query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where ids in %s" % ids_str
     # print query
     rows = db_session.execute(query)
     # the response JSON
@@ -246,7 +247,8 @@ def return_all_frames(meta_id, var_id):
 def main():
     # Q0
     print "Testing Q0..."
-    #print return_all_metadata()
+    ids = [1]
+    print return_all_metadata(ids)
 
     # Q1
     print "Testing Q1..."
@@ -284,7 +286,7 @@ def main():
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    print return_all_frames(meta_id, var_id)
+    # print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
