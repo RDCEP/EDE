@@ -218,7 +218,6 @@ def return_all_frames(meta_id, var_id):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['metadata'] = {}
-    out['response']['metadata']['timesteps'] = []
     out['response']['metadata']['units'] = 'TKTK'
     out['response']['metadata']['format'] = 'grid'
     out['response']['data'] = []
@@ -236,13 +235,20 @@ def return_all_frames(meta_id, var_id):
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
         new_data_item['properties'] = {'values': [ v['f2'] for v in vals]}
         out['response']['data'].append(new_data_item)
+    # TODO: the dates here might not be aligned with the vals in the previous query, probably have to do a join
+    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where meta_id=%s" % meta_id
+    rows = db_session.execute(query)
+    out['response']['metadata']['timesteps'] = []
+    for row in rows:
+        date_str = str(row[0])
+        out['response']['metadata']['timesteps'].append(date_str)
     return out
 
 
 def main():
     # Q0
     print "Testing Q0..."
-    print return_all_metadata()
+    #print return_all_metadata()
 
     # Q1
     print "Testing Q1..."
@@ -250,7 +256,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
+    #print return_tiles_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q2
     print "Testing Q2..."
@@ -258,7 +264,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_within_region_fixed_time(meta_id, var_id, poly, date)
+    #print return_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q3
     print "Testing Q3..."
@@ -266,7 +272,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
+    #print return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
 
     # Q4
     print "Testing Q4..."
@@ -274,13 +280,13 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     dates = [1,2,3]
-    print return_aggregate_time_within_polygon(meta_id, var_id, poly, dates)
+    #print return_aggregate_time_within_polygon(meta_id, var_id, poly, dates)
 
     # Q5
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    #print return_all_frames(meta_id, var_id)
+    print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
