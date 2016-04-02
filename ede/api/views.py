@@ -30,76 +30,87 @@ def flush_cache():
     return resp
 
 
-# QUERY 0
-@api.route('/gridmeta', defaults={'ids': []}, methods=['GET'])
+@api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
 @api.route('/gridmeta/<intlist:ids>', methods=['GET'])
 def get_gridmeta(ids):
-    status_code = 200
-    data = return_all_metadata(ids)
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    """Get metadata of gridded datasets by IDs.
 
-
-# QUERY 2 + 5
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>', defaults={'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>/<int:date>', methods=['GET'])
-def get_griddata_by_points(meta_id, var_id, poly, date):
-    status_code = 200
-    data = return_within_region_fixed_time(meta_id, var_id, poly, date)
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
-
-
-# QUERY 3
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<int:poly>/<int:date>', methods=['GET'])
-def get_spatial_aggregation(meta_id, var_id, poly, date):
-    status_code = 200
-    data = return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date)
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
-
-
-# QUERY 4
-@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<int:poly>/<intlist:dates>', methods=['GET'])
-def get_temporal_aggregation(meta_id, var_id, poly, dates):
-    status_code = 200
-    data = return_aggregate_time_within_polygon(meta_id, var_id, poly, dates)
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
-
-
-'''
-@api.route('/polymeta/<list:ids>', defaults={'ids': None}, methods=['GET'])
-def get_polymeta(ids):
-    """Get metadata for sets of polygonal regions.
-
-    Passing no ids returns metadata for all avialable polygon sets. A
-    comma-separated list of ids returns metadata for multiple polygon sets.
-    A single integer id returns metadata for a single set of polygons.
-
-    If ids is empty, filter resuts by parameters in the body of the request.
+    If no list is passed, the metadata of all gridded datasets is returned.
 
     :param ids:
     :return:
     """
-    pass
+    status_code = 200
+    data = return_gridmeta(ids) #TODO
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
 
 
-@api.route('/polydata/<int:id>', methods=['GET'])
-def get_polydata(id):
-    """Get a set of polygonal regions.
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'polys': None, 'dates': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<intlist:polys>', defaults={'dates': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<intlist:dates>', defaults={'polys': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<intlist:polys>/<intlist:dates>', methods=['GET'])
+def get_griddata_select(meta_id, var_id, polys, dates):
+    """Get values within specific polygons & dates, by their IDs.
 
-    Note: because the `id` parameter is converted to an `int`, you can only
-    get one set of polygons at a time.
+    If no polygons are passed we default to the entire globe.
+    If no dates are passed we default to all dates.
 
-    :param id:
+    :param meta_id:
+    :param var_id:
+    :param polys:
+    :param dates:
     :return:
     """
-    pass
-'''
+    status_code = 200
+    data = return_griddata_select(meta_id, var_id, polys, dates) #TODO
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
+
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>', defaults={'polys': None, 'dates': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:polys>', defaults={'dates': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:dates>', defaults={'polys': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:polys>/<intlist:dates>', methods=['GET'])
+def get_griddata_aggregate_spatial(meta_id, var_id, polys, dates):
+    """Do spatial aggregation over specific polygons & for specific dates.
+
+    If no polygons are passed we default to the entire globe.
+    If no dates are passed we default to all dates.
+
+    :param meta_id:
+    :param var_id:
+    :param polys:
+    :param dates:
+    :return:
+    """
+    status_code = 200
+    data = return_griddata_aggregate_spatial(meta_id, var_id, polys, dates) #TODO
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
+
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>', defaults={'polys': None, 'dates': None}, methods=['GET'])
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<intlist:polys>', defaults={'dates': None}, methods=['GET'])
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<intlist:dates>', defaults={'polys': None}, methods=['GET'])
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<intlist:polys>/<intlist:dates>', methods=['GET'])
+def get_griddata_aggregate_temporal(meta_id, var_id, polys, dates):
+    """Do temporal aggregation over specific dates & for points within specific polygons.
+
+    If no polygons are passed we default to the entire globe.
+    If no dates are passed we default to all dates.
+
+    :param meta_id:
+    :param var_id:
+    :param polys:
+    :param dates:
+    :return:
+    """
+    status_code = 200
+    data = return_griddata_aggregate_temporal(meta_id, var_id, polys, dates) #TODO
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
