@@ -24,7 +24,6 @@ class RectangleConverter(BaseConverter):
 
     def to_python(self, value):
         vals = map(float, value.split(','))
-        print len(vals)
         res = []
         i = 0
         while i < len(vals):

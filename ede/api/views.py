@@ -41,7 +41,7 @@ def get_gridmeta(ids):
     :return:
     """
     status_code = 200
-    data = return_gridmeta(ids) #TODO
+    data = return_gridmeta(ids)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -70,24 +70,24 @@ def get_griddata_select(meta_id, var_id, poly, date):
     return resp
 
 
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>', defaults={'polys': None, 'dates': None}, methods=['GET'])
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:polys>', defaults={'dates': None}, methods=['GET'])
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:dates>', defaults={'polys': None}, methods=['GET'])
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<intlist:polys>/<intlist:dates>', methods=['GET'])
-def get_griddata_aggregate_spatial(meta_id, var_id, polys, dates):
-    """Do spatial aggregation over specific polygons & for specific dates.
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<rect:poly>', defaults={'date': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
+@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<rect:poly>/<int:date>', methods=['GET'])
+def get_griddata_aggregate_spatial(meta_id, var_id, poly, date):
+    """Do spatial aggregation over specific polygon & for specific date.
 
-    If no polygons are passed we default to the entire globe.
-    If no dates are passed we default to all dates.
+    If no polygon is passed we default to the entire globe.
+    If no date is passed we default to all dates.
 
     :param meta_id:
     :param var_id:
-    :param polys:
-    :param dates:
+    :param poly:
+    :param date:
     :return:
     """
     status_code = 200
-    data = return_griddata_aggregate_spatial(meta_id, var_id, polys, dates) #TODO
+    data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp

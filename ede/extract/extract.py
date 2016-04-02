@@ -88,13 +88,37 @@ def return_griddata_select(meta_id, var_id, poly, date):
     return out
 
 
-def return_griddata_aggregate_spatial(meta_id, var_id, polys, dates):
-    poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
+    # poly + date specified
+    if poly and date:
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-    query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
+        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
             "where meta_id=%s and var_id=%s and date=%s;" %\
             (poly_str, meta_id, var_id, date)
-    # print query
+    # only poly specified
+    elif poly:
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
+            "where meta_id=%s and var_id=%s;" %\
+            (poly_str, meta_id, var_id)
+    # only date specified
+    elif date:
+        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
+            "where meta_id=%s and var_id=%s and date=%s;" %\
+            (poly_str, meta_id, var_id, date)
+    # neither poly nor date specified
+    else:
+        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
+              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
+            "where meta_id=%s and var_id=%s;" %\
+            (poly_str, meta_id, var_id)
     rows = db_session.execute(query)
     for row in rows:
         res = row[0].lstrip('(').rstrip(')').split(',')
@@ -106,27 +130,26 @@ def return_griddata_aggregate_spatial(meta_id, var_id, polys, dates):
     max = float(res[5])
     # the response JSON
     out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['metadata'] = {}
-    out['response']['metadata']['units'] = 'TKTK'
-    out['response']['metadata']['format'] = 'polygon'
-    out['response']['data'] = []
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['request']['url'] = '/api/v0'
+    out = {}
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['metadata'] = {}
+    out['data'] = []
     new_data_item = {}
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
     new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
     out['response']['data'].append(new_data_item)
-    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    if date:
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    else:
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
+    out['metadata'] = []
     for row in rows:
         date_str = str(row[0])
-    out['response']['metadata']['timesteps'] = [date_str]
+        out['metadata'].append(date_str)
     return out
 
 
