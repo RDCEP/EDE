@@ -4,13 +4,6 @@ from ede.database import db_session
 
 
 def return_gridmeta(ids):
-    """Get metadata of gridded datasets by IDs.
-
-    If no list is passed, the metadata of all gridded datasets is returned.
-
-    :param ids:
-    :return:
-    """
     if ids:
         ids_str = '(' + ','.join(map(str, ids)) + ')'
         query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
@@ -73,11 +66,10 @@ def return_griddata_select(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     # the response JSON
     out = {}
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -86,30 +78,17 @@ def return_griddata_select(meta_id, var_id, poly, date):
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
-        out['response']['data'].append(new_data_item)
-
-
-
+        out['data'].append(new_data_item)
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     rows = db_session.execute(query)
     for row in rows:
         date_str = str(row[0])
-    out['response']['metadata']['timesteps'] = [date_str]
+    out['metadata'] = {}
+    out['metadata']['dates'] = [date_str]
     return out
 
 
 def return_griddata_aggregate_spatial(meta_id, var_id, polys, dates):
-    """Do spatial aggregation over specific polygons & for specific dates.
-
-    If no polygons are passed we default to the entire globe.
-    If no dates are passed we default to all dates.
-
-    :param meta_id:
-    :param var_id:
-    :param polys:
-    :param dates:
-    :return:
-    """
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
