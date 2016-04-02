@@ -162,7 +162,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
 def return_aggregate_time_within_polygon(meta_id, var_id, poly, dates):
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-    date_str = '(' + ','.join(dates) + ')'
+    date_str = '(' + ','.join(map(str, dates)) + ')'
     print date_str
     tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
             "where meta_id=%s and var_id=%s and date in %s group by date))" %\
