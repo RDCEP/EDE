@@ -236,7 +236,7 @@ def return_all_frames(meta_id, var_id):
     # TODO: the dates here might not be aligned with the vals in the previous query, probably have to do a join
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where meta_id=%s" % meta_id
     rows = db_session.execute(query)
-
+    out['response']['metadata']['timesteps'] = []
     for row in rows:
         date_str = str(row[0])
         out['response']['metadata']['timesteps'].append(date_str)
@@ -284,7 +284,7 @@ def main():
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    #print return_all_frames(meta_id, var_id)
+    print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
