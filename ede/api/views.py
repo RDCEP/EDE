@@ -63,7 +63,9 @@ def get_griddata_select(meta_id, var_id, poly, date):
     :param date:
     :return:
     """
+    print "get_griddate_select..."
     print poly
+    print json.loads(request.args['poly'])
     status_code = 200
     data = return_griddata_select(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
