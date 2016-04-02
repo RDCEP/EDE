@@ -19,3 +19,11 @@ class IntListConverter(BaseConverter):
 
     def to_url(self, values):
         return ','.join([BaseConverter.to_url(value) for value in values])
+
+class RectangleConverter(BaseConverter):
+
+    def to_python(self, value):
+        return [float(pt.split(',')) for pt in value.split(';')]
+
+    def to_url(self, values):
+        return ','.join([BaseConverter.to_url(value) for value in values])

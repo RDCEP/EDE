@@ -48,9 +48,9 @@ def get_gridmeta(ids):
 
 
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>', defaults={'date': None}, methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<rect:poly>', defaults={'date': None}, methods=['GET'])
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>/<int:date>', methods=['GET'])
+@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<rect:poly>/<int:date>', methods=['GET'])
 def get_griddata_select(meta_id, var_id, poly, date):
     """Get values within specific polygon & date, by their IDs.
 
@@ -63,6 +63,7 @@ def get_griddata_select(meta_id, var_id, poly, date):
     :param date:
     :return:
     """
+    print poly
     status_code = 200
     data = return_griddata_select(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
