@@ -279,7 +279,7 @@ def main():
     # Q0
     print "Testing Q0..."
     ids = [1]
-    print return_all_metadata(ids)
+    #print return_all_metadata(ids)
 
     # Q1
     print "Testing Q1..."
@@ -295,7 +295,7 @@ def main():
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
     date = 1
-    #print return_within_region_fixed_time(meta_id, var_id, poly, date)
+    print return_within_region_fixed_time(meta_id, var_id, poly, date)
 
     # Q3
     print "Testing Q3..."

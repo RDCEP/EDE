@@ -41,7 +41,7 @@ def get_gridmeta(ids):
     return resp
 
 
-# QUERY 1 + 5
+# QUERY 2 + 5
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:poly>', defaults={'date': None}, methods=['GET'])
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
