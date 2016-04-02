@@ -34,6 +34,7 @@ def flush_cache():
 @api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
 @api.route('/gridmeta/<intlist:ids>', methods=['GET'])
 def get_gridmeta(ids):
+    print 'Hello Sevi!'
     status_code = 200
     data = return_all_metadata(ids)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
