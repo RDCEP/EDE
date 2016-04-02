@@ -268,9 +268,8 @@ def main():
     meta_id = 1
     var_id = 1
     poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-    start_date = 1
-    end_date = 2
-    print return_aggregate_time_within_polygon(meta_id, var_id, poly, start_date, end_date)
+    dates = [1,2,3]
+    print return_aggregate_time_within_polygon(meta_id, var_id, poly, dates)
 
     # Q5
     print "Testing Q5..."
