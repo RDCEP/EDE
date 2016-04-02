@@ -26,7 +26,8 @@ class RectangleConverter(BaseConverter):
         vals = map(float, value.split(','))
         print len(vals)
         res = []
-        for i in range(len(vals)):
+        i = 0
+        while i < len(vals):
             res.append([vals[i], vals[i+1]])
             i += 2
         return res
