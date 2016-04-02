@@ -94,9 +94,9 @@ def get_griddata_aggregate_spatial(meta_id, var_id, poly, date):
 
 
 @api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'dates': None}, methods=['GET'])
-@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<rec:poly>', defaults={'dates': None}, methods=['GET'])
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<rect:poly>', defaults={'dates': None}, methods=['GET'])
 @api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<intlist:dates>', defaults={'poly': None}, methods=['GET'])
-@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<rec:poly>/<intlist:dates>', methods=['GET'])
+@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<rect:poly>/<intlist:dates>', methods=['GET'])
 def get_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     status_code = 200
     data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
