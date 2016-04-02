@@ -6,7 +6,7 @@ from ede.database import db_session
 # Q0: return metadata of all grid datasets in DB
 def return_all_metadata():
     query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
-    print query
+    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -38,7 +38,7 @@ def return_tiles_within_region_fixed_time(meta_id, var_id, poly, date):
     query = "SELECT ST_X(geom), ST_Y(geom), val FROM (SELECT (ST_PixelAsCentroids(rast)).* FROM grid_data " \
             "WHERE ST_Intersects(rast, %s and meta_id=%s and var_id=%s and date=%s) foo;" %\
             (poly_str, meta_id, var_id, date)
-    print query
+    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -80,7 +80,7 @@ def return_within_region_fixed_time(meta_id, var_id, poly, date):
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" %\
             (poly_str, meta_id, var_id, date)
-    print query
+    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -121,7 +121,7 @@ def return_aggregate_polygon_fixed_time(meta_id, var_id, poly, date):
     query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
             "where meta_id=%s and var_id=%s and date=%s;" %\
             (poly_str, meta_id, var_id, date)
-    print query
+    # print query
     rows = db_session.execute(query)
     for row in rows:
         res = row[0].lstrip('(').rstrip(')').split(',')
@@ -170,7 +170,7 @@ def return_aggregate_time_within_polygon(meta_id, var_id, poly, dates):
     query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
             "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
             "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
-    print query
+    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -209,7 +209,7 @@ def return_all_frames(meta_id, var_id):
             "(ST_PixelAsCentroids(rast)).val as val from grid_data where meta_id=%s and var_id=%s)" %\
           (meta_id, var_id)
     query = tmp + '\n' + "select ST_X(pos), ST_Y(pos), array_to_json(array_agg((date, val))) from foo group by foo.pos;"
-    print query
+    # print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -228,8 +228,6 @@ def return_all_frames(meta_id, var_id):
         lon = row[0]
         lat = row[1]
         vals = row[2] # list of elems with elem = { 'f1': date as string, 'f2': value as float }
-        new_meta_item = [ v['f1'] for v in vals ]
-        out['response']['metadata']['timesteps'].append(new_meta_item)
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
@@ -238,7 +236,7 @@ def return_all_frames(meta_id, var_id):
     # TODO: the dates here might not be aligned with the vals in the previous query, probably have to do a join
     query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where meta_id=%s" % meta_id
     rows = db_session.execute(query)
-    out['response']['metadata']['timesteps'] = []
+
     for row in rows:
         date_str = str(row[0])
         out['response']['metadata']['timesteps'].append(date_str)
@@ -286,7 +284,7 @@ def main():
     print "Testing Q5..."
     meta_id = 1
     var_id = 1
-    print return_all_frames(meta_id, var_id)
+    #print return_all_frames(meta_id, var_id)
 
 if __name__ == "__main__":
     main()
