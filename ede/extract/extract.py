@@ -79,12 +79,16 @@ def return_griddata_select(meta_id, var_id, poly, date):
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
         out['data'].append(new_data_item)
-    query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    if date:
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+    else:
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-    out['metadata'] = {}
-    out['metadata']['dates'] = [date_str]
+        out['metadata']['dates'].append(date_str)
     return out
 
 
