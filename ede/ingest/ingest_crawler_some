@@ -1,12 +1,6 @@
 #!/bin/bash           
 
-urls_file=../crawler/urls_out
-
-while read line           
-do          
-	echo "ingesting... $line" 
-	wget $line
-	filename=${line##*/}	
+for filename in ../data/crawler/*; do
+    echo "ingesting..." $filename
 	python ingest.py $filename
-	rm $filename 
-done <$urls_file
+done
