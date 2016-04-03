@@ -48,8 +48,6 @@ def get_gridmeta(ids):
 
 
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<rect:poly>', defaults={'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<int:date>', defaults={'poly': None}, methods=['GET'])
 @api.route('/griddata/select/<int:meta_id>/<int:var_id>/<rect:poly>/<int:date>', methods=['GET'])
 def get_griddata_select(meta_id, var_id, poly, date):
     """Get values within specific polygon & date, by their IDs.
