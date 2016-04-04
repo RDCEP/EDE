@@ -32,6 +32,7 @@ def fetch_for_dates(date_start, date_end):
     for d in datasets['objects']:
         yield '%s/v1/api/detail/?obs_date__le=%s&obs_date__ge=%s&agg=week&dataset_name=%s' % (base_url, date_end, date_start, d['dataset_name'])
 
+
 def fetch_example_queries():
     
     # examples
