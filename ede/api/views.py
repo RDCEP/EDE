@@ -31,7 +31,7 @@ def flush_cache():
 
 
 @api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
-@api.route('/gridmeta/<intlist:ids>', methods=['GET'])
+@api.route('/gridmeta/datasets/<intlist:ids>', methods=['GET'])
 def get_gridmeta(ids):
     """Get metadata of gridded datasets by IDs.
 
@@ -47,9 +47,8 @@ def get_gridmeta(ids):
     return resp
 
 
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
-@api.route('/griddata/select/<int:meta_id>/<int:var_id>/<rect:poly>/<int:date>', methods=['GET'])
-def get_griddata_select(meta_id, var_id, poly, date):
+@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
+def get_griddata(meta_id, var_id):
     """Get values within specific polygon & date, by their IDs.
 
     If no polygon is specified we default to the entire globe.
@@ -57,20 +56,20 @@ def get_griddata_select(meta_id, var_id, poly, date):
 
     :param meta_id:
     :param var_id:
-    :param poly:
-    :param date:
     :return:
     """
     status_code = 200
-    data = return_griddata_select(meta_id, var_id, poly, date)
+    content = request.get_json()
+    poly = content['coordinates']
+    date = content['date']
+    data = return_griddata(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
 
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'date': None}, methods=['GET'])
-@api.route('/griddata/aggregate/spatial/<int:meta_id>/<int:var_id>/<rect:poly>/<int:date>', methods=['GET'])
-def get_griddata_aggregate_spatial(meta_id, var_id, poly, date):
+@api.route('/aggregate/spatial/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
+def get_griddata_aggregate_spatial(meta_id, var_id):
     """Do spatial aggregation over specific polygon & for specific date.
 
     If no polygon is passed we default to the entire globe.
@@ -78,21 +77,24 @@ def get_griddata_aggregate_spatial(meta_id, var_id, poly, date):
 
     :param meta_id:
     :param var_id:
-    :param poly:
-    :param date:
     :return:
     """
     status_code = 200
+    content = request.get_json()
+    poly = content['coordinates']
+    date = content['dates'] # must be ID = integer
     data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
 
-@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>', defaults={'poly': None, 'dates': None}, methods=['GET'])
-@api.route('/griddata/aggregate/temporal/<int:meta_id>/<int:var_id>/<rect:poly>/<intlist:dates>', methods=['GET'])
-def get_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
+@api.route('/aggregate/temporal/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
+def get_griddata_aggregate_temporal(meta_id, var_id):
     status_code = 200
+    content = request.get_json()
+    poly = content['coordinates'] # must be [p0,p1,...,pn] where p0=pn + each pi = [lon_i,lat_i]
+    dates = content['dates'] # must be list of date IDs
     data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'

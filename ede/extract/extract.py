@@ -6,9 +6,9 @@ from ede.database import db_session
 def return_gridmeta(ids):
     if ids:
         ids_str = '(' + ','.join(map(str, ids)) + ')'
-        query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
+        query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
     else:
-        query = "select filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
+        query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
     rows = db_session.execute(query)
     # The response JSON
     out = {}
@@ -18,17 +18,18 @@ def return_gridmeta(ids):
     out['data'] = []
     for row in rows:
         new_doc = {}
-        new_doc['filename'] = row[0]
-        new_doc['filesize'] = row[1]
-        new_doc['filetype'] = row[2]
-        new_doc['meta_data'] = row[3]
-        new_doc['date_created'] = datetime.strftime(row[4], "%Y-%m-%d %H:%M:%S")
-        new_doc['date_inserted'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
+        new_doc['uid'] = row[0]
+        new_doc['filename'] = row[1]
+        new_doc['filesize'] = row[2]
+        new_doc['filetype'] = row[3]
+        new_doc['meta_data'] = row[4]
+        new_doc['date_created'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
+        new_doc['date_inserted'] = datetime.strftime(row[6], "%Y-%m-%d %H:%M:%S")
         out['data'].append(new_doc)
     return out
 
 
-def return_griddata_select(meta_id, var_id, poly, date):
+def return_griddata(meta_id, var_id, poly, date):
     # poly + date specified
     if poly and date:
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
@@ -228,3 +229,6 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
         date_str = str(row[0])
         out['metadata']['dates'].append(date_str)
     return out
+
+
+
