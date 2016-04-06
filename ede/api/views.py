@@ -99,3 +99,21 @@ def get_griddata_aggregate_temporal(meta_id, var_id):
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
+
+
+@api.route('/polymeta/<intlist:ids>', defaults={'ids': None}, methods=['GET'])
+def get_polymeta(ids):
+    status_code = 200
+    data = return_polymeta(ids)
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
+
+@api.route('/polydata/<intlist:ids>', methods=['GET'])
+def get_polydata(ids):
+    status_code = 200
+    data = return_polydata(ids)
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp

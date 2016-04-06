@@ -231,4 +231,43 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     return out
 
 
+def return_polymeta(ids):
+    if ids:
+        ids_str = '(' + ','.join(map(str, ids)) + ')'
+        query = "select uid, meta_data where uid in %s" % ids_str
+    else:
+        query = "select uid, meta_data from grid_meta"
+    rows = db_session.execute(query)
+    # The response JSON
+    out = {}
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
+    for row in rows:
+        new_doc = {}
+        new_doc['uid'] = row[0]
+        new_doc['meta_data'] = row[1]
+        out['data'].append(new_doc)
+    return out
 
+
+def return_polydata(ids):
+    if ids:
+        ids_str = '(' + ','.join(map(str, ids)) + ')'
+        query = "select uid, ST_AsGeoJSON(geom) from regions where uid in %s" % ids_str
+    else:
+        query = "select uid, ST_AsGeoJSON(geom) from regions"
+    rows = db_session.execute(query)
+    # The response JSON
+    out = {}
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
+    for row in rows:
+        new_doc = {}
+        new_doc['uid'] = row[0]
+        new_doc['geo'] = row[1]
+        out['data'].append(new_doc)
+    return out
