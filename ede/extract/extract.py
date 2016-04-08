@@ -95,7 +95,7 @@ def return_griddata(meta_id, var_id, poly, date):
 
 def return_griddata_by_id(meta_id, var_id, poly, date):
     query = "SELECT ST_X(geom), ST_Y(geom), val " \
-            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, r.geom, TRUE))).* from " \
             "grid_data as gd, regions as r where gd.meta_id=%s and gd.var_id=%s and gd.date=%s and r.uid=poly) foo;" %\
             (meta_id, var_id, date)
     rows = db_session.execute(query)
