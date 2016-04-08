@@ -61,11 +61,11 @@ def get_griddata(meta_id, var_id):
     status_code = 200
     content = request.get_json()
     date = content['date']
-    poly_id = content['poly_id']
+    poly_id = content['poly_id'] #TODO: specify in JSON request format
     if poly_id:
         data = return_griddata_by_id(meta_id, var_id, poly_id, date)
     else:
-        poly = content['poly']
+        poly = content['poly'] #TODO: specify in JSON request format
         data = return_griddata(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
