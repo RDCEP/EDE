@@ -192,6 +192,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
         query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
             "where meta_id=%s and var_id=%s;" %\
             (poly_str, meta_id, var_id)
+    print query
     rows = db_session.execute(query)
     for row in rows:
         res = row[0].lstrip('(').rstrip(')').split(',')
@@ -225,6 +226,8 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     return out
 
 
+def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
+    return -1
 
 
 def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
