@@ -364,25 +364,23 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
 def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
     # poly + dates specified
     if poly and dates:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
         date_str = '(' + ','.join(map(str, dates)) + ')'
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s and date in %s group by date))" %\
-              (poly_str, meta_id, var_id, date_str)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+        tmp =   "with foo as (select array(select ROW(ST_Union(ST_Clip(gd.rast, r.geom)), 1)::rastbandarg as rast " \
+                "from grid_data as gd, regions as r where " \
+                "gd.meta_id=%s and gd.var_id=%s and r.uid=%s and gd.date in %s group by date))" %\
+                (meta_id, var_id, poly, date_str)
+        query = tmp + '\n' +    "SELECT ST_X(geom), ST_Y(geom), val FROM " \
+                                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
+                                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
     # only poly specified
     elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s group by date))" %\
-              (poly_str, meta_id, var_id)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+        tmp =   "with foo as (select array(select ROW(ST_Union(ST_Clip(gd.rast, r.geom)), 1)::rastbandarg as rast " \
+                "from grid_data as gd, regions as r where " \
+                "gd.meta_id=%s and gd.var_id=%s and r.uid=%s group by date))" %\
+                (meta_id, var_id, poly)
+        query = tmp + '\n' +    "SELECT ST_X(geom), ST_Y(geom), val FROM " \
+                                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
+                                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
     # only dates specified
     elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
