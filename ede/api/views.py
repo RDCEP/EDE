@@ -60,9 +60,13 @@ def get_griddata(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    poly = content['polygon']
     date = content['date']
-    data = return_griddata(meta_id, var_id, poly, date)
+    poly_id = content['poly_id']
+    if poly_id:
+        data = return_griddata_by_id(meta_id, var_id, poly_id, date)
+    else:
+        poly = content['poly']
+        data = return_griddata(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
