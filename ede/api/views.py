@@ -60,7 +60,7 @@ def get_griddata(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    poly = content['coordinates']
+    poly = content['polygon']
     date = content['date']
     data = return_griddata(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
@@ -81,7 +81,7 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    poly = content['coordinates']
+    poly = content['polygon']
     date = content['dates'] # must be ID = integer
     data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
@@ -93,7 +93,7 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
 def get_griddata_aggregate_temporal(meta_id, var_id):
     status_code = 200
     content = request.get_json()
-    poly = content['coordinates'] # must be [p0,p1,...,pn] where p0=pn + each pi = [lon_i,lat_i]
+    poly = content['polygon'] # must be [p0,p1,...,pn] where p0=pn + each pi = [lon_i,lat_i]
     dates = content['dates'] # must be list of date IDs
     data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
