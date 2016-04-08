@@ -94,9 +94,6 @@ def return_griddata(meta_id, var_id, poly, date):
 
 
 def return_griddata_by_id(meta_id, var_id, poly, date):
-   # get polygon from db
-    poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
     query = "SELECT ST_X(geom), ST_Y(geom), val " \
             "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
             "grid_data as gd, regions as r where gd.meta_id=%s and gd.var_id=%s and gd.date=%s and r.uid=poly) foo;" %\
