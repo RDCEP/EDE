@@ -101,9 +101,13 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
 def get_griddata_aggregate_temporal(meta_id, var_id):
     status_code = 200
     content = request.get_json()
-    poly = content['polygon'] # must be [p0,p1,...,pn] where p0=pn + each pi = [lon_i,lat_i]
     dates = content['dates'] # must be list of date IDs
-    data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
+    poly_id = content['poly_id']
+    if poly_id:
+        data = return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly_id, dates)
+    else:
+        poly = content['poly']
+        data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
