@@ -93,7 +93,7 @@ def return_griddata(meta_id, var_id, poly, date):
     return out
 
 
-def return_griddata_(meta_id, var_id, poly, date):
+def return_griddata_by_id(meta_id, var_id, poly, date):
    # get polygon from db
     poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
               (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
