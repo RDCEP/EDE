@@ -89,12 +89,16 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    date = content['dates'] # must be ID = integer, #TODO: specify in JSON request format
-    poly_id = content['poly_id']
+    date = None
+    poly_id = None
+    poly = None
+    if content:
+        date = content['dates'] # must be ID = integer, #TODO: specify in JSON request format
+        poly_id = content['poly_id']
+        poly = content['poly']
     if poly_id:
         data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date)
     else:
-        poly = content['poly']
         data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
@@ -105,12 +109,16 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
 def get_griddata_aggregate_temporal(meta_id, var_id):
     status_code = 200
     content = request.get_json()
-    dates = content['dates'] # must be list of date IDs
-    poly_id = content['poly_id']
+    dates = None
+    poly_id = None
+    poly = None
+    if content:
+        dates = content['dates'] # must be list of date IDs
+        poly_id = content['poly_id']
+        poly = content['poly']
     if poly_id:
         data = return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly_id, dates)
     else:
-        poly = content['poly']
         data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
