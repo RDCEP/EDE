@@ -58,16 +58,19 @@ def get_griddata(meta_id, var_id):
     :param var_id:
     :return:
     """
-    print "Hello Sevi!!"
+    print "get_griddata start..."
     status_code = 200
     content = request.get_json()
     date = content['date']
     poly_id = content['poly_id'] #TODO: specify in JSON request format
+    print "chp 1"
     if poly_id:
         data = return_griddata_by_id(meta_id, var_id, poly_id, date)
+        print "chp 2"
     else:
         poly = content['poly'] #TODO: specify in JSON request format
         data = return_griddata(meta_id, var_id, poly, date)
+        print "chp 3"
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
