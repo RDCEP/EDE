@@ -58,6 +58,7 @@ def get_griddata(meta_id, var_id):
     :param var_id:
     :return:
     """
+    print "Hello Sevi!!"
     status_code = 200
     content = request.get_json()
     date = content['date']
