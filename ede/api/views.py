@@ -125,7 +125,8 @@ def get_griddata_aggregate_temporal(meta_id, var_id):
     return resp
 
 
-@api.route('/polymeta/<intlist:ids>', defaults={'ids': None}, methods=['GET'])
+@api.route('/polymeta', defaults={'ids': None}, methods=['GET'])
+@api.route('/polymeta/<intlist:ids>', methods=['GET'])
 def get_polymeta(ids):
     status_code = 200
     data = return_polymeta(ids)
