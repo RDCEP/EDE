@@ -60,6 +60,9 @@ def get_griddata(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
+    date = None
+    poly_id = None
+    poly = None
     if content:
         date = content['date']
         poly_id = content['poly_id'] #TODO: specify in JSON request format
