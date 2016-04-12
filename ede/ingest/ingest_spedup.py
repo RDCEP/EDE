@@ -139,12 +139,12 @@ def main(netcdf_filename):
         meta_id = int(row[0])
 
     # (2) Determine variables to loop over + loop over them
-    vars = map(str, rootgrp.variables.keys())
+    # vars = map(str, rootgrp.variables.keys())
     # print rootgrp.variables['lat'][:]
 
-    for var in vars:
-        print "Variable we are looking at: %s" % var
-        # print rootgrp.variables[var]
+    for vname, vdata in rootgrp.variables:
+        print "Variable we are looking at: %s" % str(vname)
+        print vdata[:]
 
     '''
     for i, vname in enumerate(vnames):
