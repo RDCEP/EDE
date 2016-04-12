@@ -141,7 +141,7 @@ def main(netcdf_filename):
     # (2) Determine variables to loop over + loop over them
     vars = rootgrp.variables.keys()
     for var in vars:
-        print var
+        print type(var)
         print rootgrp.variables[var][:]
 
     '''
