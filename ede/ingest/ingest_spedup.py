@@ -142,7 +142,7 @@ def main(netcdf_filename):
     # vars = map(str, rootgrp.variables.keys())
     # print rootgrp.variables['lat'][:]
 
-    for vname, vdata in rootgrp.variables:
+    for vname, vdata in rootgrp.variables.iteritems():
         print "Variable we are looking at: %s" % str(vname)
         print vdata[:]
 
