@@ -139,9 +139,9 @@ def main(netcdf_filename):
         meta_id = int(row[0])
 
     # (2) Determine variables to loop over + loop over them
-    vars = rootgrp.variables.keys()
+    vars = map(str, rootgrp.variables.keys())
     for var in vars:
-        print type(var)
+        print var
         print rootgrp.variables[var][:]
 
     '''
