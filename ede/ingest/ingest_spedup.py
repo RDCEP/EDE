@@ -140,10 +140,12 @@ def main(netcdf_filename):
 
     # (2) Determine variables to loop over + loop over them
     vars = map(str, rootgrp.variables.keys())
-    print rootgrp.variables['lat']
+    print rootgrp.variables['lat'][:]
+    '''
     for var in vars:
         print "Variable we are looking at: %s" % var
         print rootgrp.variables[var]
+    '''
 
     '''
     for i, vname in enumerate(vnames):
