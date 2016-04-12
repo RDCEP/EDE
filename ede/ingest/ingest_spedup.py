@@ -142,7 +142,8 @@ def main(netcdf_filename):
     vars = map(str, rootgrp.variables.keys())
     for var in vars:
         print var
-        print rootgrp.variables[var][:]
+        print type(var)
+        #print rootgrp.variables[var][:]
 
     '''
     for i, vname in enumerate(vnames):
