@@ -144,7 +144,7 @@ def main(netcdf_filename):
 
     for vname, vdata in rootgrp.variables.iteritems():
         print "Variable we are looking at: %s" % str(vname)
-        print type(vdata[:])
+        print type(vdata)
 
     '''
     for i, vname in enumerate(vnames):
