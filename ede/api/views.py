@@ -42,6 +42,7 @@ def get_gridmeta(ids):
     """
     status_code = 200
     data = return_gridmeta(ids)
+    data['request']['url'] = request.url_rule
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -71,6 +72,7 @@ def get_griddata(meta_id, var_id):
         data = return_griddata_by_id(meta_id, var_id, poly_id, date)
     else:
         data = return_griddata(meta_id, var_id, poly, date)
+    data['request']['url'] = request.url_rule
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
