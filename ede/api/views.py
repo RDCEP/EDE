@@ -42,7 +42,7 @@ def get_gridmeta(ids):
     """
     status_code = 200
     data = return_gridmeta(ids)
-    data['request']['url'] = request.route
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
