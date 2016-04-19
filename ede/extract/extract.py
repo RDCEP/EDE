@@ -158,7 +158,7 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
     # the response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S') 
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
@@ -246,8 +246,8 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     # the response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-     out['response'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
@@ -326,7 +326,7 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
     # the response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S') 
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
@@ -415,8 +415,8 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     # the response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-     out['response'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
@@ -507,7 +507,7 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
     # the response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S') 
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
@@ -561,7 +561,7 @@ def return_polymeta(ids):
     # The response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S') 
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
@@ -586,7 +586,7 @@ def return_polydata(ids):
     # The response JSON
     out = {}
     out['request'] = {}
-     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S') 
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response']['status'] = 'OK'
