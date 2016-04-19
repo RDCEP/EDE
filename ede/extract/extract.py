@@ -101,7 +101,7 @@ def return_griddata(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
@@ -188,7 +188,7 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
@@ -272,7 +272,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
@@ -352,7 +352,7 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
@@ -445,7 +445,7 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
@@ -537,7 +537,7 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
-    query = "select meta_data from grid_data where uid=%s" % meta_id
+    query = "select meta_data from grid_meta where uid=%s" % meta_id
     rows = db_session.execute(query)
     for row in rows:
         meta_data = row[0]
