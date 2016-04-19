@@ -97,7 +97,7 @@ def return_griddata(meta_id, var_id, poly, date):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
@@ -184,7 +184,7 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
@@ -268,7 +268,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
@@ -348,7 +348,7 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
@@ -441,7 +441,7 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
@@ -533,7 +533,7 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
         date_str = str(row[0])
         out['response']['metadata']['dates'].append(date_str)
     out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where var_id=%s" % var_id
+    query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
     for row in rows:
         vname = row[0]
