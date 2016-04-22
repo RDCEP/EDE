@@ -153,6 +153,7 @@ def main(netcdf_filename):
     p = re.compile('\\(\"rast\"\\)')
     q = re.compile('\\);')
     for i, vname in enumerate(vnames):
+        print "Processing variable: %s ...." % vname
         # (3.1) Ingest into grid_vars + get var_id
         cur.execute("select uid from grid_vars where vname = \'%s\'" % (vname)) # check if variable already there
         rows = cur.fetchall()
@@ -176,10 +177,12 @@ def main(netcdf_filename):
                 # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
                 if not subdatasets:
                     # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
+                    print "Running raster2pgsql for variable: %s and time band: %s ..." % (vname, str(band+1))
                     proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), netcdf_filename, 'grid_data'], stdout=subprocess.PIPE)
                 # The case where we do have subdatasets, i.e. NetCDFs from Alison
                 else:
                     # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
+                    print "Running raster2pgsql for variable: %s and time band: %s ..." % (vname, str(band+1))
                     proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
 
                 # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
