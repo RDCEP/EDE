@@ -187,7 +187,7 @@ def main(netcdf_filename):
 
                 # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
                 while True:
-                    print "Reading next line from pipe buffer ...
+                    print "Reading next line from pipe buffer ..."
                     line = proc.stdout.readline().rstrip()
                     if line == '':
                         break
