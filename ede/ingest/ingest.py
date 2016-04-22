@@ -186,6 +186,7 @@ def main(netcdf_filename):
                     proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), subdatasets[i], 'grid_data'], stdout=subprocess.PIPE)
 
                 # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
+                '''
                 while True:
                     line = proc.stdout.readline().rstrip()
                     if line == '':
@@ -218,6 +219,7 @@ def main(netcdf_filename):
                     subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\")', line)[0]
                     subst_all = q.subn(', %s, %s);' % (meta_id, var_id), subst_cols)[0]
                     cur.execute(subst_all)
+        '''
 
     conn.commit()
     
