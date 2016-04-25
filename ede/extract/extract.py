@@ -14,14 +14,11 @@ def return_gridmeta(ids):
     # The response JSON
     out = dict(data=list(), metadata=dict())
     for row in rows:
-        new_doc = {}
-        new_doc['uid'] = row[0]
-        new_doc['filename'] = row[1]
-        new_doc['filesize'] = row[2]
-        new_doc['filetype'] = row[3]
-        new_doc['meta_data'] = row[4]
-        new_doc['date_created'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
-        new_doc['date_inserted'] = datetime.strftime(row[6], "%Y-%m-%d %H:%M:%S")
+        new_doc = dict(
+            uid=row[0], filename=row[1], filesize=row[2], filetype=row[3],
+            meta_data=row[4],
+            date_created=datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S"),
+            date_inserted=datetime.strftime(row[6], "%Y-%m-%d %H:%M:%S"))
         out['data'].append(new_doc)
     return out
 
@@ -60,8 +57,8 @@ def return_griddata(meta_id, var_id, poly, date):
         val = row[2]
         new_data_item = {}
         new_data_item['type'] = 'Feature'
-        new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
-        new_data_item['properties'] = { 'values': [val] }
+        new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
+        new_data_item['properties'] = {'values': [val]}
         out['data'].append(new_data_item)
     if date:
         query = DATE_BY_ID.format(date)
@@ -75,20 +72,20 @@ def return_griddata(meta_id, var_id, poly, date):
     return out
 
 
-def return_griddata_by_id(meta_id, var_id, poly, date):
-    query = GRID_DATA_BY_DATE_AND_POLYID.format(meta_id, var_id, poly, date)
+def return_griddata_by_id(meta_id, var_id, poly_id, date):
+    query = GRID_DATA_BY_DATE_AND_POLYID.format(meta_id, var_id, poly_id, date)
     rows = db_session.execute(query)
     for row in rows:
         print row
 
-    if poly:
+    if poly_id:
         if date:
             # poly + date specified
             query = GRID_DATA_BY_DATE_AND_POLYID.format(
-                meta_id, var_id, poly, date)
+                meta_id, var_id, poly_id, date)
         else:
             # only poly specified
-            query = GRID_DATA_BY_POLYID.format(meta_id, var_id, poly)
+            query = GRID_DATA_BY_POLYID.format(meta_id, var_id, poly_id)
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         if date:
@@ -122,36 +119,23 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
 
 
 def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
-    # poly + date specified
-    if poly and date:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s and date=%s;" %\
-            (poly_str, meta_id, var_id, date)
-    # only poly specified
-    elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s;" %\
-            (poly_str, meta_id, var_id)
-    # only date specified
-    elif date:
-        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s and date=%s;" %\
-            (poly_str, meta_id, var_id, date)
-    # neither poly nor date specified
+    if poly:
+        if date:
+            # poly + date specified
+            query = SPATIAL_AGG_BY_DATE.format(
+                make_poly_str(poly), meta_id, var_id, date)
+        else:
+            # only poly specified
+            query = SPATIAL_AGG.format(make_poly_str(poly), meta_id, var_id)
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s;" %\
-            (poly_str, meta_id, var_id)
+        if date:
+            # only date specified
+            query = SPATIAL_AGG_BY_DATE.format(
+                make_poly_str(poly), meta_id, var_id, date)
+        else:
+            # neither poly nor date specified
+            query = SPATIAL_AGG.format(make_poly_str(poly), meta_id, var_id)
     #print query
     rows = db_session.execute(query)
     for row in rows:
@@ -163,22 +147,18 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     min = float(res[4])
     max = float(res[5])
     # the response JSON
-    out = {}
-    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['status'] = 'OK'
-    out['status_code'] = 200
-    out['data'] = []
+    out = dict(data=list(), metadata=dict())
     new_data_item = {}
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
-    new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
+    new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean,
+                                   'stddev': stddev, 'min':min, 'max': max}
     out['data'].append(new_data_item)
     if date:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+        query = DATE_BY_ID.format(date)
     else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
+        query = DATE
     rows = db_session.execute(query)
-    out['metadata'] = {}
     out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
@@ -186,33 +166,24 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     return out
 
 
-def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
-    # poly + date specified
-    if poly and date:
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, r.geom, true))) from grid_data as gd, regions as r " \
-                "where gd.meta_id=%s and gd.var_id=%s and r.uid=%s and gd.date=%s;" %\
-                (meta_id, var_id, poly, date)
-    # only poly specified
-    elif poly:
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, r.geom, true))) from grid_data as gd, regions as r " \
-                "where gd.meta_id=%s and gd.var_id=%s and r.uid=%s;" %\
-                (meta_id, var_id, poly)
-    # only date specified
-    elif date:
-        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s and date=%s;" %\
-            (poly_str, meta_id, var_id, date)
-    # neither poly nor date specified
+def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date):
+    if poly_id:
+        if date:
+            # poly + date specified
+            query = SPATIAL_AGG_BY_DATE_AND_POLYID.format(
+                meta_id, var_id, poly_id, date)
+        else:
+            # only poly specified
+            query = SPATIAL_AGG_BY_POLYID.format(meta_id, var_id, poly_id)
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "select ST_SummaryStats(ST_Union(ST_Clip(rast, %s, true))) from grid_data " \
-            "where meta_id=%s and var_id=%s;" %\
-            (poly_str, meta_id, var_id)
+        if date:
+            # only date specified
+            query = SPATIAL_AGG_BY_DATE.format(
+                make_poly_str(poly), meta_id, var_id, date)
+        else:
+            # neither poly nor date specified
+            query = SPATIAL_AGG.format(make_poly_str(poly), meta_id, var_id)
     #print query
     rows = db_session.execute(query)
     for row in rows:
@@ -231,13 +202,14 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
     out['data'] = []
     new_data_item = {}
     new_data_item['type'] = 'Feature'
-    new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
-    new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
+    new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly_id}
+    new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean,
+                                   'stddev': stddev, 'min':min, 'max': max}
     out['data'].append(new_data_item)
     if date:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+        query = DATE_BY_ID.format(date)
     else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
+        query = DATE
     rows = db_session.execute(query)
     out['metadata'] = {}
     out['metadata']['dates'] = []
