@@ -1,24 +1,18 @@
 from datetime import datetime
 import time
 from ede.database import db_session
+from ede.extract.sql import *
 
 
 def return_gridmeta(ids):
     if ids:
         ids_str = '(' + ','.join(map(str, ids)) + ')'
-        query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta where uid in %s" % ids_str
+        query = GRID_META_BY_UID.format(ids_str)
     else:
-        query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
+        query = GRID_META
     rows = db_session.execute(query)
     # The response JSON
-    out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out = dict(data=list(), metadata=dict())
     for row in rows:
         new_doc = {}
         new_doc['uid'] = row[0]
@@ -28,55 +22,40 @@ def return_gridmeta(ids):
         new_doc['meta_data'] = row[4]
         new_doc['date_created'] = datetime.strftime(row[5], "%Y-%m-%d %H:%M:%S")
         new_doc['date_inserted'] = datetime.strftime(row[6], "%Y-%m-%d %H:%M:%S")
-        out['response']['data'].append(new_doc)
+        out['data'].append(new_doc)
     return out
 
 
 def return_griddata(meta_id, var_id, poly, date):
     # poly + date specified
     if poly and date:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "SELECT ST_X(geom), ST_Y(geom), val " \
-            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-            "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" %\
-            (poly_str, meta_id, var_id, date)
+        poly_str = MAKE_POLY.format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
+            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = GRID_DATA_BY_DATE.format(poly_str, meta_id, var_id, date)
     # only poly specified
     elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "SELECT ST_X(geom), ST_Y(geom), val " \
-            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-            "grid_data where meta_id=%s and var_id=%s) foo;" %\
-            (poly_str, meta_id, var_id)
+        poly_str = MAKE_POLY.format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
+            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = GRID_DATA.format(poly_str, meta_id, var_id)
     # only date specified
     elif date:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "SELECT ST_X(geom), ST_Y(geom), val " \
-            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-            "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" %\
-            (poly_str, meta_id, var_id, date)
+        poly_str = MAKE_POLY.format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
+            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = GRID_DATA_BY_DATE.format(poly_str, meta_id, var_id, date)
     # neither poly nor date specified
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = "SELECT ST_X(geom), ST_Y(geom), val " \
-            "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-            "grid_data where meta_id=%s and var_id=%s) foo;" %\
-            (poly_str, meta_id, var_id)
+        poly_str = MAKE_POLY.format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
+            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = GRID_DATA.format(poly_str, meta_id, var_id)
     rows = db_session.execute(query)
     # the response JSON
-    out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out = dict(data=list(), metadata=dict())
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -85,37 +64,28 @@ def return_griddata(meta_id, var_id, poly, date):
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
-        out['response']['data'].append(new_data_item)
+        out['data'].append(new_data_item)
     if date:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
+        query = DATE_BY_ID.format(date)
     else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
+        query = DATE
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'grid'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
 def return_griddata_by_id(meta_id, var_id, poly, date):
+    query = "SELECT ST_X(geom), ST_Y(geom), val " \
+            "from (select (ST_PixelAsCentroids(ST_Clip(rast, r.geom, TRUE))).* from " \
+            "grid_data as gd, regions as r where gd.meta_id=%s and gd.var_id=%s and r.uid=%s and gd.date=%s) foo;" %\
+            (meta_id, var_id, poly, date)
+    rows = db_session.execute(query)
+    for row in rows:
+        print row
+
     # poly + date specified
     if poly and date:
         query = "SELECT ST_X(geom), ST_Y(geom), val " \
@@ -149,13 +119,10 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
     rows = db_session.execute(query)
     # the response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -164,33 +131,17 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
         new_data_item['properties'] = { 'values': [val] }
-        out['response']['data'].append(new_data_item)
+        out['data'].append(new_data_item)
     if date:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     else:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'grid'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
@@ -237,44 +188,25 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     max = float(res[5])
     # the response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     new_data_item = {}
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
     new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
-    out['response']['data'].append(new_data_item)
+    out['data'].append(new_data_item)
     if date:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     else:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'polygon'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
@@ -317,44 +249,25 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
     max = float(res[5])
     # the response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     new_data_item = {}
     new_data_item['type'] = 'Feature'
     new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
     new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min':min, 'max': max}
-    out['response']['data'].append(new_data_item)
+    out['data'].append(new_data_item)
     if date:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
     else:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'polygon'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
@@ -406,13 +319,10 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     rows = db_session.execute(query)
     # the response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -421,33 +331,17 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
         new_data_item['properties'] = {'values': [val]}
-        out['response']['data'].append(new_data_item)
+        out['data'].append(new_data_item)
     if dates:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid in %s" % date_str
     else:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'grid'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
@@ -494,16 +388,14 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
         query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
                 "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
                 "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+    print query
     rows = db_session.execute(query)
     # the response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -512,33 +404,17 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
         new_data_item['properties'] = {'values': [val]}
-        out['response']['data'].append(new_data_item)
+        out['data'].append(new_data_item)
     if dates:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid in %s" % date_str
     else:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
     rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
+    out['metadata'] = {}
+    out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    out['response']['metadata']['region'] = poly
-    query = "select vname from grid_vars where uid=%s" % var_id
-    rows = db_session.execute(query)
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid=%s" % meta_id
-    rows = db_session.execute(query)
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'grid'
+        out['metadata']['dates'].append(date_str)
     return out
 
 
@@ -551,19 +427,16 @@ def return_polymeta(ids):
     rows = db_session.execute(query)
     # The response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         new_doc = {}
         new_doc['uid'] = row[0]
         new_doc['name'] = row[1]
         new_doc['attributes'] = row[1]
-        out['response']['data'].append(new_doc)
+        out['data'].append(new_doc)
     return out
 
 
@@ -576,16 +449,13 @@ def return_polydata(ids):
     rows = db_session.execute(query)
     # The response JSON
     out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
+    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['status'] = 'OK'
+    out['status_code'] = 200
+    out['data'] = []
     for row in rows:
         new_doc = {}
         new_doc['uid'] = row[0]
         new_doc['geo'] = row[1]
-        out['response']['data'].append(new_doc)
+        out['data'].append(new_doc)
     return out
