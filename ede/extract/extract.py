@@ -26,33 +26,31 @@ def return_gridmeta(ids):
     return out
 
 
+def make_poly_str(poly):
+    return MAKE_POLY.format(
+        poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
+        poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+
+
 def return_griddata(meta_id, var_id, poly, date):
-    # poly + date specified
-    if poly and date:
-        poly_str = MAKE_POLY.format(
-            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
-            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = GRID_DATA_BY_DATE.format(poly_str, meta_id, var_id, date)
-    # only poly specified
-    elif poly:
-        poly_str = MAKE_POLY.format(
-            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
-            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = GRID_DATA.format(poly_str, meta_id, var_id)
-    # only date specified
-    elif date:
-        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = MAKE_POLY.format(
-            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
-            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = GRID_DATA_BY_DATE.format(poly_str, meta_id, var_id, date)
-    # neither poly nor date specified
+    if poly:
+        if date:
+            # poly + date specified
+            query = GRID_DATA_BY_DATE.format(
+                make_poly_str(poly), meta_id, var_id, date)
+        else:
+            # only poly specified
+            query = GRID_DATA.format(
+                make_poly_str(poly), meta_id, var_id)
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = MAKE_POLY.format(
-            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0],
-            poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        query = GRID_DATA.format(poly_str, meta_id, var_id)
+        # neither poly nor date specified
+        query = GRID_DATA.format(make_poly_str(poly), meta_id, var_id)
+        if date:
+            # only date specified
+            query = GRID_DATA_BY_DATE.format(
+                make_poly_str(poly), meta_id, var_id, date)
+
     rows = db_session.execute(query)
     # the response JSON
     out = dict(data=list(), metadata=dict())
