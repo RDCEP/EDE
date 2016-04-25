@@ -42,6 +42,7 @@ def get_gridmeta(ids):
     """
     status_code = 200
     data = return_gridmeta(ids)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -71,6 +72,7 @@ def get_griddata(meta_id, var_id):
         data = return_griddata_by_id(meta_id, var_id, poly_id, date)
     else:
         data = return_griddata(meta_id, var_id, poly, date)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -100,6 +102,7 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
         data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date)
     else:
         data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -120,6 +123,7 @@ def get_griddata_aggregate_temporal(meta_id, var_id):
         data = return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly_id, dates)
     else:
         data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -130,6 +134,7 @@ def get_griddata_aggregate_temporal(meta_id, var_id):
 def get_polymeta(ids):
     status_code = 200
     data = return_polymeta(ids)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -139,6 +144,7 @@ def get_polymeta(ids):
 def get_polydata(ids):
     status_code = 200
     data = return_polydata(ids)
+    data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
