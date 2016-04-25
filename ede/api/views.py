@@ -4,7 +4,7 @@ try:
     import simplejson as json
 except ImportError:
     import json
-from datetime import date
+from datetime import date, time
 from flask import Blueprint, make_response, request
 from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
@@ -21,6 +21,15 @@ api = Blueprint('ede_api', __name__, url_prefix='/api/{}'.format(API_VERSION))
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
 
 
+def base_response(r):
+    return dict(
+        datetime=time.strftime('%Y-%m-%d %H:%M:%S'),
+        status='OK',
+        status_code=200,
+        request=dict(url=r.path),
+    )
+
+
 @api.route('/flush-cache')
 def flush_cache():
     cache.clear()
@@ -30,8 +39,8 @@ def flush_cache():
     return resp
 
 
-@api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
-@api.route('/gridmeta/datasets/<intlist:ids>', methods=['GET'])
+@api.route('/gridmeta', defaults={'ids': None}, methods=['GET', 'POST'])
+@api.route('/gridmeta/datasets/<intlist:ids>', methods=['GET', 'POST'])
 def get_gridmeta(ids):
     """Get metadata of gridded datasets by IDs.
 
@@ -40,15 +49,26 @@ def get_gridmeta(ids):
     :param ids:
     :return:
     """
-    status_code = 200
-    data = return_gridmeta(ids)
-    data['request']['url'] = request.path
+    data = base_response(request)
+
+    try:
+        status_code = 200
+        if request.method == 'GET':
+            data['data'] = return_gridmeta(ids)
+        else:
+            search = request.json.get('search')
+            data['data'] = return_gridmeta(ids)
+    except Exception:
+        status_code = 500
+        data['status'] = 'Error'
+    data['status_code'] = status_code
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
 
-@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
+@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>',
+           methods=['GET', 'POST'])
 def get_griddata(meta_id, var_id):
     """Get values within specific polygon & date, by their IDs.
 
@@ -59,26 +79,36 @@ def get_griddata(meta_id, var_id):
     :param var_id:
     :return:
     """
-    status_code = 200
-    content = request.get_json()
+    data = base_response(request)
     date = None
     poly_id = None
     poly = None
-    if content:
-        date = content['date']
-        poly_id = content['poly_id'] #TODO: specify in JSON request format
-        poly = content['poly'] #TODO: specify in JSON request format
-    if poly_id:
-        data = return_griddata_by_id(meta_id, var_id, poly_id, date)
-    else:
-        data = return_griddata(meta_id, var_id, poly, date)
-    data['request']['url'] = request.path
+    try:
+        status_code = 200
+        if request.method == 'GET':
+            data = dict(data, **return_griddata(meta_id, var_id, poly, date))
+        else:
+            # TODO: specify JSON request format
+            content = request.get_json()
+            if content:
+                date = content['date'] if 'date' in content.keys() else None
+                poly_id = content['poly_id'] if 'poly_id' in content.keys() else None
+                poly = content['poly'] if 'poly' in content.keys() else None
+            if poly_id:
+                data = dict(data, **return_griddata_by_id(meta_id, var_id, poly_id, date))
+            else:
+                data = dict(data, **return_griddata(meta_id, var_id, poly, date))
+    except:
+        status_code = 500
+        data['status'] = 'Error'
+    data['status_code'] = status_code
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
 
-@api.route('/aggregate/spatial/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
+@api.route('/aggregate/spatial/dataset/<int:meta_id>/var/<int:var_id>',
+           methods=['GET', 'POST'])
 def get_griddata_aggregate_spatial(meta_id, var_id):
     """Do spatial aggregation over specific polygon & for specific date.
 
@@ -89,20 +119,31 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
     :param var_id:
     :return:
     """
-    status_code = 200
-    content = request.get_json()
+    data = base_response(request)
     date = None
     poly_id = None
     poly = None
-    if content:
-        date = content['dates'] # must be ID = integer, #TODO: specify in JSON request format
-        poly_id = content['poly_id']
-        poly = content['poly']
-    if poly_id:
-        data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date)
-    else:
-        data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
-    data['request']['url'] = request.path
+    try:
+        status_code = 200
+        if request.method == 'GET':
+            data = dict(data, **return_griddata_aggregate_spatial(
+                meta_id, var_id, poly, date))
+        else:
+            content = request.get_json()
+            if content:
+                date = int(content['dates']) # must be ID = integer, #TODO: specify in JSON request format
+                poly_id = int(content['poly_id'])
+                poly = content['poly']
+            if poly_id:
+                data = dict(data, **return_griddata_aggregate_spatial_by_id(
+                    meta_id, var_id, poly_id, date))
+            else:
+                data = dict(data, **return_griddata_aggregate_spatial(
+                    meta_id, var_id, poly, date))
+    except:
+        status_code = 500
+        data['status'] = 'Error'
+    data['status_code'] = status_code
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
@@ -110,15 +151,16 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
 
 @api.route('/aggregate/temporal/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
 def get_griddata_aggregate_temporal(meta_id, var_id):
-    status_code = 200
-    content = request.get_json()
+    data = base_response(request)
     dates = None
     poly_id = None
     poly = None
-    if content:
-        dates = content['dates'] # must be list of date IDs
-        poly_id = content['poly_id']
-        poly = content['poly']
+    if request.method == 'POST':
+        content = request.get_json()
+        if content:
+            dates = content['dates'] # must be list of date IDs
+            poly_id = content['poly_id']
+            poly = content['poly']
     if poly_id:
         data = return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly_id, dates)
     else:
