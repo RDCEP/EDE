@@ -220,57 +220,29 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date):
 
 
 def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
-    # poly + dates specified
-    if poly and dates:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        date_str = '(' + ','.join(map(str, dates)) + ')'
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s and date in %s group by date))" %\
-              (poly_str, meta_id, var_id, date_str)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
-    # only poly specified
-    elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s group by date))" %\
-              (poly_str, meta_id, var_id)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
-    # only dates specified
-    elif dates:
-        poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        date_str = '(' + ','.join(map(str, dates)) + ')'
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s and date in %s group by date))" %\
-              (poly_str, meta_id, var_id, date_str)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
-    # neither poly nor dates specified
+    date_str = '(' + ','.join(map(str, dates)) + ')'
+    if poly:
+        if dates:
+            # poly + dates specified
+            query = TEMPORAL_AGG_BY_DATE_AND_POLY.format(
+                make_poly_str(poly), meta_id, var_id, date_str)
+        else:
+            # only poly specified
+            query = TEMPORAL_AGG_BY_POLY.format(
+                make_poly_str(poly), meta_id, var_id)
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" %\
-              (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1], poly[4][0], poly[4][1])
-        tmp = "with foo as (select array(select ROW(ST_Union(ST_Clip(rast, %s)), 1)::rastbandarg as rast from grid_data " \
-                "where meta_id=%s and var_id=%s group by date))" %\
-              (poly_str, meta_id, var_id)
-        query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
-                "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
-                "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+        if dates:
+            # only dates specified
+            query = TEMPORAL_AGG_BY_DATE_AND_POLY.format(
+                make_poly_str(poly), meta_id, var_id, date_str)
+        else:
+            # neither poly nor dates specified
+            query = TEMPORAL_AGG_BY_POLY.format(
+                make_poly_str(poly), meta_id, var_id)
     rows = db_session.execute(query)
     # the response JSON
-    out = {}
-    out['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['status'] = 'OK'
-    out['status_code'] = 200
-    out['data'] = []
+    out = dict(data=list(), metadata=dict())
     for row in rows:
         lon = row[0]
         lat = row[1]
@@ -281,11 +253,10 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
         new_data_item['properties'] = {'values': [val]}
         out['data'].append(new_data_item)
     if dates:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid in %s" % date_str
+        query = DATE_BY_ID.format(date_str)
     else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
+        query = DATE
     rows = db_session.execute(query)
-    out['metadata'] = {}
     out['metadata']['dates'] = []
     for row in rows:
         date_str = str(row[0])

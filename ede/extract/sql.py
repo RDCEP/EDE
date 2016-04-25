@@ -68,3 +68,20 @@ SPATIAL_AGG_BY_DATE_AND_POLYID = """SELECT ST_SummaryStats(ST_Union(ST_Clip(rast
 FROM grid_data AS gd, regions AS r
 WHERE gd.meta_id={} AND gd.var_id={} AND r.uid={} AND gd.date={};
 """
+
+TEMPORAL_AGG_BY_DATE_AND_POLY = """WITH foo AS (SELECT ARRAY(SELECT ROW(
+ST_Union(ST_Clip(rast, {})), 1)::rastbandarg AS rast from grid_data
+WHERE meta_id={} AND var_id={} AND DATE IN {} GROUP BY DATE))
+SELECT ST_X(geom), ST_Y(geom), val FROM
+(SELECT (ST_PixelAsCentroids(ST_MapAlgebra((SELECT * FROM foo)::rastbandarg[],
+'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;
+"""
+
+TEMPORAL_AGG_BY_POLY = """WITH foo AS (SELECT ARRAY(SELECT ROW(
+ST_Union(ST_Clip(rast, {})), 1)::rastbandarg AS rast from grid_data
+where meta_id={} and var_id={} GROUP BY DATE))
+SELECT ST_X(geom), ST_Y(geom), val FROM
+(SELECT (ST_PixelAsCentroids(ST_MapAlgebra((SELECT * FROM foo)::rastbandarg[],
+'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;
+"""
+
