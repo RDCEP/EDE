@@ -1,6 +1,9 @@
 import os, sys
 from netCDF4 import Dataset
 from numpy.linalg import norm
+import numpy
+
+numpy.set_printoptions(threshold='nan')
 
 def main(netcdf_filename):
 
