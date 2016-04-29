@@ -12,13 +12,6 @@ def has_false(bool_array):
     return False
 
 
-def count_false(bool_array):
-    res = 0
-    for b in bool_array:
-        if not b:
-            res += 1
-    return res
-
 def main(netcdf_filename):
 
     rootgrp = Dataset(netcdf_filename, "r", format="NETCDF4")
@@ -43,7 +36,7 @@ def main(netcdf_filename):
 
     for t in range(times.size):
         vals = yield_whe[t, :, :]
-        print "Frame %d has %d vals out of %d that were not completely null" % (t, count_false(vals), num_pixels)
+        print "Frame %d has %d vals out of %d that were not completely null" % (t, vals.count_masked(), num_pixels)
 
 
     # time = rootgrp.variables['time']
