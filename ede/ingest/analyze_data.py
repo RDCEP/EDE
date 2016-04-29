@@ -2,6 +2,7 @@ import os, sys
 from netCDF4 import Dataset
 from numpy.linalg import norm
 import numpy
+import numpy.ma as ma
 
 numpy.set_printoptions(threshold='nan')
 
@@ -36,7 +37,7 @@ def main(netcdf_filename):
 
     for t in range(times.size):
         vals = yield_whe[t, :, :]
-        print "Frame %d has %d vals out of %d that were not completely null" % (t, vals.count_masked(), num_pixels)
+        print "Frame %d has %d vals out of %d that were null" % (t, ma.count_masked(vals), num_pixels)
 
 
     # time = rootgrp.variables['time']
