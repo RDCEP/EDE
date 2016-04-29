@@ -79,13 +79,13 @@ def return_griddata(meta_id, var_id, poly, date):
     out['response']['status_code'] = 200
     out['response']['data'] = []
     for row in rows:
-        lon = row[0]
-        lat = row[1]
-        val = row[2]
+        lon = row[0] # longitude
+        lat = row[1] # latitude
+        vals = row[2] # array of values, including NULL
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = { 'type': 'Point', 'coordinates': [lon, lat] }
-        new_data_item['properties'] = { 'values': [val] }
+        new_data_item['properties'] = { 'values': vals }
         out['response']['data'].append(new_data_item)
     if date:
         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
