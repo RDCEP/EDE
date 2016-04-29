@@ -16,7 +16,7 @@ def main(netcdf_filename):
         yield_whe_frame_prev = yield_whe_frame_next
         yield_whe_frame_next = rootgrp.variables['yield_whe'][t]
         if yield_whe_frame_prev is not None and yield_whe_frame_next is not None:
-            print "Euclidean difference: %f" % norm(yield_whe_frame_next-yield_whe_frame_prev)
+            print "Euclidean difference: %f" % norm(yield_whe_frame_next-yield_whe_frame_next)
 
     # print "number of longitudes: %d" % lons.size
     # print "number of latitudes: %d" % lats.size
