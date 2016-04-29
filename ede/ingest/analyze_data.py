@@ -41,6 +41,16 @@ def main(netcdf_filename):
     num_pixels = lons.size * lats.size
 
     num_null = 0
+    count_valid = 0
+    count_0 = 0
+    accuracy_level_1 = 0.0001
+    count_1 = 0
+    accuracy_level_2 = 0.001
+    count_2 = 0
+    accuracy_level_3 = 0.01
+    count_3 = 0
+    accuracy_level_4 = 0.1
+    count_4 = 0
     for lat in range(lats.size):
         for lon in range(lons.size):
             vals = yield_whe[:, lat, lon]
@@ -50,8 +60,23 @@ def main(netcdf_filename):
                 #print vals
                 avg_diff = compute_avg_diff(vals)
                 if avg_diff:
-                    print "Average difference between consecutive vals at (lat,lon)=(%f,%f) = %f" % (lat, lon, avg_diff)
+                    count_valid += 1
+                    if avg_diff < accuracy_level_1:
+                        count_0 += 1
+                    elif accuracy_level_1 <= avg_diff < accuracy_level_2:
+                        count_1 += 1
+                    elif accuracy_level_2 <= avg_diff < accuracy_level_3:
+                        count_2 += 1
+                    elif accuracy_level_3 <= avg_diff < accuracy_level_4:
+                        count_3 += 1
+                    else:
+                        count_4 += 1
 
+    print "Ratio for accuracy in [0, %f]: %f" % (accuracy_level_1, count_0)
+    print "Ratio for accuracy in [%f, %f]: %f" % (accuracy_level_1, accuracy_level_2, count_1)
+    print "Ratio for accuracy in [%f, %f]: %f" % (accuracy_level_2, accuracy_level_3, count_2)
+    print "Ratio for accuracy in [%f, %f]: %f" % (accuracy_level_3, accuracy_level_4, count_3)
+    print "Ratio for accuracy in [%f, ...]: %f" % (accuracy_level_4, count_4)
     print "Out of %d point slices %d were completely null" % (num_pixels, num_null)
 
 
