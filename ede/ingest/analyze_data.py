@@ -42,7 +42,7 @@ def main(netcdf_filename):
 
 
     for t in range(times.size):
-        vals = yield_whe[t]
+        vals = yield_whe[t, :, :]
         print "Frame %d has %d vals out of %d that were not completely null" % (t, count_false(vals), num_pixels)
 
 
