@@ -3,6 +3,7 @@ from netCDF4 import Dataset
 from numpy.linalg import norm
 import numpy
 import numpy.ma as ma
+import math
 
 numpy.set_printoptions(threshold='nan')
 
@@ -11,6 +12,24 @@ def has_false(bool_array):
         if not b:
             return True
     return False
+
+
+def compute_avg_diff(masked_array):
+    data = masked_array.data
+    mask = masked_array.mask
+    diff_sum = math.nan
+    set = False
+    for i in range(data.size):
+        if i != data.size-1 and (not mask[i]) and (not mask[i+1]):
+            if not set:
+                diff_sum = 0
+                set = True
+            else:
+                diff_sum += abs(data[i+1]-data[i])
+    if math.isnan(diff_sum):
+        return math.nan
+    else:
+        return diff_sum / data.size
 
 
 def main(netcdf_filename):
@@ -23,22 +42,23 @@ def main(netcdf_filename):
     yield_whe = rootgrp.variables['yield_whe'][:]
     num_pixels = lons.size * lats.size
 
-    num_not_null = 0
+    num_null = 0
     for lat in range(lats.size):
         for lon in range(lons.size):
             vals = yield_whe[:, lat, lon]
             if has_false(vals.mask):
                 # has at least one valid value
-                num_not_null += 1
+                num_null += 1
                 #print vals
+                avg_diff = compute_avg_diff(vals)
+                print "Average difference between consecutive vals at (lat,lon)=(%f,%f) = %f" % (lat, lon, avg_diff)
 
-    print "Out of %d point slices %d were not completely null" % (num_pixels, num_not_null)
+    print "Out of %d point slices %d were completely null" % (num_pixels, num_null)
 
 
     for t in range(times.size):
         vals = yield_whe[t, :, :]
-        print "Frame %d has %d vals out of %d that were null" % (t, ma.count_masked(vals), num_pixels)
-
+        print "Frame %d has %d vals out of %d that are null" % (t, ma.count_masked(vals), num_pixels)
 
     # time = rootgrp.variables['time']
     # yield_whe_frame_prev = None
