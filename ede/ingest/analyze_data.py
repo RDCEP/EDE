@@ -36,7 +36,7 @@ def main(netcdf_filename):
             if has_false(vals.mask):
                 # has at least one valid value
                 num_not_null += 1
-                print vals
+                #print vals
 
     print "Out of %d point slices %d were not completely null" % (num_pixels, num_not_null)
 
