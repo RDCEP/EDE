@@ -16,17 +16,19 @@ def has_false(bool_array):
 def compute_avg_diff(masked_array):
     data = masked_array.data
     mask = masked_array.mask
-    diff_sum = None
+    diff_sum = float('nan')
+    set = False
     for i in range(data.size):
         if i != data.size-1 and (not mask[i]) and (not mask[i+1]):
             if not set:
                 diff_sum = 0
+                set = True
             else:
                 diff_sum += abs(data[i+1]-data[i])
-    if diff_sum:
-        return diff_sum / data.size
+    if not set:
+        return float('nan')
     else:
-        return None
+        return diff_sum / data.size
 
 def main(netcdf_filename):
 
