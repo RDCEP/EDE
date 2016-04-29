@@ -1,7 +1,6 @@
 import os, sys
 from netCDF4 import Dataset
-import numpy as np
-
+from numpy.linalg import norm
 
 def main(netcdf_filename):
 
@@ -11,9 +10,13 @@ def main(netcdf_filename):
     # lats = rootgrp.variables['lat'][:]
     time = rootgrp.variables['time']
 
+    yield_whe_frame_prev = None
+    yield_whe_frame_next = None
     for t in range(time.size):
-        yield_whe_frame = rootgrp.variables['yield_whe'][t]
-        print yield_whe_frame.size
+        yield_whe_frame_prev = yield_whe_frame_next
+        yield_whe_frame_next = rootgrp.variables['yield_whe'][t]
+        if yield_whe_frame_prev and yield_whe_frame_next:
+            print "Euclidean difference: %d" % norm(yield_whe_frame_next-yield_whe_frame_prev)
 
     # print "number of longitudes: %d" % lons.size
     # print "number of latitudes: %d" % lats.size
