@@ -9,22 +9,22 @@ def main(netcdf_filename):
 
     rootgrp = Dataset(netcdf_filename, "r", format="NETCDF4")
 
-    # lons = rootgrp.variables['lon'][:]
-    # lats = rootgrp.variables['lat'][:]
-    time = rootgrp.variables['time']
+    lons = rootgrp.variables['lon']
+    lats = rootgrp.variables['lat']
+    yield_whe = rootgrp.variables['yield_whe']
+    for lat in lats.size:
+        for lon in lons.size:
+            print yield_whe[:, lat, lon]
 
-    yield_whe_frame_prev = None
-    yield_whe_frame_next = None
-    for t in range(time.size):
-        yield_whe_frame_prev = yield_whe_frame_next
-        yield_whe_frame_next = rootgrp.variables['yield_whe'][t]
-        if yield_whe_frame_prev is not None and yield_whe_frame_next is not None:
-            print yield_whe_frame_next
-            print "Euclidean difference: %f" % norm(yield_whe_frame_next-yield_whe_frame_next)
-
-    # print "number of longitudes: %d" % lons.size
-    # print "number of latitudes: %d" % lats.size
-    # print "number of yield_whe's: %d" % yield_whe.size
+    # time = rootgrp.variables['time']
+    # yield_whe_frame_prev = None
+    # yield_whe_frame_next = None
+    # for t in range(time.size):
+    #     yield_whe_frame_prev = yield_whe_frame_next
+    #     yield_whe_frame_next = rootgrp.variables['yield_whe'][t]
+    #     if yield_whe_frame_prev is not None and yield_whe_frame_next is not None:
+    #         print yield_whe_frame_next
+    #         print "Euclidean difference: %f" % norm(yield_whe_frame_next-yield_whe_frame_next)
 
     rootgrp.close()
 
