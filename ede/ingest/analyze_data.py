@@ -47,7 +47,8 @@ def main(netcdf_filename):
                 num_null += 1
                 #print vals
                 avg_diff = compute_avg_diff(vals)
-                print "Average difference between consecutive vals at (lat,lon)=(%f,%f) = %f" % (lat, lon, avg_diff)
+                if avg_diff:
+                    print "Average difference between consecutive vals at (lat,lon)=(%f,%f) = %f" % (lat, lon, avg_diff)
 
     print "Out of %d point slices %d were completely null" % (num_pixels, num_null)
 
