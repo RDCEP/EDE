@@ -9,6 +9,9 @@ def main(netcdf_filename):
     lons = rootgrp.variables['lon'][:]
     lats = rootgrp.variables['lat'][:]
     yield_whe = rootgrp.variables['yield_whe'][:]
+    print "number of longitudes: %d" % lons.size
+    print "number of latitudes: %d" % lats.size
+    print "number of yield_whe's: %d" % yield_whe.size
 
     rootgrp.close()
 
