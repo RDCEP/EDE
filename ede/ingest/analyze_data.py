@@ -3,7 +3,6 @@ from netCDF4 import Dataset
 from numpy.linalg import norm
 import numpy
 import numpy.ma as ma
-import math
 
 numpy.set_printoptions(threshold='nan')
 
@@ -17,20 +16,17 @@ def has_false(bool_array):
 def compute_avg_diff(masked_array):
     data = masked_array.data
     mask = masked_array.mask
-    diff_sum = math.nan
-    set = False
+    diff_sum = None
     for i in range(data.size):
         if i != data.size-1 and (not mask[i]) and (not mask[i+1]):
             if not set:
                 diff_sum = 0
-                set = True
             else:
                 diff_sum += abs(data[i+1]-data[i])
-    if math.isnan(diff_sum):
-        return math.nan
-    else:
+    if diff_sum:
         return diff_sum / data.size
-
+    else:
+        return None
 
 def main(netcdf_filename):
 
