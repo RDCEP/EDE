@@ -17,13 +17,12 @@ def main(netcdf_filename):
 
     lons = rootgrp.variables['lon']
     lats = rootgrp.variables['lat']
-    yield_whe = rootgrp.variables['yield_whe']
+    yield_whe = rootgrp.variables['yield_whe'][:]
     num_not_null = 0
     for lat in range(lats.size):
         for lon in range(lons.size):
             vals = yield_whe[:, lat, lon]
-            mask = vals.mask
-            if has_false(mask):
+            if has_false(vals.mask):
                 # has at least one valid value
                 num_not_null += 1
                 print vals
