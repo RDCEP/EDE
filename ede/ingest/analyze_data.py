@@ -77,6 +77,7 @@ def main(netcdf_filename):
     print "Ratio for accuracy in [%f, %f]: %f" % (accuracy_level_2, accuracy_level_3, count_2)
     print "Ratio for accuracy in [%f, %f]: %f" % (accuracy_level_3, accuracy_level_4, count_3)
     print "Ratio for accuracy in [%f, ...]: %f" % (accuracy_level_4, count_4)
+    print "Total number of valid average differences: %f" % count_valid
     print "Out of %d point slices %d were completely null" % (num_pixels, num_null)
 
 
