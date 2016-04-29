@@ -5,6 +5,12 @@ import numpy
 
 numpy.set_printoptions(threshold='nan')
 
+def has_false(bool_array):
+    for b in bool_array:
+        if not b:
+            return True
+    return False
+
 def main(netcdf_filename):
 
     rootgrp = Dataset(netcdf_filename, "r", format="NETCDF4")
@@ -14,8 +20,11 @@ def main(netcdf_filename):
     yield_whe = rootgrp.variables['yield_whe']
     for lat in range(lats.size):
         for lon in range(lons.size):
-
-            print (yield_whe[0, lat, lon] is None)
+            vals = yield_whe[:, lat, lon]
+            mask = vals.mask
+            if has_false(mask):
+                # has at least one valid value
+                print vals
 
     # time = rootgrp.variables['time']
     # yield_whe_frame_prev = None
