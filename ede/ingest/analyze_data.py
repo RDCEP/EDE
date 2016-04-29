@@ -11,13 +11,24 @@ def has_false(bool_array):
             return True
     return False
 
+
+def count_false(bool_array):
+    res = 0
+    for b in bool_array:
+        if not b:
+            res += 1
+    return res
+
 def main(netcdf_filename):
 
     rootgrp = Dataset(netcdf_filename, "r", format="NETCDF4")
 
     lons = rootgrp.variables['lon']
     lats = rootgrp.variables['lat']
+    times = rootgrp.variables['time']
     yield_whe = rootgrp.variables['yield_whe'][:]
+    num_pixels = lons.size * lats.size
+
     num_not_null = 0
     for lat in range(lats.size):
         for lon in range(lons.size):
@@ -27,7 +38,13 @@ def main(netcdf_filename):
                 num_not_null += 1
                 print vals
 
-    print "Out of %d point slices %d were not completely null" % (lons.size * lats.size, num_not_null)
+    print "Out of %d point slices %d were not completely null" % (num_pixels, num_not_null)
+
+
+    for t in range(times.size):
+        vals = yield_whe[t]
+        print "Frame %d has %d vals out of %d that were not completely null" % (t, count_false(vals), num_pixels)
+
 
     # time = rootgrp.variables['time']
     # yield_whe_frame_prev = None
