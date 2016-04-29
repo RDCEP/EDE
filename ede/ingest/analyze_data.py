@@ -15,7 +15,7 @@ def main(netcdf_filename):
     for lat in range(lats.size):
         for lon in range(lons.size):
 
-            print yield_whe[0, lat, lon]
+            print (yield_whe[0, lat, lon] is None)
 
     # time = rootgrp.variables['time']
     # yield_whe_frame_prev = None
