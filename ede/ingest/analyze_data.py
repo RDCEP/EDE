@@ -14,7 +14,8 @@ def main(netcdf_filename):
     yield_whe = rootgrp.variables['yield_whe']
     for lat in range(lats.size):
         for lon in range(lons.size):
-            print yield_whe[:, lat, lon]
+
+            print yield_whe[0, lat, lon]
 
     # time = rootgrp.variables['time']
     # yield_whe_frame_prev = None
