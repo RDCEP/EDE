@@ -145,7 +145,7 @@ def main(in_filename, out_filename):
     vnames = []
     subdatasets = []
     gdal_dataset = gdal.Open(in_filename)
-    for sd in gdal_dataset.fxGetSubDatasets():
+    for sd in gdal_dataset.GetSubDatasets():
         vnames.append(sd[0].split(':')[-1])
     	subdatasets.append(sd[0])
     if not vnames:
