@@ -1,17 +1,16 @@
-import os, sys, subprocess, time
+import os, sys, time
 from netCDF4 import Dataset
 from osgeo import gdal
 import psycopg2
 from psycopg2.extras import Json
-import re
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from datetime import datetime, timedelta
 
-def main(netcdf_filename):
-    
+def main(in_filename, out_filename):
+
     ### Get meta data ###
-    rootgrp = Dataset(netcdf_filename, "r", format="NETCDF4")
-    
+    rootgrp = Dataset(in_filename, "r", format="NETCDF4")
+
     # The dimensions
     dimensions = []
     num_dates = None
@@ -22,8 +21,8 @@ def main(netcdf_filename):
         })
         if dim.name == "time":
             num_dates = dim.size
-    
-    # The variables        
+
+    # The variables
     variables=[]
     date_field_str = None
     dates_offset = None
@@ -77,7 +76,7 @@ def main(netcdf_filename):
             "name":attr_key,
             "value":rootgrp.getncattr(attr_key)
         })
-     
+
     meta_data = {
         "name":os.path.basename(netcdf_filename),
         "dimensions":dimensions,
@@ -87,7 +86,7 @@ def main(netcdf_filename):
 
     # The bounding box
     geo = False
-    
+
     if geo is False:
         try:
             lon1=float(min(rootgrp.variables['lon']))
@@ -126,22 +125,26 @@ def main(netcdf_filename):
 
     rootgrp.close()
 
+    out_file = open(out_filename, 'w')
+
     ## Connection to the database ##
     conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
                             host=DB_HOST, port=DB_PORT)
     cur = conn.cursor()
-    
+
     # (1) Ingest into grid_meta + get meta_id
     cur.execute("insert into grid_meta (filename, filesize, filetype, meta_data, date_created) values (\'%s\', %s, \'%s\', %s, \'%s\') returning uid" %
-        (os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(netcdf_filename))))
+        (os.path.basename(in_filename), os.path.getsize(in_filename), 'HDF', Json(meta_data), time.ctime(os.path.getctime(in_filename))))
     rows = cur.fetchall()
     for row in rows:
         meta_id = int(row[0])
-    
+
+    out_file.write(str(meta_id))
+
     # (2) Determine variables to loop over + loop over them
     vnames = []
     subdatasets = []
-    gdal_dataset = gdal.Open(netcdf_filename)
+    gdal_dataset = gdal.Open(in_filename)
     for sd in gdal_dataset.fxGetSubDatasets():
         vnames.append(sd[0].split(':')[-1])
     	subdatasets.append(sd[0])
@@ -150,8 +153,8 @@ def main(netcdf_filename):
             if var.name not in ['lat','lon','time']:
                 vnames.append(var.name)
 
-    p = re.compile('\\(\"rast\"\\)')
-    q = re.compile('\\);')
+    out_file.write(str(len(vnames)))
+
     for i, vname in enumerate(vnames):
         print "Processing variable: %s ...." % vname
         # (3.1) Ingest into grid_vars + get var_id
@@ -162,6 +165,7 @@ def main(netcdf_filename):
             rows = cur.fetchall()
         for row in rows:
             var_id = int(row[0])
+            out_file.write(vname + ',' + str(var_id))
 
         # In case the NetCDF does have a time dimension
         if has_time:
@@ -171,58 +175,11 @@ def main(netcdf_filename):
                 rows = cur.fetchall()
                 for row in rows:
                     date_id = int(row[0])
-
-                # (4) Ingest into grid_data
-                # (4.1) Pipe the output of raster2pgsql into memory
-                # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
-                if not subdatasets:
-                    # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
-                    print "Running raster2pgsql for variable: %s and time band: %s ..." % (vname, str(band+1))
-                    proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), netcdf_filename, 'grid_data'], stdout=subprocess.PIPE, bufsize=-1)
-                # The case where we do have subdatasets, i.e. NetCDFs from Alison
-                else:
-                    # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
-                    print "Running raster2pgsql for variable: %s and time band: %s ..." % (vname, str(band+1))
-                    proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', '-b', str(band+1), subdatasets[i], 'grid_data'], stdout=subprocess.PIPE, bufsize=-1)
-
-                # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
-                while True:
-                    print "Reading next line from pipe buffer ..."
-                    line = proc.stdout.readline().rstrip()
-                    if line == '':
-                        break
-                    elif line.startswith('INSERT INTO'):
-                        m = p.findall(line)
-                        subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\", \"date\")', line)[0]
-                        subst_all = q.subn(', %s, %s, \'%s\');' % (meta_id, var_id, date_id), subst_cols)[0]
-                        cur.execute(subst_all)
-        # In case the NetCDF does not have a time dimension
-        else:
-            # (4) Ingest into grid_data
-            # (4.1) Pipe the output of raster2pgsql into memory
-            # The case where we don't have subdatasets, i.e. NetCDFs from Joshua
-            if not subdatasets:
-                # raster2pgsql -s 4326 -a -M -t 10x10 ../data/papsim.nc4 netcdf_data
-                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', netcdf_filename, 'grid_data'], stdout=subprocess.PIPE, bufsize=-1)
-            # The case where we do have subdatasets, i.e. NetCDFs from Alison
-            else:
-                # raster2pgsql -s 4326 -a -M -t 10x10 NETCDF:"../data/clim_0005_0043.tile.nc4":cropland netcdf_data
-                proc = subprocess.Popen(['raster2pgsql', '-s', '4326', '-a', '-t', '10x10', subdatasets[i], 'grid_data'], stdout=subprocess.PIPE, bufsize=-1)
-
-            # (4.2) Read output of raster2pgsql line by line, append (meta_id, var_id) + run the query into postgres
-            while True:
-                print "Reading next line from pipe buffer ..."
-                line = proc.stdout.readline().rstrip()
-                if line == '':
-                    break
-                elif line.startswith('INSERT INTO'):
-                    m = p.findall(line)
-                    subst_cols = p.subn('(\"rast\", \"meta_id\", \"var_id\")', line)[0]
-                    subst_all = q.subn(', %s, %s);' % (meta_id, var_id), subst_cols)[0]
-                    cur.execute(subst_all)
+                    out_file.write(vname + ',' + str(date_id))
 
     conn.commit()
-    
+
 if __name__ == "__main__":
-    netcdf_filename = sys.argv[1]
-    main(netcdf_filename)
+    in_filename = sys.argv[1]
+    out_filename = in_filename + '_tableids'
+    main(in_filename, out_filename)
