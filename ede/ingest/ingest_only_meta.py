@@ -139,7 +139,7 @@ def main(in_filename, out_filename):
     for row in rows:
         meta_id = int(row[0])
 
-    out_file.write(str(meta_id))
+    out_file.write(str(meta_id) + '\n')
 
     # (2) Determine variables to loop over + loop over them
     vnames = []
@@ -153,7 +153,7 @@ def main(in_filename, out_filename):
             if var.name not in ['lat','lon','time']:
                 vnames.append(var.name)
 
-    out_file.write(str(len(vnames)))
+    out_file.write(str(len(vnames)) + '\n')
 
     for i, vname in enumerate(vnames):
         print "Processing variable: %s ...." % vname
@@ -165,7 +165,7 @@ def main(in_filename, out_filename):
             rows = cur.fetchall()
         for row in rows:
             var_id = int(row[0])
-            out_file.write(vname + ',' + str(var_id))
+            out_file.write(vname + ',' + str(var_id) + '\n')
 
         # In case the NetCDF does have a time dimension
         if has_time:
@@ -175,7 +175,7 @@ def main(in_filename, out_filename):
                 rows = cur.fetchall()
                 for row in rows:
                     date_id = int(row[0])
-                    out_file.write(vname + ',' + str(date_id))
+                    out_file.write(str(date_id))
 
     conn.commit()
 
