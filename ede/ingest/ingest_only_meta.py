@@ -175,7 +175,7 @@ def main(in_filename, out_filename):
                 rows = cur.fetchall()
                 for row in rows:
                     date_id = int(row[0])
-                    out_file.write(str(date_id))
+                    out_file.write(str(date_id) + '\n')
 
     conn.commit()
 
