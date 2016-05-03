@@ -167,15 +167,15 @@ def main(in_filename, out_filename):
             var_id = int(row[0])
             out_file.write(vname + ',' + str(var_id) + '\n')
 
-        # In case the NetCDF does have a time dimension
-        if has_time:
-            for band in range(num_dates):
-                # (3.2) Ingest (meta_id, dates[band]) into grid_dates + get date_id
-                cur.execute("insert into grid_dates (meta_id, date) values (%s, \'%s\') returning uid" % (meta_id, dates[band]))
-                rows = cur.fetchall()
-                for row in rows:
-                    date_id = int(row[0])
-                    out_file.write(str(date_id) + '\n')
+    # In case the NetCDF does have a time dimension
+    if has_time:
+        for band in range(num_dates):
+            # (3.2) Ingest (meta_id, dates[band]) into grid_dates + get date_id
+            cur.execute("insert into grid_dates (meta_id, date) values (%s, \'%s\') returning uid" % (meta_id, dates[band]))
+            rows = cur.fetchall()
+            for row in rows:
+                date_id = int(row[0])
+                out_file.write(str(date_id) + '\n')
 
     conn.commit()
 
