@@ -78,7 +78,7 @@ def main(in_filename, out_filename):
         })
 
     meta_data = {
-        "name":os.path.basename(netcdf_filename),
+        "name":os.path.basename(in_filename),
         "dimensions":dimensions,
         "variables":variables,
         "attributes":attributes
