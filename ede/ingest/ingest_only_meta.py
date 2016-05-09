@@ -182,4 +182,7 @@ def main(in_filename, out_filename):
 if __name__ == "__main__":
     in_filename = sys.argv[1]
     out_filename = in_filename + '_tableids'
+    start = time.time()
     main(in_filename, out_filename)
+    end = time.time()
+    print "Elapsed time: %.2f" % (end-start)
