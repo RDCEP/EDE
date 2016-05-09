@@ -1,0 +1,7 @@
+#!/bin/bash           
+
+for filename in ~/data/psims/*;
+do
+	echo "ingesting..." $filename
+	./automate_psims_one $filename
+done
