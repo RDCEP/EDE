@@ -3,8 +3,8 @@
 FILE_NETCDF=$1
 FILE_TABLEIDS=${FILE_NETCDF}_tableids
 FILE_TEXT=${FILE_NETCDF}_text
-INGEST_ONLY_META=/home/ubuntu/EDE/ede/ingest/ingest_only_meta.py
-RASTER2TEXT=~/postgis/raster/loader/raster2text
+INGEST_ONLY_META=/home/sthaler/EDE/ede/ingest/ingest_only_meta.py
+RASTER2TEXT=/home/sthaler/postgis/raster/loader/raster2text
 COPY_CMD='copy grid_data(meta_id, var_id, date, rast) from '\'${FILE_TEXT}\'
 
 TIME_START=$SECONDS
@@ -16,6 +16,8 @@ TIME_GENERATE_TEXT=$(($SECONDS - $TIME_START))
 TIME_START=$SECONDS
 psql -U postgres -d ede -c "${COPY_CMD}"
 TIME_COPY_FROM=$(($SECONDS - $TIME_START))
+
+rm ${FILE_TABLEIDS} ${FILE_TEXT}
 
 echo 'Elapsed time to ingest only metadata: '${TIME_INGEST_ONLY_META}
 echo 'Elapsed time to generate text format: '${TIME_GENERATE_TEXT}

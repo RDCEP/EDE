@@ -1,0 +1,34 @@
+#!/bin/bash
+
+FILE_NETCDF=$1
+FILE_TABLEIDS=${FILE_NETCDF}_tableids
+FILE_TEXT=${FILE_NETCDF}_text
+FILE_SUBDATASETS=${FILE_NETCDF}_subdatasets
+INGEST_ONLY_META=/home/sthaler/EDE/ede/ingest/ingest_only_meta.py
+GENERATE_SUBDATASETS=/home/sthaler/EDE/ede/ingest/generate_subdatasets.py
+RASTER2TEXT=/home/sthaler/postgis/raster/loader/.libs/raster2text
+COPY_CMD='copy grid_data(meta_id, var_id, date, rast) from '\'${FILE_TEXT}\'
+
+TIME_START=$SECONDS
+python ${INGEST_ONLY_META} ${FILE_NETCDF}
+TIME_INGEST_ONLY_META=$(($SECONDS - $TIME_START))
+echo 'Elapsed time to ingest only metadata: '${TIME_INGEST_ONLY_META}
+
+python ${GENERATE_SUBDATASETS} ${FILE_NETCDF}
+
+# todo: loop over the subdatasets of the netcdf
+while read FILE_NETCDF_VAR; do
+
+        TIME_START=$SECONDS
+        ${RASTER2TEXT} -t 10x10 -tids ${FILE_TABLEIDS} -o ${FILE_TEXT} ${FILE_NETCDF_VAR}
+        TIME_GENERATE_TEXT=$(($SECONDS - $TIME_START))
+        TIME_START=$SECONDS
+        psql -U postgres -d ede -c "${COPY_CMD}"
+        TIME_COPY_FROM=$(($SECONDS - $TIME_START))
+        echo 'Elapsed time to generate text format: '${TIME_GENERATE_TEXT}
+        echo 'Elapsed time to do the copy from: '${TIME_COPY_FROM}
+        rm ${FILE_TEXT}
+
+done < ${FILE_SUBDATASETS}
+
+rm ${FILE_SUBDATASETS} ${FILE_TABLEIDS}
