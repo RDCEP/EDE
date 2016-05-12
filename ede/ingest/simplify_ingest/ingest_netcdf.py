@@ -145,6 +145,12 @@ def process_netcdf(netcdf_filename):
 
     bbox = get_bounding_box(longs, lats)
 
+    # testing output
+    print dims_info
+    print vars_info
+    print global_attrs
+    print bbox
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process raster configuration parameters.')
