@@ -123,6 +123,15 @@ def get_dimensions_info(dataset):
     return dims_info
 
 
+def process_variable(variable):
+    print(variable.name)
+
+
+def is_proper_variable(variable):
+    improper_vars = ['lon','longitude','X','lat','latitude','Y','time']
+    return variable.name not in improper_vars
+
+
 def process_netcdf(netcdf_filename):
     """Processes the NetCDF
     :param netcdf_filename:
@@ -134,23 +143,25 @@ def process_netcdf(netcdf_filename):
         eprint("I/O error({0}): {1}".format(e.errno, e.strerror))
         raise
 
-    dims_info = get_dimensions_info(ds)
-    vars_info = get_variables_info(ds)
-    global_attrs = get_global_attributes(ds)
+    # dims_info = get_dimensions_info(ds)
+    # vars_info = get_variables_info(ds)
+    # global_attrs = get_global_attributes(ds)
+    #
+    # try:
+    #     longs, lats = get_longitudes_latitudes(ds)
+    # except:
+    #     raise RasterProcessingException("Could not get longitudes and latitudes of netcdf file: %s", netcdf_filename)
+    #
+    # bbox = get_bounding_box(longs, lats)
+
+    proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
-        longs, lats = get_longitudes_latitudes(ds)
+        for var in proper_vars:
+            process_variable(var)
     except:
-        raise RasterProcessingException("Could not get longitudes and latitudes of netcdf file: %s", netcdf_filename)
-
-    bbox = get_bounding_box(longs, lats)
-
-    # testing output
-    print(dims_info)
-    print(vars_info)
-    print(global_attrs)
-    print(bbox)
-
+        # TODO:
+        sys.exit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process raster configuration parameters.')
