@@ -132,7 +132,7 @@ def process_lon_lat_depth(variable):
     :param variable:
     :return:
     """
-    print variable[:]
+    print(variable[:])
 
 
 def process_lon_lat_time(variable):
@@ -144,7 +144,7 @@ def process_lon_lat_time(variable):
     :param variable:
     :return:
     """
-    print variable[:]
+    print(variable[:])
 
 
 def process_lon_lat(variable):
@@ -155,7 +155,7 @@ def process_lon_lat(variable):
     :param variable:
     :return:
     """
-    print variable[:]
+    print(variable[:])
 
 
 def process_variable(variable):
