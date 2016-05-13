@@ -2,7 +2,6 @@ from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
-import math
 
 
 class RasterProcessingException(Exception):
@@ -12,6 +11,9 @@ class RasterProcessingException(Exception):
     def __init__(self, message):
         super(RasterProcessingException, self).__init__(message)
 
+
+def ceil_integer_division(a, b):
+    return a + b - 1 // b
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -145,8 +147,8 @@ def process_band(band, band_dim):
     tile_size_lon = 10
     band_shape = band.shape
     print("band shape: {}".format(band_shape))
-    num_tiles_lat = math.ceil(band_shape[0] / tile_size_lat)
-    num_tiles_lon = math.ceil(band_shape[1] / tile_size_lon)
+    num_tiles_lat = ceil_integer_division(band_shape[0] / tile_size_lat)
+    num_tiles_lon = ceil_integer_division(band_shape[1] / tile_size_lon)
     print("number of lat tiles: {}".format(num_tiles_lat))
     print("number of lon tiles: {}".format(num_tiles_lon))
     for i in range(num_tiles_lat):
