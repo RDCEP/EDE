@@ -272,6 +272,7 @@ def process_netcdf(netcdf_filename):
         for var in proper_vars:
             process_variable(var)
     except:
+        eprint("Could not process variables!")
         raise
 
 
