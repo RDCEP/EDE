@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
@@ -8,6 +9,10 @@ class RasterProcessingException(Exception):
     """
     def __init__(self, message):
         super(RasterProcessingException, self).__init__(message)
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def get_bounding_box(longitudes, latitudes):
@@ -277,5 +282,5 @@ if __name__ == "__main__":
     try:
         process_netcdf(args.input)
     except:
-        sys.stderr.write("Could not process netcdf file: {}".format(args.input))
+        eprint("Could not process netcdf file: {}".format(args.input))
         sys.exit()
