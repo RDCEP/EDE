@@ -142,8 +142,8 @@ def process_band(band, band_dim):
     :return:
     """
     # TODO: Don't hardcode the tilesizes
-    tile_size_lat = 10
-    tile_size_lon = 10
+    tile_size_lat = 100
+    tile_size_lon = 100
     band_shape = band.shape
     num_tiles_lat = ceil_integer_division(band_shape[0], tile_size_lat)
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
