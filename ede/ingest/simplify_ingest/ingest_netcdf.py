@@ -274,8 +274,8 @@ def process_netcdf(netcdf_filename):
         for var in proper_vars:
             process_variable(var)
     except:
-        # TODO:
-        sys.exit()
+        raise
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process raster configuration parameters.')
