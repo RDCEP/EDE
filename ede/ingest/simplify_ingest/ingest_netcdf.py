@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
-
+import math
 
 def eprint(*args, **kwargs):
     """Prints to stderr
@@ -123,39 +123,75 @@ def get_dimensions_info(dataset):
     return dims_info
 
 
-def process_lon_lat_depth(variable):
+def process_tile(tile, band_dim):
+    """Processes a single tile
+    :param tile:
+    :param band_dim:
+    :return:
+    """
+    print(tile)
+    print(band_dim)
+
+
+def process_band(band, band_dim):
+    """Processes a single band
+
+    Note that we are assuming band = band[lat][lon]
+
+    :param band:
+    :param band_dim:
+    :return:
+    """
+    # TODO: Don't hardcode the tilesizes
+    tile_size_lat = 10
+    tile_size_lon = 10
+    band_shape = band.shape
+    num_tiles_lat = math.ceil(band_shape[0] / tile_size_lat)
+    num_tiles_lon = math.ceil(band_shape[1] / tile_size_lon)
+    for i in range(num_tiles_lat):
+        for j in range(num_tiles_lon):
+            tile = band[i*tile_size_lat:(i+1)*tile_size_lat][j*tile_size_lon:(j+1)*tile_size_lon]
+            process_tile(tile, band_dim)
+
+
+def process_depth_lat_lon(variable):
     """Processes a variable that depends on (lon,lat,depth)
 
     TODO: Make sure to handle all permutations correctly, i.e.
     (lon,lat,depth), (depth,lon,lat), etc.
+    Right now we're assuming (depth,lat,lon)
 
     :param variable:
     :return:
     """
-    print(variable[:])
+    for depth_band in variable:
+        process_band(depth_band, 'depth')
 
 
-def process_lon_lat_time(variable):
+def process_time_lat_lon(variable):
     """Processes a variable that depends on (lon,lat,time)
 
     TODO: Make sure to handle all permutations correctly, i.e.
     (lon,lat,time), (time,lon,lat), etc.
+    Right now we're assuming (time,lat,lon)
 
     :param variable:
     :return:
     """
-    print(variable[:])
+    for time_band in variable:
+        process_band(time_band, 'time')
 
 
-def process_lon_lat(variable):
+def process_lat_lon(variable):
     """Processes a variable that depends on (lon,lat)
 
     TODO: Make sure to handle both (lon,lat) and (lat,lon) correctly
+    Right now we're assuming (lat,lon)
 
     :param variable:
     :return:
     """
-    print(variable[:])
+    process_band(variable[:], None)
 
 
 def process_variable(variable):
@@ -175,7 +211,7 @@ def process_variable(variable):
     elif num_dims == 2:
         # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
         if 'lon' in dims and 'lat' in dims:
-            process_lon_lat(variable)
+            process_lat_lon(variable)
         else:
             raise RasterProcessingException("Variable %s depends on %s and %s which are not both spatial dimensions. "
                                             "This case is not supported!",
@@ -184,9 +220,9 @@ def process_variable(variable):
         # TODO: see just above
         if 'lon' in dims and 'lat' in dims:
             if 'time' in dims:
-                process_lon_lat_time(variable)
+                process_time_lat_lon(variable)
             elif 'depth' in dims:
-                process_lon_lat_depth(variable)
+                process_depth_lat_lon(variable)
             else:
                 raise RasterProcessingException("Variable %s depends on %s, %s, %s two of which are spatial "
                                                 "dimensions, but the third one is neither time nor depth. "
