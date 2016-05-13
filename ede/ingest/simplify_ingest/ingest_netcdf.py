@@ -249,10 +249,10 @@ def process_netcdf(netcdf_filename):
     try:
         ds = Dataset(netcdf_filename, "r", format="NETCDF4")
     except IOError as e:
-        sys.stderr.write("I/O error({}): {}".format(e.errno, e.strerror))
+        eprint("I/O error({}): {}".format(e.errno, e.strerror))
         raise
     except Exception as e:
-        sys.stderr.write("Other problem during opening the dataset: {}".format(e))
+        eprint("Other problem during opening the dataset: {}".format(e))
         raise
 
     # dims_info = get_dimensions_info(ds)
