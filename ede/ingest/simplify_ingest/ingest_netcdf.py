@@ -155,7 +155,6 @@ def process_band(band, band_dim):
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
             print(type(band))
-            print("value: {}".format(band[0][0]))
             tile = band[i*tile_size_lat : (i+1)*tile_size_lat][j*tile_size_lon : (j+1)*tile_size_lon]
             print("begin processing of tile...")
             process_tile(tile, band_dim)
