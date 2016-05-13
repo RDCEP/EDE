@@ -15,6 +15,7 @@ class RasterProcessingException(Exception):
 def ceil_integer_division(a, b):
     return (a + b - 1) // b
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
@@ -155,7 +156,7 @@ def process_band(band, band_dim):
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
             print(type(band))
-            tile = band[i*tile_size_lat : (i+1)*tile_size_lat][j*tile_size_lon : (j+1)*tile_size_lon]
+            tile = band[i * tile_size_lat: (i + 1) * tile_size_lat][j * tile_size_lon: (j + 1) * tile_size_lon]
             print("begin processing of tile...")
             process_tile(tile, band_dim)
 
@@ -190,6 +191,7 @@ def process_time_lat_lon(variable):
     except Exception as e:
         eprint("process_time_lat_lon: Could not process variable {}. Error: {}".format(variable.mame, e))
         raise
+
 
 def process_lat_lon(variable):
     """Processes a variable that depends on (lon,lat)
@@ -244,15 +246,15 @@ def process_variable(variable):
                     process_time_lat_lon(variable)
                 except:
                     eprint("Could not process variable {} with process_time_lat_lon".format(variable.name))
-                raise RasterProcessingException("Could not process variable {} with process_time_lat_lon"
-                                                .format(variable.name))
+                    raise RasterProcessingException("Could not process variable {} with process_time_lat_lon"
+                                                    .format(variable.name))
             elif 'depth' in dims:
                 try:
                     process_depth_lat_lon(variable)
                 except:
                     eprint("Could not process variable {} with process_depth_lat_lon".format(variable.name))
-                raise RasterProcessingException("Could not process variable {} with process_depth_lat_lon"
-                                                .format(variable.name))
+                    raise RasterProcessingException("Could not process variable {} with process_depth_lat_lon"
+                                                    .format(variable.name))
             else:
                 eprint("Variable {} depends on {}, {}, {} two of which are spatial "
                        "dimensions, but the third one is neither time nor depth. "
