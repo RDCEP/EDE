@@ -1,17 +1,7 @@
-from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
 import math
-
-def eprint(*args, **kwargs):
-    """Prints to stderr
-    :param args:
-    :param kwargs:
-    :return:
-    """
-    print(*args, file=sys.stderr, **kwargs)
-
 
 class RasterProcessingException(Exception):
     """Represents an exception that can occur during the processing of a raster file
@@ -254,10 +244,10 @@ def process_netcdf(netcdf_filename):
     try:
         ds = Dataset(netcdf_filename, "r", format="NETCDF4")
     except IOError as e:
-        eprint("I/O error({0}): {1}".format(e.errno, e.strerror))
+        sys.stderr.write("I/O error({}): {}".format(e.errno, e.strerror))
         raise
     except Exception as e:
-        eprint("Other problem during opening the dataset: %s", e)
+        sys.stderr.write("Other problem during opening the dataset: {}".format(e))
         raise
 
     # dims_info = get_dimensions_info(ds)
@@ -281,11 +271,11 @@ def process_netcdf(netcdf_filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process raster configuration parameters.')
+    parser = argparse.ArgumentParser(description='Parse raster processing parameters.')
     parser.add_argument('--input', help='Input netcdf filename', required=True)
     args = parser.parse_args()
     try:
         process_netcdf(args.input)
     except:
-        eprint("Could not process netcdf file: %s", args.input)
+        sys.stderr.write("Could not process netcdf file: {}".format(args.input))
         sys.exit()
