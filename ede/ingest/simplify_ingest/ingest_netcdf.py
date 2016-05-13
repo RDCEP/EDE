@@ -123,12 +123,90 @@ def get_dimensions_info(dataset):
     return dims_info
 
 
+def process_lon_lat_depth(variable):
+    """Processes a variable that depends on (lon,lat,depth)
+
+    TODO: Make sure to handle all permutations correctly, i.e.
+    (lon,lat,depth), (depth,lon,lat), etc.
+
+    :param variable:
+    :return:
+    """
+    print variable[:]
+
+
+def process_lon_lat_time(variable):
+    """Processes a variable that depends on (lon,lat,time)
+
+    TODO: Make sure to handle all permutations correctly, i.e.
+    (lon,lat,time), (time,lon,lat), etc.
+
+    :param variable:
+    :return:
+    """
+    print variable[:]
+
+
+def process_lon_lat(variable):
+    """Processes a variable that depends on (lon,lat)
+
+    TODO: Make sure to handle both (lon,lat) and (lat,lon) correctly
+
+    :param variable:
+    :return:
+    """
+    print variable[:]
+
+
 def process_variable(variable):
-    print(variable.name)
+    """Processes an individual variable
+    :param variable:
+    :return:
+    """
+    dims = variable.dimensions
+    num_dims = len(dims)
+    if num_dims == 1:
+        if variable.name == dims[0]:
+            pass
+        else:
+            raise RasterProcessingException("Variable %s depends only on %s which is not itself. "
+                                            "This case is not supported!",
+                                            variable.name, dims[0])
+    elif num_dims == 2:
+        # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
+        if 'lon' in dims and 'lat' in dims:
+            process_lon_lat(variable)
+        else:
+            raise RasterProcessingException("Variable %s depends on %s and %s which are not both spatial dimensions. "
+                                            "This case is not supported!",
+                                            variable.name, dims[0], dims[1])
+    elif num_dims == 3:
+        # TODO: see just above
+        if 'lon' in dims and 'lat' in dims:
+            if 'time' in dims:
+                process_lon_lat_time(variable)
+            elif 'depth' in dims:
+                process_lon_lat_depth(variable)
+            else:
+                raise RasterProcessingException("Variable %s depends on %s, %s, %s two of which are spatial "
+                                                "dimensions, but the third one is neither time nor depth. "
+                                                "This case is not supported!",
+                                                variable.name, dims[0], dims[1], dims[2])
+        else:
+            raise RasterProcessingException("Variable %s depends on %s, %s, %s which don't contain two spatial"
+                                            "dimensions. This case is not supported!",
+                                            variable.name, dims[0], dims[1], dims[2])
+    else:
+        raise RasterProcessingException("Variable %s depends on more than 3 variables. This case is not supported!",
+                                        variable.name)
 
 
 def is_proper_variable(variable):
-    improper_vars = ['lon','longitude','X','lat','latitude','Y','time']
+    """Returns True if the variable is a proper variable
+    :param variable:
+    :return:
+    """
+    improper_vars = ['lon','longitude','X','lat','latitude','Y','time','depth']
     return variable.name not in improper_vars
 
 
