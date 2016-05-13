@@ -211,7 +211,12 @@ def process_variable(variable):
     elif num_dims == 2:
         # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
         if 'lon' in dims and 'lat' in dims:
-            process_lat_lon(variable)
+            try:
+                process_lat_lon(variable)
+            except:
+                eprint("Could not process variable {} with process_lat_lon".format(variable.name))
+                raise RasterProcessingException("Could not process variable {} with process_lat_lon"
+                                                .format(variable.name))
         else:
             eprint("Variable {} depends on {} and {} which are not both spatial dimensions. "
                    "This case is not supported!"
@@ -223,9 +228,19 @@ def process_variable(variable):
         # TODO: see just above
         if 'lon' in dims and 'lat' in dims:
             if 'time' in dims:
-                process_time_lat_lon(variable)
+                try:
+                    process_time_lat_lon(variable)
+                except:
+                    eprint("Could not process variable {} with process_time_lat_lon".format(variable.name))
+                raise RasterProcessingException("Could not process variable {} with process_time_lat_lon"
+                                                .format(variable.name))
             elif 'depth' in dims:
-                process_depth_lat_lon(variable)
+                try:
+                    process_depth_lat_lon(variable)
+                except:
+                    eprint("Could not process variable {} with process_depth_lat_lon".format(variable.name))
+                raise RasterProcessingException("Could not process variable {} with process_depth_lat_lon"
+                                                .format(variable.name))
             else:
                 eprint("Variable {} depends on {}, {}, {} two of which are spatial "
                        "dimensions, but the third one is neither time nor depth. "
