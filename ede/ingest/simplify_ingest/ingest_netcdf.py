@@ -13,7 +13,7 @@ class RasterProcessingException(Exception):
 
 
 def ceil_integer_division(a, b):
-    return a + b - 1 // b
+    return (a + b - 1) // b
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
