@@ -175,6 +175,7 @@ def process_time_lat_lon(variable):
     :param variable:
     :return:
     """
+    print(variable.name)
     try:
         for time_band in variable:
             process_band(time_band, 'time')
