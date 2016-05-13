@@ -4,9 +4,11 @@ import argparse
 from netCDF4 import Dataset
 import math
 
+
 class RasterProcessingException(Exception):
     """Represents an exception that can occur during the processing of a raster file
     """
+
     def __init__(self, message):
         super(RasterProcessingException, self).__init__(message)
 
@@ -145,7 +147,7 @@ def process_band(band, band_dim):
     num_tiles_lon = math.ceil(band_shape[1] / tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            tile = band[i*tile_size_lat:(i+1)*tile_size_lat][j*tile_size_lon:(j+1)*tile_size_lon]
+            tile = band[i * tile_size_lat:(i + 1) * tile_size_lat][j * tile_size_lon:(j + 1) * tile_size_lon]
             process_tile(tile, band_dim)
 
 
@@ -200,17 +202,23 @@ def process_variable(variable):
         if variable.name == dims[0]:
             pass
         else:
-            raise RasterProcessingException("Variable %s depends only on %s which is not itself. "
-                                            "This case is not supported!",
-                                            variable.name, dims[0])
+            eprint("Variable {} depends only on {} which is not itself. "
+                   "This case is not supported!"
+                   .format(variable.name, dims[0]))
+            raise RasterProcessingException("Variable {} depends only on {} which is not itself. "
+                                            "This case is not supported!"
+                                            .format(variable.name, dims[0]))
     elif num_dims == 2:
         # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
         if 'lon' in dims and 'lat' in dims:
             process_lat_lon(variable)
         else:
-            raise RasterProcessingException("Variable %s depends on %s and %s which are not both spatial dimensions. "
-                                            "This case is not supported!",
-                                            variable.name, dims[0], dims[1])
+            eprint("Variable {} depends on {} and {} which are not both spatial dimensions. "
+                   "This case is not supported!"
+                   .format(variable.name, dims[0], dims[1]))
+            raise RasterProcessingException("Variable {} depends on {} and {} which are not both spatial dimensions. "
+                                            "This case is not supported!"
+                                            .format(variable.name, dims[0], dims[1]))
     elif num_dims == 3:
         # TODO: see just above
         if 'lon' in dims and 'lat' in dims:
@@ -219,17 +227,26 @@ def process_variable(variable):
             elif 'depth' in dims:
                 process_depth_lat_lon(variable)
             else:
-                raise RasterProcessingException("Variable %s depends on %s, %s, %s two of which are spatial "
+                eprint("Variable {} depends on {}, {}, {} two of which are spatial "
+                       "dimensions, but the third one is neither time nor depth. "
+                       "This case is not supported!"
+                       .format(variable.name, dims[0], dims[1], dims[2]))
+                raise RasterProcessingException("Variable {} depends on {}, {}, {} two of which are spatial "
                                                 "dimensions, but the third one is neither time nor depth. "
-                                                "This case is not supported!",
-                                                variable.name, dims[0], dims[1], dims[2])
+                                                "This case is not supported!"
+                                                .format(variable.name, dims[0], dims[1], dims[2]))
         else:
-            raise RasterProcessingException("Variable %s depends on %s, %s, %s which don't contain two spatial"
-                                            "dimensions. This case is not supported!",
-                                            variable.name, dims[0], dims[1], dims[2])
+            eprint("Variable {} depends on {}, {}, {} which don't contain two spatial"
+                   "dimensions. This case is not supported!"
+                   .format(variable.name, dims[0], dims[1], dims[2]))
+            raise RasterProcessingException("Variable {} depends on {}, {}, {} which don't contain two spatial"
+                                            "dimensions. This case is not supported!"
+                                            .format(variable.name, dims[0], dims[1], dims[2]))
     else:
-        raise RasterProcessingException("Variable %s depends on more than 3 variables. This case is not supported!",
-                                        variable.name)
+        eprint("Variable {} depends on more than 3 variables. This case is not supported!"
+               .format(variable.name))
+        raise RasterProcessingException("Variable {} depends on more than 3 variables. This case is not supported!"
+                                        .format(variable.name))
 
 
 def is_proper_variable(variable):
@@ -237,7 +254,7 @@ def is_proper_variable(variable):
     :param variable:
     :return:
     """
-    improper_vars = ['lon','longitude','X','lat','latitude','Y','time','depth']
+    improper_vars = ['lon', 'longitude', 'X', 'lat', 'latitude', 'Y', 'time', 'depth']
     return variable.name not in improper_vars
 
 
