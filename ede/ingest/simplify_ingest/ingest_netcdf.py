@@ -175,9 +175,12 @@ def process_time_lat_lon(variable):
     :param variable:
     :return:
     """
-    for time_band in variable:
-        process_band(time_band, 'time')
-
+    try:
+        for time_band in variable:
+            process_band(time_band, 'time')
+    except Exception as e:
+        eprint("process_time_lat_lon: Could not process variable {}. Error: {}".format(variable.mame, e))
+        raise
 
 def process_lat_lon(variable):
     """Processes a variable that depends on (lon,lat)
