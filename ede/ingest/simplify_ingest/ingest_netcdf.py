@@ -256,6 +256,9 @@ def process_netcdf(netcdf_filename):
     except IOError as e:
         eprint("I/O error({0}): {1}".format(e.errno, e.strerror))
         raise
+    except Exception as e:
+        eprint("Other problem during opening the dataset: %s", e)
+        raise
 
     # dims_info = get_dimensions_info(ds)
     # vars_info = get_variables_info(ds)
