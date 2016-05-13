@@ -139,6 +139,7 @@ def process_band(band, band_dim):
     :param band_dim:
     :return:
     """
+    print("processing band..")
     # TODO: Don't hardcode the tilesizes
     tile_size_lat = 10
     tile_size_lon = 10
@@ -175,7 +176,6 @@ def process_time_lat_lon(variable):
     :param variable:
     :return:
     """
-    print(variable.name)
     try:
         for time_band in variable:
             process_band(time_band, 'time')
