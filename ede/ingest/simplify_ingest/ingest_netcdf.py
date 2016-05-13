@@ -145,11 +145,19 @@ def process_band(band, band_dim):
     tile_size_lat = 100
     tile_size_lon = 100
     band_shape = band.shape
+    print("band shape: {}".format(band_shape))
+    print("number of lats: {}".format(band_shape[0]))
+    print("number of longs: {}".format(band_shape[1]))
     num_tiles_lat = ceil_integer_division(band_shape[0], tile_size_lat)
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
+    print("number of lat tiles: {}".format(num_tiles_lat))
+    print("number of lon tiles: {}".format(num_tiles_lon))
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
+            print(type(band))
+            print("value: {}".format(band[0][0]))
             tile = band[i*tile_size_lat : (i+1)*tile_size_lat][j*tile_size_lon : (j+1)*tile_size_lon]
+            print("begin processing of tile...")
             process_tile(tile, band_dim)
 
 
