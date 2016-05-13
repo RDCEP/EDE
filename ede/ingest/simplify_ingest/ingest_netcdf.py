@@ -147,6 +147,8 @@ def process_band(band, band_dim):
     tile_size_lon = 10
     band_shape = band.shape
     print("band shape: {}".format(band_shape))
+    print("number of lats: {}".format(band_shape[0]))
+    print("number of longs: {}".format(band_shape[1]))
     num_tiles_lat = ceil_integer_division(band_shape[0] / tile_size_lat)
     num_tiles_lon = ceil_integer_division(band_shape[1] / tile_size_lon)
     print("number of lat tiles: {}".format(num_tiles_lat))
