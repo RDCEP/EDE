@@ -64,7 +64,7 @@ class Raster(object):
                 f.write(pack(endian + fmt, band.nodata))
 
                 # Write out actual data
-                buffer = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data)
+                buffer = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
                 f.write(buffer)
 
 
