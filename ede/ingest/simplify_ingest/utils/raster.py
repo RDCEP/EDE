@@ -57,7 +57,7 @@ class Raster(object):
                 bit2 = 0x40 if band.has_no_data_value else 0
                 bit3 = 0x20 if band.is_no_data_value else 0
 
-                bits = bit1 | bit2 | bit3 | band.pixtype
+                bits = bit1 | bit2 | bit3 | (band.pixtype + 1)
                 f.write(pack(endian + 'b', bits))
 
                 # Write out nodata value
@@ -91,7 +91,7 @@ def wkb_to_raster(wkb_filename):
             has_no_data_value = bool(bits & 64)  # second bit
             is_no_data_value = bool(bits & 32)  # third bit
 
-            pixtype = bits & 15 # bits 4-8
+            pixtype = (bits & 15) - 1 # bits 4-8
 
             fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
             dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
