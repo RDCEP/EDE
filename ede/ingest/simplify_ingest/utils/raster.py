@@ -4,11 +4,10 @@ import argparse
 
 
 class Band(object):
-    def __init__(self, is_offline, has_no_data_value, is_no_data_value, reserved, pixtype, nodata, data):
+    def __init__(self, is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data):
         self.is_offline = is_offline
         self.has_no_data_value = has_no_data_value
         self.is_no_data_value = is_no_data_value
-        self.reserved = reserved
         self.pixtype = pixtype
         self.nodata = nodata
         self.data = data
@@ -54,11 +53,11 @@ class Raster(object):
                 fmt = fmts[band.pixtype]
 
                 # Write out band header pixels
-                bit1 = '\x80' if band.is_offline else '\x00'
-                bit2 = '\x40' if band.has_no_data_value else '\x00'
-                bit3 = '\x20' if band.is_no_data_value else '\x00'
-                bit4 = band.reserved
-                bits = bit1 | bit2 | bit3 | bit4 | band.pixtype
+                bit1 = 8 if band.is_offline else 0
+                bit2 = 4 if band.has_no_data_value else 0
+                bit3 = 2 if band.is_no_data_value else 0
+
+                #bits = bit1 | bit2 | bit3 | bit4 | band.pixtype
                 f.write(pack(endian + 'b', bits))
 
                 # Write out nodata value
@@ -91,9 +90,9 @@ def wkb_to_raster(wkb_filename):
             is_offline = bool(bits & 128)  # first bit
             has_no_data_value = bool(bits & 64)  # second bit
             is_no_data_value = bool(bits & 32)  # third bit
-            reserved = bits & 16
 
-            pixtype = bits & 15
+            pixtype = bits & 15 # bits 4-8
+            print(type(pixtype))
 
             fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
             dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
