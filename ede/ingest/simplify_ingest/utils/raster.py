@@ -91,7 +91,7 @@ def wkb_to_raster(wkb_filename):
             has_no_data_value = bool(bits & 64)  # second bit
             is_no_data_value = bool(bits & 32)  # third bit
 
-            pixtype = (bits & 15) - 1 # bits 4-8
+            pixtype = (bits & 15) - 1 # bits 4-8 TODO: why's it -1 here?
 
             fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
             dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
