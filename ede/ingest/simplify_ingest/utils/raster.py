@@ -111,7 +111,7 @@ def wkb_to_raster(wkb_filename):
                               dtype=np.dtype(dtype)
                               )
 
-            band = Band(is_offline, has_no_data_value, is_no_data_value, reserved, pixtype, nodata, data)
+            band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data)
             raster.add_band(band)
 
         return raster
