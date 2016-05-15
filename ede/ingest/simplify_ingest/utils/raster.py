@@ -43,6 +43,12 @@ class Raster(object):
         self.height = height
         self.bands = []
 
+    def __str__(self):
+        return ("Raster(version={},n_bands={},scale_X={},scale_Y={},ip_X={},ip_Y={},skew_X={},skew_Y={},"
+               "srid={},width={},height={}".format(self.version, self.n_bands, self.scale_X, self.scale_Y,
+                                                   self.ip_X, self.ip_Y, self.skew_X, self.skew_Y,
+                                                   self.srid, self.width, self.height))
+
     def add_band(self, band):
         self.bands.append(band)
 
@@ -65,7 +71,7 @@ class Raster(object):
 
             try:
                 buff = pack(endian + 'HHddddddiHH', self.version, self.n_bands, self.scale_X, self.scale_Y,
-                        self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height)
+                            self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height)
             except struct.error as e:
                 eprint(e)
                 raise RasterProcessingException("Could not pack raster header")
@@ -149,7 +155,7 @@ def wkb_to_raster(wkb_filename):
             has_no_data_value = bool(bits & 64)  # second bit
             is_no_data_value = bool(bits & 32)  # third bit
 
-            pixtype = (bits & 15) - 1 # bits 4-8 TODO: why's it -1 here?
+            pixtype = (bits & 15) - 1  # bits 4-8 TODO: why's it -1 here?
 
             fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
             dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
@@ -170,9 +176,9 @@ def wkb_to_raster(wkb_filename):
             # note that the data is filled in row-wise
             try:
                 data = np.ndarray((height, width),
-                              buffer=f.read(width * height * size),
-                              dtype=np.dtype(dtype)
-                              )
+                                  buffer=f.read(width * height * size),
+                                  dtype=np.dtype(dtype)
+                                  )
             except Exception as e:
                 eprint(e)
                 raise RasterProcessingException("Could not fill in actual data into numpy array!")
