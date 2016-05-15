@@ -309,7 +309,9 @@ def process_netcdf(netcdf_filename, wkb_filename):
     except RasterProcessingException as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
-
+    except Exception as e:
+        eprint(e)
+        raise RasterProcessingException("process_netcdf: Could not process variables!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse raster processing parameters.')
