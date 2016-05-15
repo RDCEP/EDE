@@ -302,6 +302,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 rast.add_band(band)
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                 rast.raster_to_wkb(wkb_filename, 1)
+                break
 
     except RasterProcessingException as e:
         eprint(e)
