@@ -1,6 +1,21 @@
+from __future__ import print_function
+import sys
+import struct
 from struct import unpack, pack
 import numpy as np
 import argparse
+
+
+class RasterProcessingException(Exception):
+    """Represents an exception that can occur during the processing of a raster file
+    """
+
+    def __init__(self, message):
+        super(RasterProcessingException, self).__init__(message)
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 class Band(object):
@@ -38,15 +53,27 @@ class Raster(object):
 
         with open(wkb_filename, 'w') as f:
 
-            f.write(pack('B', endian))
+            try:
+                buff = pack('B', endian)
+            except struct.error as e:
+                eprint(e)
+                raise RasterProcessingException("Could not pack endian-ness!")
+
+            f.write(buff)
 
             if endian == 0:
                 endian = '>'
             elif endian == 1:
                 endian = '<'
 
-            f.write(pack(endian + 'HHddddddiHH', self.version, self.n_bands, self.scale_X, self.scale_Y,
-                        self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height))
+            try:
+                buff = pack(endian + 'HHddddddiHH', self.version, self.n_bands, self.scale_X, self.scale_Y,
+                        self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height)
+            except struct.error as e:
+                eprint(e)
+                raise RasterProcessingException("Could not pack raster header")
+
+            f.write(buff)
 
             num_pixels = self.width * self.height
 
@@ -61,14 +88,32 @@ class Raster(object):
                 bit3 = 0x20 if band.is_no_data_value else 0
 
                 bits = bit1 | bit2 | bit3 | (band.pixtype + 1)
-                f.write(pack(endian + 'b', bits))
+
+                try:
+                    buff = pack(endian + 'b', bits)
+                except struct.error as e:
+                    eprint(e)
+                    raise RasterProcessingException("Could not pack band header bits!")
+
+                f.write(buff)
 
                 # Write out nodata value
-                f.write(pack(endian + fmt, band.nodata))
+                try:
+                    buff = pack(endian + fmt, band.nodata)
+                except struct.error as e:
+                    eprint(e)
+                    raise RasterProcessingException("Could not pack nodata value!")
+
+                f.write(buff)
 
                 # Write out actual data
-                buffer = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
-                f.write(buffer)
+                try:
+                    buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
+                except struct.error as e:
+                    eprint(e)
+                    raise RasterProcessingException("Could not pack actual band data!")
+
+                f.write(buff)
 
 
 def wkb_to_raster(wkb_filename):

@@ -1,25 +1,12 @@
-from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
 import numpy as np
-from ede.ingest.simplify_ingest.utils.raster import Raster, Band
-
-
-class RasterProcessingException(Exception):
-    """Represents an exception that can occur during the processing of a raster file
-    """
-
-    def __init__(self, message):
-        super(RasterProcessingException, self).__init__(message)
+from ede.ingest.simplify_ingest.utils.raster import Raster, Band, eprint, RasterProcessingException
 
 
 def ceil_integer_division(a, b):
     return (a + b - 1) // b
-
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 
 def get_resolution(array):
@@ -313,7 +300,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                 rast.add_band(band)
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
-                #rast.raster_to_wkb(wkb_filename, 1)
+                rast.raster_to_wkb(wkb_filename, 1)
                 rast.clear_bands()
     except:
         eprint("Could not process variables!")
