@@ -106,6 +106,7 @@ class Raster(object):
 
                 f.write(buff)
 
+                print("hello")
                 # Write out actual data
                 try:
                     buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())

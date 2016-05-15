@@ -282,6 +282,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
     tile_size_lon = 100
 
     # TODO: to be filled with correct values
+    # TODO: this seems very brittle in case we get the types wrong here,
+    # the pack method will do a conversion i guess and we get wrong wkb output, fix this
     is_offline = 0
     has_no_data_value = 1
     is_no_data_value = 0
