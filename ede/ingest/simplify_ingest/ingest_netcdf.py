@@ -271,7 +271,7 @@ def process_netcdf(netcdf_filename):
             "Could not get longitudes and latitudes of netcdf file: {}".format(netcdf_filename))
 
     bbox = get_bounding_box(longs, lats)
-
+    print("do we get here?")
     # Note that x = longitude & y = latitude
     try:
         scale_X = get_resolution(longs)
@@ -281,7 +281,6 @@ def process_netcdf(netcdf_filename):
         raise RasterProcessingException(
             "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
-    print("are we here?")
     ip_X = longs[0] - 0.5 * scale_X
     ip_Y = lats[0] - 0.5 * scale_Y
     # TODO: does a netcdf always have 0 skews?
