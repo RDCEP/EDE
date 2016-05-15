@@ -136,10 +136,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            print("process_band: {} {}".format(tile_size_lat, tile_size_lon))
-            print("i: {} j: {}".format(i, j))
             tmp = band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
-            print("tmp shape: {}".format(tmp.shape))
             yield tmp
 
 
@@ -307,7 +304,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                 rast.add_band(band)
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
-                # rast.raster_to_wkb(wkb_filename, 1)
+                rast.raster_to_wkb(wkb_filename, 1)
                 rast.clear_bands()
     except RasterProcessingException as e:
         eprint(e)
