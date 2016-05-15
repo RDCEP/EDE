@@ -24,7 +24,7 @@ def eprint(*args, **kwargs):
 def get_resolution(array):
     eps = np.finfo(float).eps
     res = array[1] - array[0]
-    for i in range(1, len(array)):
+    for i in range(1, len(array)-1):
         res_next = array[i + 1] - array[i]
         if abs(res_next - res) > eps:
             raise RasterProcessingException("Does not have a uniform resolution. This case is not supported!")
@@ -271,7 +271,7 @@ def process_netcdf(netcdf_filename):
             "Could not get longitudes and latitudes of netcdf file: {}".format(netcdf_filename))
 
     bbox = get_bounding_box(longs, lats)
-    print("do we get here?")
+
     # Note that x = longitude & y = latitude
     try:
         scale_X = get_resolution(longs)
