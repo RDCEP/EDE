@@ -131,6 +131,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     :param band_dim:
     :return:
     """
+    print("process_band: {} {}".format(tile_size_lat, tile_size_lon))
     band_shape = band.shape
     num_tiles_lat = ceil_integer_division(band_shape[0], tile_size_lat)
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
