@@ -134,17 +134,7 @@ def get_dimensions_info(dataset):
     return dims_info
 
 
-def process_tile(tile, band_dim):
-    """Processes a single tile
-    :param tile:
-    :param band_dim:
-    :return:
-    """
-    print(tile)
-    print(band_dim)
-
-
-def process_band(band, band_dim):
+def process_band(band, tile_size_lat, tile_size_lon):
     """Processes a single band
 
     Note that we are assuming band = band[lat][lon]
@@ -153,19 +143,15 @@ def process_band(band, band_dim):
     :param band_dim:
     :return:
     """
-    # TODO: Don't hardcode the tilesizes
-    tile_size_lat = 100
-    tile_size_lon = 100
     band_shape = band.shape
     num_tiles_lat = ceil_integer_division(band_shape[0], tile_size_lat)
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            tile = band[i * tile_size_lat: (i + 1) * tile_size_lat][j * tile_size_lon: (j + 1) * tile_size_lon]
-            process_tile(tile, band_dim)
+            yield band[i * tile_size_lat: (i + 1) * tile_size_lat][j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
-def process_depth_lat_lon(variable):
+def process_band_lat_lon(variable, tile_size_lat, tile_size_lon):
     """Processes a variable that depends on (lon,lat,depth)
 
     TODO: Make sure to handle all permutations correctly, i.e.
@@ -175,29 +161,13 @@ def process_depth_lat_lon(variable):
     :param variable:
     :return:
     """
-    for depth_band in variable:
-        process_band(depth_band, 'depth')
+    for band in variable:
+        tiles = process_band(band, tile_size_lat, tile_size_lon)
+        for tile in tiles:
+            yield tile
 
 
-def process_time_lat_lon(variable):
-    """Processes a variable that depends on (lon,lat,time)
-
-    TODO: Make sure to handle all permutations correctly, i.e.
-    (lon,lat,time), (time,lon,lat), etc.
-    Right now we're assuming (time,lat,lon)
-
-    :param variable:
-    :return:
-    """
-    try:
-        for time_band in variable:
-            process_band(time_band, 'time')
-    except Exception as e:
-        eprint("process_time_lat_lon: Could not process variable {}. Error: {}".format(variable.mame, e))
-        raise
-
-
-def process_lat_lon(variable):
+def process_lat_lon(variable, tile_size_lat, tile_size_lon):
     """Processes a variable that depends on (lon,lat)
 
     TODO: Make sure to handle both (lon,lat) and (lat,lon) correctly
@@ -206,10 +176,10 @@ def process_lat_lon(variable):
     :param variable:
     :return:
     """
-    process_band(variable[:], None)
+    return process_band(variable[:], tile_size_lat, tile_size_lon)
 
 
-def process_variable(variable):
+def process_variable(variable, tile_size_lat, tile_size_lon):
     """Processes an individual variable
     :param variable:
     :return:
@@ -229,12 +199,7 @@ def process_variable(variable):
     elif num_dims == 2:
         # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
         if 'lon' in dims and 'lat' in dims:
-            try:
-                process_lat_lon(variable)
-            except:
-                eprint("Could not process variable {} with process_lat_lon".format(variable.name))
-                raise RasterProcessingException("Could not process variable {} with process_lat_lon"
-                                                .format(variable.name))
+            return process_lat_lon(variable, tile_size_lat, tile_size_lon)
         else:
             eprint("Variable {} depends on {} and {} which are not both spatial dimensions. "
                    "This case is not supported!"
@@ -246,19 +211,9 @@ def process_variable(variable):
         # TODO: see just above
         if 'lon' in dims and 'lat' in dims:
             if 'time' in dims:
-                try:
-                    process_time_lat_lon(variable)
-                except:
-                    eprint("Could not process variable {} with process_time_lat_lon".format(variable.name))
-                    raise RasterProcessingException("Could not process variable {} with process_time_lat_lon"
-                                                    .format(variable.name))
+                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon)
             elif 'depth' in dims:
-                try:
-                    process_depth_lat_lon(variable)
-                except:
-                    eprint("Could not process variable {} with process_depth_lat_lon".format(variable.name))
-                    raise RasterProcessingException("Could not process variable {} with process_depth_lat_lon"
-                                                    .format(variable.name))
+                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon)
             else:
                 eprint("Variable {} depends on {}, {}, {} two of which are spatial "
                        "dimensions, but the third one is neither time nor depth. "
@@ -333,12 +288,16 @@ def process_netcdf(netcdf_filename):
     skew_Y = 0.0
     # TODO: does a netcdf always have srid 4326?
     srid = 4326
+    tile_size_lat = 100
+    tile_size_lon = 100
 
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
         for var in proper_vars:
-            process_variable(var)
+            tiles = process_variable(var, tile_size_lat, tile_size_lon)
+            for tile in tiles:
+                print(tile)
     except:
         eprint("Could not process variables!")
         raise
