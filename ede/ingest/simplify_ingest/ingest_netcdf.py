@@ -296,7 +296,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
         for var in proper_vars:
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             for tile in tiles:
-                print("hello")
                 rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                               srid, tile.shape[1], tile.shape[0])
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)

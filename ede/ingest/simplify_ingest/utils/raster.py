@@ -116,21 +116,34 @@ class Raster(object):
 def wkb_to_raster(wkb_filename):
     with open(wkb_filename, 'r') as f:
 
-        (endian,) = unpack('B', f.read(1))
+        try:
+            (endian,) = unpack('B', f.read(1))
+        except struct.error as e:
+            eprint(e)
+            raise RasterProcessingException("Could not unpack endianness!")
 
         if endian == 0:
             endian = '>'
         elif endian == 1:
             endian = '<'
 
-        (version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height) = unpack(
-            endian + 'HHddddddiHH',
-            f.read(60))
+        try:
+            (version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height) = unpack(
+                endian + 'HHddddddiHH',
+                f.read(60))
+        except struct.error as e:
+            eprint(e)
+            raise RasterProcessingException("Could not unpack raster header!")
 
         raster = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height)
 
         for _ in range(n_bands):
-            (bits,) = unpack(endian + 'b', f.read(1))
+
+            try:
+                (bits,) = unpack(endian + 'b', f.read(1))
+            except RasterProcessingException as e:
+                eprint(e)
+                raise RasterProcessingException("Could not unpack band header bits!")
 
             is_offline = bool(bits & 128)  # first bit
             has_no_data_value = bool(bits & 64)  # second bit
@@ -147,14 +160,22 @@ def wkb_to_raster(wkb_filename):
             fmt = fmts[pixtype]
 
             # Read the nodata value
-            (nodata,) = unpack(endian + fmt, f.read(size))
+            try:
+                (nodata,) = unpack(endian + fmt, f.read(size))
+            except struct.error as e:
+                eprint(e)
+                raise RasterProcessingException("Could not unpack band nodata value!")
 
             # Note that now data = data[height][width], i.e. height ~ row and width ~ column and
             # note that the data is filled in row-wise
-            data = np.ndarray((height, width),
+            try:
+                data = np.ndarray((height, width),
                               buffer=f.read(width * height * size),
                               dtype=np.dtype(dtype)
                               )
+            except Exception as e:
+                eprint(e)
+                raise RasterProcessingException("Could not fill in actual data into numpy array!")
 
             band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data)
             raster.add_band(band)
