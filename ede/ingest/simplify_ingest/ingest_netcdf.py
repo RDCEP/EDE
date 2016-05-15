@@ -297,6 +297,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
             pixtype = get_pixtype(var)
             nodata = var.missing_value  # we're assuming this is not None!!
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
+            print("pixtype: {}".format(pixtype))
+            print("nodata: {}".format(nodata))
             for tile in tiles:
                 rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                               srid, tile.shape[1], tile.shape[0])
