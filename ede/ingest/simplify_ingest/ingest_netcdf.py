@@ -141,6 +141,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
+            print("fill value: {}".format(band.get_fill_value()))
             yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
@@ -297,7 +298,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
             pixtype = get_pixtype(var)
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             for tile in tiles:
-                nodata = tile.get_fill_value()
+                nodata = 9999 # TODO: DON'T HARDCODE!!!!
                 rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                               srid, tile.shape[1], tile.shape[0])
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
