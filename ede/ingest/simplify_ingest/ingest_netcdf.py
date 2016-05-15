@@ -296,7 +296,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
         for var in proper_vars:
             pixtype = get_pixtype(var)
             print("hello there")
-            nodata = var.missing_value  # we're assuming this is not None!!
+            nodata = var._FillValue # we're assuming this is not None!!
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             print("pixtype: {}".format(pixtype))
             print("nodata: {}".format(nodata))
