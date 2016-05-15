@@ -189,4 +189,5 @@ if __name__ == "__main__":
     parser.add_argument('--output', help='Output wkb file', required=True)
     args = parser.parse_args()
     raster = wkb_to_raster(args.input)
+    print(raster)
     raster.raster_to_wkb(args.output, 1)
