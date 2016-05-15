@@ -20,27 +20,27 @@ def eprint(*args, **kwargs):
 
 class Band(object):
     def __init__(self, is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data):
-        self.is_offline = is_offline
-        self.has_no_data_value = has_no_data_value
-        self.is_no_data_value = is_no_data_value
-        self.pixtype = pixtype
-        self.nodata = nodata
-        self.data = data
+        self.is_offline = is_offline # python bool
+        self.has_no_data_value = has_no_data_value # python bool
+        self.is_no_data_value = is_no_data_value # python bool
+        self.pixtype = pixtype # python integer
+        self.nodata = nodata # format fmts[pixtype] = corresponding python type according to struct doc
+        self.data = data # numpy array with dtype = dtypes[pixtype]
 
 
 class Raster(object):
     def __init__(self, version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height):
-        self.version = version
-        self.n_bands = n_bands
-        self.scale_X = scale_X
-        self.scale_Y = scale_Y
-        self.ip_X = ip_X
-        self.ip_Y = ip_Y
-        self.skew_X = skew_X
-        self.skew_Y = skew_Y
-        self.srid = srid
-        self.width = width
-        self.height = height
+        self.version = version # format H = python integer
+        self.n_bands = n_bands # H
+        self.scale_X = scale_X # d = python float
+        self.scale_Y = scale_Y # d
+        self.ip_X = ip_X # d
+        self.ip_Y = ip_Y # d
+        self.skew_X = skew_X # d
+        self.skew_Y = skew_Y # d
+        self.srid = srid # i = python integer
+        self.width = width # H
+        self.height = height # H
         self.bands = []
 
     def __str__(self):

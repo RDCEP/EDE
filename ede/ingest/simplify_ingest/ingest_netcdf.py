@@ -9,10 +9,15 @@ def ceil_integer_division(a, b):
     return (a + b - 1) // b
 
 
+def get_pixtype(variable):
+    dtypes = map(np.dtype, ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8'])
+    return dtypes.index(variable.dtype)
+
+
 def get_resolution(array):
     eps = np.finfo(float).eps
     res = array[1] - array[0]
-    for i in range(1, len(array)-1):
+    for i in range(1, len(array) - 1):
         res_next = array[i + 1] - array[i]
         if abs(res_next - res) > eps:
             raise RasterProcessingException("Does not have a uniform resolution. This case is not supported!")
@@ -269,11 +274,11 @@ def process_netcdf(netcdf_filename, wkb_filename):
         raise RasterProcessingException(
             "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
-    version = 1.3 # Always version = 0
-    n_bands = 1 # We ingest unpacked rast fields
+    version = 0  # Always version = 0
+    n_bands = 1  # We ingest unpacked rast fields
     ip_X = longs[0] - 0.5 * scale_X
     ip_Y = lats[0] - 0.5 * scale_Y
-    # TODO: does a netcdf always have 0 skews?
+    # TODO: does a netcdf always have 0 skew?
     skew_X = 0.0
     skew_Y = 0.0
     # TODO: does a netcdf always have srid 4326?
@@ -281,19 +286,16 @@ def process_netcdf(netcdf_filename, wkb_filename):
     tile_size_lat = 100
     tile_size_lon = 100
 
-    # TODO: to be filled with correct values
-    # TODO: this seems very brittle in case we get the types wrong here,
-    # the pack method will do a conversion i guess and we get wrong wkb output, fix this
-    is_offline = 0
-    has_no_data_value = 1
-    is_no_data_value = 0
-    pixtype = 9
-    nodata = 10e23
+    is_offline = False
+    has_no_data_value = True  # we're assuming there's always a no_data value! TODO: maybe check if nodata val is None
+    is_no_data_value = False  # we're being conservative here
 
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
         for var in proper_vars:
+            pixtype = get_pixtype(var)
+            nodata = var.missing_value  # we're assuming this is not None!!
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             for tile in tiles:
                 rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
