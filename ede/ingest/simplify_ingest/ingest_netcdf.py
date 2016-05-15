@@ -302,9 +302,9 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                 rast.raster_to_wkb(wkb_filename, 1)
                 rast.clear_bands()
-    except:
-        eprint("Could not process variables!")
-        raise
+    except RasterProcessingException as e:
+        eprint(e)
+        raise RasterProcessingException("process_netcdf: Could not process variables!")
 
 
 if __name__ == "__main__":
