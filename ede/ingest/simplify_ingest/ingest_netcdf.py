@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import argparse
 from netCDF4 import Dataset
+import numpy as np
 
 
 class RasterProcessingException(Exception):
@@ -18,6 +19,16 @@ def ceil_integer_division(a, b):
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+
+def get_resolution(array):
+    eps = np.finfo(float).eps
+    res = array[1] - array[0]
+    for i in range(1, len(array)):
+        res_next = array[i + 1] - array[i]
+        if abs(res_next - res) > eps:
+            raise RasterProcessingException("Does not have a uniform resolution. This case is not supported!")
+    return res
 
 
 def get_bounding_box(longitudes, latitudes):
@@ -150,7 +161,7 @@ def process_band(band, band_dim):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            tile = band[i*tile_size_lat : (i+1)*tile_size_lat][j*tile_size_lon : (j+1)*tile_size_lon]
+            tile = band[i * tile_size_lat: (i + 1) * tile_size_lat][j * tile_size_lon: (j + 1) * tile_size_lon]
             process_tile(tile, band_dim)
 
 
@@ -294,16 +305,34 @@ def process_netcdf(netcdf_filename):
         eprint("Other problem during opening the dataset: {}".format(e))
         raise
 
-    # dims_info = get_dimensions_info(ds)
-    # vars_info = get_variables_info(ds)
-    # global_attrs = get_global_attributes(ds)
-    #
-    # try:
-    #     longs, lats = get_longitudes_latitudes(ds)
-    # except:
-    #     raise RasterProcessingException("Could not get longitudes and latitudes of netcdf file: %s", netcdf_filename)
-    #
-    # bbox = get_bounding_box(longs, lats)
+    dims_info = get_dimensions_info(ds)
+    vars_info = get_variables_info(ds)
+    global_attrs = get_global_attributes(ds)
+
+    try:
+        longs, lats = get_longitudes_latitudes(ds)
+    except:
+        raise RasterProcessingException(
+            "Could not get longitudes and latitudes of netcdf file: {}".format(netcdf_filename))
+
+    bbox = get_bounding_box(longs, lats)
+
+    # Note that x = longitude & y = latitude
+    try:
+        scale_X = get_resolution(longs)
+        scale_Y = get_resolution(lats)
+    except RasterProcessingException as e:
+        eprint(e)
+        raise RasterProcessingException(
+            "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
+
+    ip_X = longs[0] - 0.5 * scale_X
+    ip_Y = lats[0] - 0.5 * scale_Y
+    # TODO: does a netcdf always have 0 skews?
+    skew_X = 0.0
+    skew_Y = 0.0
+    # TODO: does a netcdf always have srid 4326?
+    srid = 4326
 
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
