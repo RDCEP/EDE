@@ -137,6 +137,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
             print("process_band: {} {}".format(tile_size_lat, tile_size_lon))
+            print("i: {} j: {}".format(i, j))
             yield band[i * tile_size_lat: (i + 1) * tile_size_lat][j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
