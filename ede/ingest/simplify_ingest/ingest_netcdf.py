@@ -269,7 +269,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
         raise RasterProcessingException(
             "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
-    version = 0.3 # Always version = 0
+    version = 32768 # Always version = 0
     n_bands = 1 # We ingest unpacked rast fields
     ip_X = longs[0] - 0.5 * scale_X
     ip_Y = lats[0] - 0.5 * scale_Y
