@@ -136,8 +136,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            tmp = band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
-            yield tmp
+            yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
 def process_band_lat_lon(variable, tile_size_lat, tile_size_lon):
@@ -291,21 +290,19 @@ def process_netcdf(netcdf_filename, wkb_filename):
     pixtype = 9
     nodata = 10e23
 
-    rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
-                              srid, tile_size_lon, tile_size_lat)
-
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
         for var in proper_vars:
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             for tile in tiles:
-                print("tile shape: {}".format(tile.shape))
+                rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
+                              srid, tile.shape[1], tile.shape[0])
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                 rast.add_band(band)
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                 rast.raster_to_wkb(wkb_filename, 1)
-                rast.clear_bands()
+
     except RasterProcessingException as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
