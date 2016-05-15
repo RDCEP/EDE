@@ -3,6 +3,7 @@ import sys
 import argparse
 from netCDF4 import Dataset
 import numpy as np
+from ede.ingest.simplify_ingest.utils.raster import Raster, Band
 
 
 class RasterProcessingException(Exception):
@@ -246,7 +247,7 @@ def is_proper_variable(variable):
     return variable.name not in improper_vars
 
 
-def process_netcdf(netcdf_filename):
+def process_netcdf(netcdf_filename, wkb_filename):
     """Processes the NetCDF
     :param netcdf_filename:
     :return:
@@ -281,6 +282,8 @@ def process_netcdf(netcdf_filename):
         raise RasterProcessingException(
             "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
+    version = 0 # Always version = 0
+    n_bands = 1 # We ingest unpacked rast fields
     ip_X = longs[0] - 0.5 * scale_X
     ip_Y = lats[0] - 0.5 * scale_Y
     # TODO: does a netcdf always have 0 skews?
@@ -291,13 +294,27 @@ def process_netcdf(netcdf_filename):
     tile_size_lat = 100
     tile_size_lon = 100
 
+    # TODO: to be filled with correct values
+    is_offline = 0
+    has_no_data_value = 1
+    is_no_data_value = 0
+    pixtype = 9
+    nodata = 10e23
+
+    rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
+                              srid, tile_size_lon, tile_size_lat)
+
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
         for var in proper_vars:
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
             for tile in tiles:
-                print(tile)
+                band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
+                rast.add_band(band)
+                # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
+                rast.raster_to_wkb(wkb_filename, 1)
+                rast.clear_bands()
     except:
         eprint("Could not process variables!")
         raise
@@ -306,9 +323,10 @@ def process_netcdf(netcdf_filename):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse raster processing parameters.')
     parser.add_argument('--input', help='Input netcdf filename', required=True)
+    parser.add_argument('--output', help='Output wkb filename', required=True)
     args = parser.parse_args()
     try:
-        process_netcdf(args.input)
+        process_netcdf(args.input, args.output)
     except:
         eprint("Could not process netcdf file: {}".format(args.input))
         sys.exit()

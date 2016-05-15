@@ -31,6 +31,9 @@ class Raster(object):
     def add_band(self, band):
         self.bands.append(band)
 
+    def clear_bands(self):
+        self.bands = []
+
     def raster_to_wkb(self, wkb_filename, endian):
 
         with open(wkb_filename, 'w') as f:
