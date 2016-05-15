@@ -313,7 +313,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                 rast.add_band(band)
                 # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
-                rast.raster_to_wkb(wkb_filename, 1)
+                #rast.raster_to_wkb(wkb_filename, 1)
                 rast.clear_bands()
     except:
         eprint("Could not process variables!")
