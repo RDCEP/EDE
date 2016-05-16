@@ -339,6 +339,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         process_netcdf(args.input, args.output)
-    except:
+    except Exception as e:
+        eprint(e)
         eprint("Could not process netcdf file: {}".format(args.input))
         sys.exit()
