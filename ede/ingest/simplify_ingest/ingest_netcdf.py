@@ -299,29 +299,30 @@ def process_netcdf(netcdf_filename, wkb_filename):
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
-        for var in proper_vars:
-            pixtype = get_pixtype(var)
-            tiles = process_variable(var, tile_size_lat, tile_size_lon)
-            try:
-                nodata = var._FillValue
-            except:
-                nodata = get_nodata_value(pixtype)
-            for tile in tiles:
-                rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
-                              srid, tile.shape[1], tile.shape[0])
-                band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
-                rast.add_band(band)
-                # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
-                rast.raster_to_hexwkb(1)
-                # TODO: write to file
-                break
-
+        with open(wkb_filename, 'w') as f:
+            for var in proper_vars:
+                pixtype = get_pixtype(var)
+                tiles = process_variable(var, tile_size_lat, tile_size_lon)
+                try:
+                    nodata = var._FillValue
+                except:
+                    nodata = get_nodata_value(pixtype)
+                for tile in tiles:
+                    rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
+                                  srid, tile.shape[1], tile.shape[0])
+                    band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
+                    rast.add_band(band)
+                    # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
+                    hexwkb = rast.raster_to_hexwkb(1)
+                    f.write(hexwkb + '\n')
+                    break
     except RasterProcessingException as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
     except Exception as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse raster processing parameters.')
