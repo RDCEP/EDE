@@ -299,6 +299,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
+
         with open(wkb_filename, 'w') as f:
             for var in proper_vars:
                 pixtype = get_pixtype(var)
@@ -315,7 +316,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                     # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                     hexwkb = rast.raster_to_hexwkb(1)
                     f.write(hexwkb + '\n')
-                    break
+
     except RasterProcessingException as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
