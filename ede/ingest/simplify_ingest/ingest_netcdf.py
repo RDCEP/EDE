@@ -2,6 +2,7 @@ import sys
 import argparse
 from netCDF4 import Dataset
 import numpy as np
+import numpy.ma as ma
 from ede.ingest.simplify_ingest.utils.raster import Raster, Band, eprint, RasterProcessingException
 
 
@@ -12,6 +13,11 @@ def ceil_integer_division(a, b):
 def get_pixtype(variable):
     dtypes = map(np.dtype, ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8'])
     return dtypes.index(variable.dtype)
+
+
+def get_nodata_value(pixtype):
+    dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
+    return ma.get_fill_value(np.dtype(dtypes[pixtype]))
 
 
 def get_resolution(array):
@@ -141,7 +147,6 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            print("fill value: {}".format(band.get_fill_value()))
             yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
@@ -297,8 +302,11 @@ def process_netcdf(netcdf_filename, wkb_filename):
         for var in proper_vars:
             pixtype = get_pixtype(var)
             tiles = process_variable(var, tile_size_lat, tile_size_lon)
+            try:
+                nodata = var._FillValue
+            except:
+                nodata = get_nodata_value(pixtype)
             for tile in tiles:
-                nodata = 9999 # TODO: DON'T HARDCODE!!!!
                 rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                               srid, tile.shape[1], tile.shape[0])
                 band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
