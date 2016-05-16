@@ -3,7 +3,7 @@ import argparse
 from netCDF4 import Dataset
 import numpy as np
 import numpy.ma as ma
-from ede.ingest.simplify_ingest.utils.raster import Raster, Band, eprint, RasterProcessingException
+from ede.ingest.simplify_ingest.utils.raster import *
 
 
 def ceil_integer_division(a, b):
@@ -26,7 +26,8 @@ def get_resolution(array):
     for i in range(1, len(array) - 1):
         res_next = array[i + 1] - array[i]
         if abs(res_next - res) > eps:
-            raise RasterProcessingException("Does not have a uniform resolution. This case is not supported!")
+            raise RasterProcessingException("Does not have a uniform resolution at index {}. "
+                                            "This case is not supported!".format(i))
     return res
 
 
@@ -274,11 +275,17 @@ def process_netcdf(netcdf_filename, wkb_filename):
     # Note that x = longitude & y = latitude
     try:
         scale_X = get_resolution(longs)
+    except RasterProcessingException as e:
+        eprint(e)
+        raise RasterProcessingException(
+            "Could not get longitude resolution of netcdf file: {}".format(netcdf_filename))
+
+    try:
         scale_Y = get_resolution(lats)
     except RasterProcessingException as e:
         eprint(e)
         raise RasterProcessingException(
-            "Could not get longitude and latitude resolutions of netcdf file: {}".format(netcdf_filename))
+            "Could not get latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
     version = 0  # Always version = 0
     n_bands = 1  # We ingest unpacked rast fields
