@@ -4,6 +4,7 @@ from netCDF4 import Dataset
 import numpy as np
 import numpy.ma as ma
 from ede.ingest.simplify_ingest.utils.raster import *
+from datetime import datetime
 
 
 def ceil_integer_division(a, b):
@@ -339,7 +340,9 @@ if __name__ == "__main__":
     parser.add_argument('--output', help='Output wkb filename', required=True)
     args = parser.parse_args()
     try:
+        startTime = datetime.now()
         process_netcdf(args.input, args.output)
+        print("Duration: {}".format(datetime.now() - startTime))
     except Exception as e:
         eprint(e)
         eprint("Could not process netcdf file: {}".format(args.input))
