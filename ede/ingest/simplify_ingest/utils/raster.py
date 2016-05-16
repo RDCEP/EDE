@@ -122,12 +122,12 @@ class Raster(object):
 
     def raster_to_hexwkb(self, endian):
 
-        hexwkb = ""
+        hexwkb = ''
         wkb = self.raster_to_wkb(endian)
         hexchars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
         for byte in wkb:
-            hex_1 = hexchars[byte >> 4]
-            hex_2 = hexchars[byte & 0x0F]
+            hex_1 = hexchars[ord(byte) >> 4]
+            hex_2 = hexchars[ord(byte) & 0x0F]
             hexwkb += hex_1
             hexwkb += hex_2
         return hexwkb
