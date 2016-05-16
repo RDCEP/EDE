@@ -21,7 +21,8 @@ def get_nodata_value(pixtype):
 
 
 def get_resolution(array):
-    eps = np.finfo(float).eps
+    #eps = np.finfo(float).eps # too strict, soil data wouldn't pass this
+    eps = 1e-4
     res = array[1] - array[0]
     for i in range(1, len(array) - 1):
         res_next = array[i + 1] - array[i]
