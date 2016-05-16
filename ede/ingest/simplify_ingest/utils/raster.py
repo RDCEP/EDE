@@ -20,103 +20,117 @@ def eprint(*args, **kwargs):
 
 class Band(object):
     def __init__(self, is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data):
-        self.is_offline = is_offline # python bool
-        self.has_no_data_value = has_no_data_value # python bool
-        self.is_no_data_value = is_no_data_value # python bool
-        self.pixtype = pixtype # python integer
-        self.nodata = nodata # format fmts[pixtype] = corresponding python type according to struct doc
-        self.data = data # numpy array with dtype = dtypes[pixtype]
+        self.is_offline = is_offline  # python bool
+        self.has_no_data_value = has_no_data_value  # python bool
+        self.is_no_data_value = is_no_data_value  # python bool
+        self.pixtype = pixtype  # python integer
+        self.nodata = nodata  # format fmts[pixtype] = corresponding python type according to struct doc
+        self.data = data  # numpy array with dtype = dtypes[pixtype]
 
 
 class Raster(object):
     def __init__(self, version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height):
-        self.version = version # format H = python integer
-        self.n_bands = n_bands # H
-        self.scale_X = scale_X # d = python float
-        self.scale_Y = scale_Y # d
-        self.ip_X = ip_X # d
-        self.ip_Y = ip_Y # d
-        self.skew_X = skew_X # d
-        self.skew_Y = skew_Y # d
-        self.srid = srid # i = python integer
-        self.width = width # H
-        self.height = height # H
+        self.version = version  # format H = python integer
+        self.n_bands = n_bands  # H
+        self.scale_X = scale_X  # d = python float
+        self.scale_Y = scale_Y  # d
+        self.ip_X = ip_X  # d
+        self.ip_Y = ip_Y  # d
+        self.skew_X = skew_X  # d
+        self.skew_Y = skew_Y  # d
+        self.srid = srid  # i = python integer
+        self.width = width  # H
+        self.height = height  # H
         self.bands = []
 
     def __str__(self):
         return ("Raster(version={},n_bands={},scale_X={},scale_Y={},ip_X={},ip_Y={},skew_X={},skew_Y={},"
-               "srid={},width={},height={}".format(self.version, self.n_bands, self.scale_X, self.scale_Y,
-                                                   self.ip_X, self.ip_Y, self.skew_X, self.skew_Y,
-                                                   self.srid, self.width, self.height))
+                "srid={},width={},height={})".format(self.version, self.n_bands, self.scale_X, self.scale_Y,
+                                                     self.ip_X, self.ip_Y, self.skew_X, self.skew_Y,
+                                                     self.srid, self.width, self.height))
 
     def add_band(self, band):
         self.bands.append(band)
 
-    def raster_to_wkb(self, wkb_filename, endian):
+    def raster_to_wkb(self, endian):
 
-        with open(wkb_filename, 'w') as f:
+        chunks = []
+
+        try:
+            buff = pack('B', endian)
+        except struct.error as e:
+            eprint(e)
+            raise RasterProcessingException("Could not pack endian-ness!")
+
+        chunks.append(buff)
+
+        if endian == 0:
+            endian = '>'
+        elif endian == 1:
+            endian = '<'
+
+        try:
+            buff = pack(endian + 'HHddddddiHH', self.version, self.n_bands, self.scale_X, self.scale_Y,
+                        self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height)
+        except struct.error as e:
+            eprint(e)
+            raise RasterProcessingException("Could not pack raster header")
+
+        chunks.append(buff)
+
+        num_pixels = self.width * self.height
+
+        for band in self.bands:
+
+            fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
+            fmt = fmts[band.pixtype]
+
+            # Write out band header pixels
+            bit1 = 0x80 if band.is_offline else 0
+            bit2 = 0x40 if band.has_no_data_value else 0
+            bit3 = 0x20 if band.is_no_data_value else 0
+
+            bits = bit1 | bit2 | bit3 | (band.pixtype + 1)
 
             try:
-                buff = pack('B', endian)
+                buff = pack(endian + 'b', bits)
             except struct.error as e:
                 eprint(e)
-                raise RasterProcessingException("Could not pack endian-ness!")
+                raise RasterProcessingException("Could not pack band header bits!")
 
-            f.write(buff)
+            chunks.append(buff)
 
-            if endian == 0:
-                endian = '>'
-            elif endian == 1:
-                endian = '<'
-
+            # Write out nodata value
             try:
-                buff = pack(endian + 'HHddddddiHH', self.version, self.n_bands, self.scale_X, self.scale_Y,
-                            self.ip_X, self.ip_Y, self.skew_X, self.skew_Y, self.srid, self.width, self.height)
+                buff = pack(endian + fmt, band.nodata)
             except struct.error as e:
                 eprint(e)
-                raise RasterProcessingException("Could not pack raster header")
+                raise RasterProcessingException("Could not pack nodata value!")
 
-            f.write(buff)
+            chunks.append(buff)
 
-            num_pixels = self.width * self.height
+            # Write out actual data
+            try:
+                buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
+            except struct.error as e:
+                eprint(e)
+                raise RasterProcessingException("Could not pack actual band data!")
 
-            for band in self.bands:
+            chunks.append(buff)
 
-                fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
-                fmt = fmts[band.pixtype]
+        return b''.join(chunks)
 
-                # Write out band header pixels
-                bit1 = 0x80 if band.is_offline else 0
-                bit2 = 0x40 if band.has_no_data_value else 0
-                bit3 = 0x20 if band.is_no_data_value else 0
+    def raster_to_hexwkb(self, endian):
 
-                bits = bit1 | bit2 | bit3 | (band.pixtype + 1)
-
-                try:
-                    buff = pack(endian + 'b', bits)
-                except struct.error as e:
-                    eprint(e)
-                    raise RasterProcessingException("Could not pack band header bits!")
-
-                f.write(buff)
-
-                # Write out nodata value
-                try:
-                    buff = pack(endian + fmt, band.nodata)
-                except struct.error as e:
-                    eprint(e)
-                    raise RasterProcessingException("Could not pack nodata value!")
-
-                f.write(buff)
-
-                # Write out actual data
-                try:
-                    buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
-                except struct.error as e:
-                    eprint(e)
-                    raise RasterProcessingException("Could not pack actual band data!")
-
-                f.write(buff)
+        hexwkb = ""
+        wkb = self.raster_to_wkb(endian)
+        hexchars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+        for byte in wkb:
+            hex_1 = hexchars[byte >> 4]
+            hex_2 = hexchars[byte & 0x0F]
+            hexwkb += hex_1
+            hexwkb += hex_2
+        return hexwkb
 
 
 def wkb_to_raster(wkb_filename):
