@@ -17,7 +17,7 @@ def get_pixtype(variable):
 
 def get_nodata_value(pixtype):
     dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
-    return ma.get_fill_value(np.dtype(dtypes[pixtype]))
+    return ma.default_fill_value(np.dtype(dtypes[pixtype]))
 
 
 def get_resolution(array):
