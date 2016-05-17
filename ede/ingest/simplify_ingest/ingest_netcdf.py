@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import Json
+from psycopg2 import DatabaseError
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from itertools import izip
 
@@ -24,6 +25,9 @@ def insert_get_var_id(cursor, variable):
         for row in rows:
             var_id = int(row[0])
             return var_id
+    except DatabaseError as e:
+        eprint(e)
+        raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
     except Exception as e:
         eprint(e)
         raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
