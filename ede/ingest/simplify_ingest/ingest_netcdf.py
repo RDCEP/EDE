@@ -20,6 +20,7 @@ def insert_get_var_id(cursor, variable):
     try:
         # check if variable already there
         print("0")
+        print("select uid from grid_vars where vname = \'{}\'".format(vname))
         cursor.execute("select uid from grid_vars where vname = \'{}\'".format(vname))
         print("1")
         rows = cursor.fetchall()
