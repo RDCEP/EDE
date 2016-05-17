@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 from ede.ingest.simplify_ingest.utils.raster import *
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import Json
 from psycopg2 import DatabaseError
@@ -192,22 +192,38 @@ def get_time_ids(cursor, dataset, meta_id):
     :return:
     """
     try:
-        times = dataset.variables['time'][:]
-        time_ids = []
+        time_var = dataset.variables['time']
+    except KeyError:
+        return None
+    try:
+        time_field_str = str(time_var.getncattr('units'))
+        time_fields_str = time_field_str.split("since")
+        time_unit_str = time_fields_str[0].strip()
+        time_delta = None
+        if time_unit_str == "days":
+            time_delta = timedelta(days=1)
+        elif time_unit_str == "growing seasons":
+            time_delta = timedelta(days=365)
+        time_start_str = time_fields_str[1].strip()
+        time_start = datetime.strptime(time_start_str, "%Y-%m-%d %H:%M:%S") +\
+                     timedelta(seconds=time_var[0] * time_delta.total_seconds())
+        times_obj = [time_start + t * time_delta for t in range(time_var.size)]
+        times = [t.strftime("%Y-%m-%d %H:%M:%S") for t in times_obj]
         for time in times:
             cursor.execute("insert into grid_times (meta_id, time) values ({}, \'{}\') returning uid"
                            .format(meta_id, time))
             rows = cursor.fetchall()
+            time_ids = []
             for row in rows:
                 time_id = int(row[0])
                 time_ids.append(time_id)
                 break
-    except KeyError as e:
-        eprint(e)
-        time_ids = None
     except DatabaseError as e:
         eprint(e)
         raise RasterProcessingException("There was a DB Error during get_time_ids!")
+    except Exception as e:
+        eprint(e)
+        raise RasterProcessingException("There was some other exception during get_time_ds!")
     return time_ids
 
 
