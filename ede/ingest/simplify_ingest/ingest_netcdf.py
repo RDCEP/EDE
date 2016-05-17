@@ -20,13 +20,18 @@ def insert_get_var_id(cursor, variable):
     try:
         # check if variable already there
         cursor.execute("select uid from grid_vars where vname = \'{}\'".format(vname))
+        print("1")
         rows = cursor.fetchall()
+        print("2")
         if not rows:
             # insert if variable not already there
             cursor.execute("insert into grid_vars (vname) values (\'{}\') returning uid".format(vname))
+            print("3")
             rows = cursor.fetchall()
+            print("4")
         for row in rows:
             var_id = int(row[0])
+            print("5")
             return var_id
     except DatabaseError as e:
         eprint(e)
