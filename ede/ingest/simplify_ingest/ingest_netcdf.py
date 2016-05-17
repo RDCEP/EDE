@@ -14,13 +14,14 @@ from itertools import izip
 
 
 def insert_get_var_id(cursor, variable):
+    vname = str(variable.name)
     try:
         # check if variable already there
-        cursor.execute("select uid from grid_vars where vname = \'{}\'".format(variable.name))
+        cursor.execute("select uid from grid_vars where vname = \'{}\'".format(vname))
         rows = cursor.fetchall()
         if not rows:
             # insert if variable not already there
-            cursor.execute("insert into grid_vars (vname) values (\'{}\') returning uid".format(variable.name))
+            cursor.execute("insert into grid_vars (vname) values (\'{}\') returning uid".format(vname))
             rows = cursor.fetchall()
         for row in rows:
             var_id = int(row[0])
@@ -28,10 +29,10 @@ def insert_get_var_id(cursor, variable):
     except DatabaseError as e:
         eprint(e)
         raise RasterProcessingException("Could not get variable id for variable: {}. Due to DatabaseError!"
-                                        .format(variable.name))
+                                        .format(vname))
     except Exception as e:
         eprint(e)
-        raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
+        raise RasterProcessingException("Could not get variable id for variable: {}".format(vname))
 
 
 def insert_get_meta_id(cursor, netcdf_filename, meta_data):
