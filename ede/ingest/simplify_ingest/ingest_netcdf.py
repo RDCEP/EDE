@@ -27,7 +27,8 @@ def insert_get_var_id(cursor, variable):
             return var_id
     except DatabaseError as e:
         eprint(e)
-        raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
+        raise RasterProcessingException("Could not get variable id for variable: {}. Due to DatabaseError"
+                                        .format(variable.name))
     except Exception as e:
         eprint(e)
         raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
