@@ -16,6 +16,7 @@ from itertools import izip
 def insert_get_var_id(cursor, variable):
     vname = str(variable.name)
     print("insert_get_var_id with vname: {}".format(vname))
+    print(type(variable))
     try:
         # check if variable already there
         cursor.execute("select uid from grid_vars where vname = \'{}\'".format(vname))
