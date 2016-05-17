@@ -26,7 +26,7 @@ def insert_get_var_id(cursor, variable):
             return var_id
     except Exception as e:
         eprint(e)
-        raise
+        raise RasterProcessingException("Could not get variable id for variable: {}".format(variable.name))
 
 
 def insert_get_meta_id(cursor, netcdf_filename, meta_data):
@@ -42,7 +42,7 @@ def insert_get_meta_id(cursor, netcdf_filename, meta_data):
             return meta_id
     except Exception as e:
         eprint(e)
-        raise
+        raise RasterProcessingException("Could not get meta_id for netcdf: {}".format(netcdf_filename))
 
 
 def ingest_lat_lon(wkb_filename, cursor):
@@ -50,7 +50,7 @@ def ingest_lat_lon(wkb_filename, cursor):
         cursor.execute("copy grid_data_lat_lon(meta_id, var_id, rast) from \'{}\'".format(wkb_filename))
     except Exception as e:
         eprint(e)
-        raise
+        raise RasterProcessingException("Could not ingest var(lat,lon)!")
 
 
 def ingest_time_lat_lon(wkb_filename, cursor):
@@ -58,7 +58,7 @@ def ingest_time_lat_lon(wkb_filename, cursor):
         cursor.execute("copy grid_data_time_lat_lon(meta_id, var_id, time_id, rast) from \'{}\'".format(wkb_filename))
     except Exception as e:
         eprint(e)
-        raise
+        raise RasterProcessingException("Could not ingest var(time,lat,lon)!")
 
 
 def ingest_depth_lat_lon(wkb_filename, cursor):
@@ -66,7 +66,7 @@ def ingest_depth_lat_lon(wkb_filename, cursor):
         cursor.execute("copy grid_data_depth_lat_lon(meta_id, var_id, depth_id, rast) from \'{}\'".format(wkb_filename))
     except Exception as e:
         eprint(e)
-        raise
+        raise RasterProcessingException("Could not ingest var(depth,lat,lon)!")
 
 
 def ingest_actual_data(wkb_filename, cursor, variable):
@@ -509,6 +509,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
     except Exception as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
+
 
 
 if __name__ == "__main__":
