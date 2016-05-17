@@ -11,6 +11,23 @@ from psycopg2.extras import Json
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 
 
+def insert_get_var_id(cursor, variable):
+    try:
+        # check if variable already there
+        cursor.execute("select uid from grid_vars where vname = \'{}\'".format(variable.name))
+        rows = cursor.fetchall()
+        if not rows:
+            # insert if variable not already there
+            cursor.execute("insert into grid_vars (vname) values (\'{}\') returning uid".format(variable.name))
+            rows = cursor.fetchall()
+        for row in rows:
+            var_id = int(row[0])
+            return var_id
+    except Exception as e:
+        eprint(e)
+        raise
+
+
 def insert_get_meta_id(cursor, netcdf_filename, meta_data):
     try:
         cursor.execute(
@@ -355,6 +372,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
 
         with open(wkb_filename, 'w') as f:
             for var in proper_vars:
+                var_id = insert_get_var_id(cur, var)
                 pixtype = get_pixtype(var)
                 tiles = process_variable(var, tile_size_lat, tile_size_lon)
                 try:
