@@ -9,6 +9,7 @@ from datetime import datetime
 import psycopg2
 from psycopg2.extras import Json
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
+from itertools import izip
 
 
 def insert_get_var_id(cursor, variable):
@@ -42,6 +43,64 @@ def insert_get_meta_id(cursor, netcdf_filename, meta_data):
     except Exception as e:
         eprint(e)
         raise
+
+
+def ingest_lat_lon(wkb_filename, cursor):
+    try:
+        cursor.execute("copy grid_data_lat_lon(meta_id, var_id, rast) from \'{}\'".format(wkb_filename))
+    except Exception as e:
+        eprint(e)
+        raise
+
+
+def ingest_time_lat_lon(wkb_filename, cursor):
+    try:
+        cursor.execute("copy grid_data_time_lat_lon(meta_id, var_id, time_id, rast) from \'{}\'".format(wkb_filename))
+    except Exception as e:
+        eprint(e)
+        raise
+
+
+def ingest_depth_lat_lon(wkb_filename, cursor):
+    try:
+        cursor.execute("copy grid_data_depth_lat_lon(meta_id, var_id, depth_id, rast) from \'{}\'".format(wkb_filename))
+    except Exception as e:
+        eprint(e)
+        raise
+
+
+def ingest_actual_data(wkb_filename, cursor, variable):
+    dims = variable.dimensions
+    num_dims = len(dims)
+    if num_dims == 2:
+        ingest_lat_lon(wkb_filename, cursor)
+    elif num_dims == 3:
+        if 'time' in dims:
+            ingest_time_lat_lon(wkb_filename, cursor)
+        elif 'depth' in dims:
+            ingest_depth_lat_lon(wkb_filename, cursor)
+        else:
+            raise RasterProcessingException("Got variable with unexpected dimensions when ingesting actual data!")
+    else:
+        raise RasterProcessingException("Got variable with unexpected dimensions when ingesting actual data!")
+
+
+def compose_fields(meta_id, var_id, band_id, hexwkb):
+    """Writes into file + calls postgres' copy from on it, for the right table
+    i.e. raster_time_lat_lon / raster_depth_lat_lon / raster_lat_lon
+
+    TODO: again need to do the logic here to determine if it depends on depth/time.
+    get rid of this redundancy, and somehow do it already in process_variable only
+    :param meta_id:
+    :param var_id:
+    :param band_id:
+    :param hexwkb:
+    :return:
+    """
+    if band_id is None:
+        return "{}\t{}\t{}".format(meta_id, var_id, hexwkb)
+    else:
+        return "{}\t{}\t{}\t{}".format(meta_id, var_id, band_id, hexwkb)
 
 
 def ceil_integer_division(a, b):
@@ -82,6 +141,54 @@ def get_bounding_box(longitudes, latitudes):
     lat_min = float(min(latitudes))
     lat_max = float(max(latitudes))
     return (((lon_min, lat_min), (lon_max, lat_min), (lon_max, lat_max), (lon_min, lat_max), (lon_min, lat_min)))
+
+
+def get_depth_ids(cursor, dataset, meta_id):
+    """
+    TODO: this is too slow => use executemany or something
+    :param cursor:
+    :param dataset:
+    :param meta_id:
+    :return:
+    """
+    try:
+        depths = dataset.variables['depth'][:]
+        depth_ids = []
+        for depth in depths:
+            cursor.execute("insert into grid_depths (meta_id, depth) values ({}, \'{}\') returning uid"
+                           .format(meta_id, depth))
+            rows = cursor.fetchall()
+            for row in rows:
+                depth_id = int(row[0])
+                depth_ids.append(depth_id)
+                break
+    except:
+        depth_ids = None
+    return depth_ids
+
+
+def get_time_ids(cursor, dataset, meta_id):
+    """
+    TODO: this is too slow => use executemany or something
+    :param cursor:
+    :param dataset:
+    :param meta_id:
+    :return:
+    """
+    try:
+        times = dataset.variables['time'][:]
+        time_ids = []
+        for time in times:
+            cursor.execute("insert into grid_times (meta_id, time) values ({}, \'{}\') returning uid"
+                           .format(meta_id, time))
+            rows = cursor.fetchall()
+            for row in rows:
+                time_id = int(row[0])
+                time_ids.append(time_id)
+                break
+    except:
+        time_ids = None
+    return time_ids
 
 
 def get_longitudes_latitudes(dataset):
@@ -204,10 +311,10 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
+            yield None, band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
-def process_band_lat_lon(variable, tile_size_lat, tile_size_lon):
+def process_band_lat_lon(variable, tile_size_lat, tile_size_lon, band_vals):
     """Processes a variable that depends on (lon,lat,depth)
 
     TODO: Make sure to handle all permutations correctly, i.e.
@@ -217,10 +324,11 @@ def process_band_lat_lon(variable, tile_size_lat, tile_size_lon):
     :param variable:
     :return:
     """
-    for band in variable:
+    assert (len(variable) == len(band_vals))
+    for band_val, band in izip(band_vals, variable):
         tiles = process_band(band, tile_size_lat, tile_size_lon)
         for tile in tiles:
-            yield tile
+            yield band_val, tile
 
 
 def process_lat_lon(variable, tile_size_lat, tile_size_lon):
@@ -235,7 +343,7 @@ def process_lat_lon(variable, tile_size_lat, tile_size_lon):
     return process_band(variable[:], tile_size_lat, tile_size_lon)
 
 
-def process_variable(variable, tile_size_lat, tile_size_lon):
+def process_variable(variable, tile_size_lat, tile_size_lon, times, depths):
     """Processes an individual variable
     :param variable:
     :return:
@@ -267,9 +375,11 @@ def process_variable(variable, tile_size_lat, tile_size_lon):
         # TODO: see just above
         if 'lon' in dims and 'lat' in dims:
             if 'time' in dims:
-                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon)
+                assert times is not None
+                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon, times)
             elif 'depth' in dims:
-                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon)
+                assert depths is not None
+                return process_band_lat_lon(variable, tile_size_lat, tile_size_lon, depths)
             else:
                 eprint("Variable {} depends on {}, {}, {} two of which are spatial "
                        "dimensions, but the third one is neither time nor depth. "
@@ -366,27 +476,32 @@ def process_netcdf(netcdf_filename, wkb_filename):
         eprint(e)
         raise RasterProcessingException("Could not ingest metadata and get meta_id!")
 
+    time_ids = get_time_ids(cur, ds, meta_id)
+    depth_ids = get_depth_ids(cur, ds, meta_id)
+
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
 
-        with open(wkb_filename, 'w') as f:
-            for var in proper_vars:
-                var_id = insert_get_var_id(cur, var)
-                pixtype = get_pixtype(var)
-                tiles = process_variable(var, tile_size_lat, tile_size_lon)
-                try:
-                    nodata = var._FillValue
-                except:
-                    nodata = get_nodata_value(pixtype)
-                for tile in tiles:
+        for var in proper_vars:
+            var_id = insert_get_var_id(cur, var)
+            pixtype = get_pixtype(var)
+            tiles = process_variable(var, tile_size_lat, tile_size_lon, time_ids, depth_ids)
+            try:
+                nodata = var._FillValue
+            except:
+                nodata = get_nodata_value(pixtype)
+            with open(wkb_filename, 'w') as f:
+                for (band_id, tile) in tiles:
                     rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                                   srid, tile.shape[1], tile.shape[0])
                     band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                     rast.add_band(band)
                     # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                     hexwkb = rast.raster_to_hexwkb(1)
-                    f.write(hexwkb + '\n')
+                    row = compose_fields(f, var, meta_id, var_id, band_id, hexwkb)
+                    f.write(row + '\n')
+            ingest_actual_data(wkb_filename, cur, var)
 
     except RasterProcessingException as e:
         eprint(e)
