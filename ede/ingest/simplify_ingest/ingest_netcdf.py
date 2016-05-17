@@ -37,6 +37,7 @@ def insert_get_var_id(cursor, variable):
             return var_id
     except DatabaseError as e:
         eprint(e)
+        print("pgerror: {}".format(e.pgerror))
         raise RasterProcessingException("Could not get variable id for variable: {}. Due to DatabaseError!"
                                         .format(vname))
     except Exception as e:
