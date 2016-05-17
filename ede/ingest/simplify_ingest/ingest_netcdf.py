@@ -1,10 +1,30 @@
-import sys
+import sys, os
 import argparse
 from netCDF4 import Dataset
 import numpy as np
 import numpy.ma as ma
 from ede.ingest.simplify_ingest.utils.raster import *
+import time
 from datetime import datetime
+import psycopg2
+from psycopg2.extras import Json
+from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
+
+
+def insert_get_meta_id(cursor, netcdf_filename, meta_data):
+    try:
+        cursor.execute(
+            "insert into grid_meta (filename, filesize, filetype, meta_data, date_created) values "
+            "(\'{}\', {}, \'{}\', {}, \'{}\') returning uid".format(
+                os.path.basename(netcdf_filename), os.path.getsize(netcdf_filename), 'HDF', Json(meta_data),
+                time.ctime(os.path.getctime(netcdf_filename))))
+        rows = cursor.fetchall()
+        for row in rows:
+            meta_id = int(row[0])
+            return meta_id
+    except Exception as e:
+        eprint(e)
+        raise
 
 
 def ceil_integer_division(a, b):
@@ -22,7 +42,7 @@ def get_nodata_value(pixtype):
 
 
 def get_resolution(array):
-    #eps = np.finfo(float).eps # too strict, soil data wouldn't pass this
+    # eps = np.finfo(float).eps # too strict, soil data wouldn't pass this
     eps = 1e-4
     res = array[1] - array[0]
     for i in range(1, len(array) - 1):
@@ -95,7 +115,10 @@ def get_global_attributes(dataset):
     """
     attrs = []
     for attr_key in dataset.ncattrs():
-        attrs.append((attr_key, dataset.getncattr(attr_key)))
+        attrs.append({
+            "name": attr_key,
+            "value": dataset.getncattr(attr_key)
+        })
     return attrs
 
 
@@ -132,8 +155,22 @@ def get_dimensions_info(dataset):
     """
     dims_info = []
     for dim in dataset.dimensions.values():
-        dims_info.append((dim.name, dim.size))
+        dims_info.append({
+            "name": dim.name,
+            "size": dim.size
+        })
     return dims_info
+
+
+def get_metadata(dataset, netcdf_filename, bbox):
+    return {
+        "name": os.path.basename(netcdf_filename),
+        "dimensions": get_dimensions_info(dataset),
+        "variables": get_variables_info(dataset),
+        "attributes": get_global_attributes(dataset),
+        "loc": {"type": "Polygon",
+                "coordinates": bbox}
+    }
 
 
 def process_band(band, tile_size_lat, tile_size_lon):
@@ -262,10 +299,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
         eprint("Other problem during opening the dataset: {}".format(e))
         raise
 
-    dims_info = get_dimensions_info(ds)
-    vars_info = get_variables_info(ds)
-    global_attrs = get_global_attributes(ds)
-
     try:
         longs, lats = get_longitudes_latitudes(ds)
     except:
@@ -273,6 +306,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
             "Could not get longitudes and latitudes of netcdf file: {}".format(netcdf_filename))
 
     bbox = get_bounding_box(longs, lats)
+
+    meta_data = get_metadata(ds, netcdf_filename, bbox)
 
     # Note that x = longitude & y = latitude
     try:
@@ -300,10 +335,19 @@ def process_netcdf(netcdf_filename, wkb_filename):
     srid = 4326
     tile_size_lat = 100
     tile_size_lon = 100
-
     is_offline = False
     has_no_data_value = True  # we're assuming there's always a no_data value! TODO: maybe check if nodata val is None
     is_no_data_value = False  # we're being conservative here
+
+    conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
+                            host=DB_HOST, port=DB_PORT)
+    cur = conn.cursor()
+
+    try:
+        meta_id = insert_get_meta_id(cur, netcdf_filename, meta_data)
+    except Exception as e:
+        eprint(e)
+        raise RasterProcessingException("Could not ingest metadata and get meta_id!")
 
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
