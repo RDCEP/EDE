@@ -196,15 +196,15 @@ def get_time_ids(cursor, dataset, meta_id):
         elif time_unit_str == "growing seasons":
             time_delta = timedelta(days=365)
         time_start_str = time_fields_str[1].strip()
-        time_start = datetime.strptime(time_start_str, "%Y-%m-%d %H:%M:%S") +\
+        time_start = datetime.strptime(time_start_str, "%Y-%m-%d %H:%M:%S") + \
                      timedelta(seconds=time_var[0] * time_delta.total_seconds())
         times_obj = [time_start + t * time_delta for t in range(time_var.size)]
         times = [t.strftime("%Y-%m-%d %H:%M:%S") for t in times_obj]
+        time_ids = []
         for time in times:
             cursor.execute("insert into grid_times (meta_id, time) values ({}, \'{}\') returning uid"
                            .format(meta_id, time))
             rows = cursor.fetchall()
-            time_ids = []
             for row in rows:
                 time_id = int(row[0])
                 time_ids.append(time_id)
@@ -509,7 +509,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
     proper_vars = [var for var in ds.variables.values() if is_proper_variable(var)]
 
     try:
-
         for var in proper_vars:
             var_id = insert_get_var_id(cur, var)
             pixtype = get_pixtype(var)
@@ -536,7 +535,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
     except Exception as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
-
 
 
 if __name__ == "__main__":
