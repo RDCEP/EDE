@@ -202,8 +202,12 @@ def get_time_ids(cursor, dataset, meta_id):
                 time_id = int(row[0])
                 time_ids.append(time_id)
                 break
-    except:
+    except KeyError as e:
+        eprint(e)
         time_ids = None
+    except DatabaseError as e:
+        eprint(e)
+        raise RasterProcessingException("There was a DB Error during get_time_ids!")
     return time_ids
 
 
