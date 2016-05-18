@@ -369,7 +369,7 @@ def process_lat_lon(variable, tile_size_lat, tile_size_lon):
     """
     tiles = process_band(variable[:], tile_size_lat, tile_size_lon)
     for tile in tiles:
-        return None, tile
+        yield None, tile
 
 
 def process_variable(variable, tile_size_lat, tile_size_lon, times, depths):
