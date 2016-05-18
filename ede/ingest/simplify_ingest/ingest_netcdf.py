@@ -529,7 +529,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                     hexwkb = rast.raster_to_hexwkb(1)
                     row = compose_fields(meta_id, var_id, band_id, hexwkb)
                     f.write(row + '\n')
-            ingest_actual_data(wkb_filename, cur, var)
+                ingest_actual_data(wkb_filename, cur, var)
 
     except RasterProcessingException as e:
         eprint(e)
