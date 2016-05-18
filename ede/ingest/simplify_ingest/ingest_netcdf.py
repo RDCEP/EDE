@@ -520,8 +520,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
             except:
                 nodata = get_nodata_value(pixtype)
             with open(wkb_filename, 'w') as f:
-                num_tiles = len(tiles)
-                for i, (band_id, tile) in enumerate(tiles):
+                for band_id, tile in tiles:
                     rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
                                   srid, tile.shape[1], tile.shape[0])
                     band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
@@ -529,10 +528,9 @@ def process_netcdf(netcdf_filename, wkb_filename):
                     # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
                     hexwkb = rast.raster_to_hexwkb(1)
                     row = compose_fields(meta_id, var_id, band_id, hexwkb)
-                    if i != num_tiles-1:
-                        f.write(row + '\n')
-                    else:
-                        f.write(row)
+                    f.write(row + '\n')
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
 
     except RasterProcessingException as e:
