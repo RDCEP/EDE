@@ -338,7 +338,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            yield None, band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
+            yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
 def process_band_lat_lon(variable, tile_size_lat, tile_size_lon, band_vals):
@@ -367,7 +367,9 @@ def process_lat_lon(variable, tile_size_lat, tile_size_lon):
     :param variable:
     :return:
     """
-    return process_band(variable[:], tile_size_lat, tile_size_lon)
+    tiles = process_band(variable[:], tile_size_lat, tile_size_lon)
+    for tile in tiles:
+        return None, tile
 
 
 def process_variable(variable, tile_size_lat, tile_size_lon, times, depths):
