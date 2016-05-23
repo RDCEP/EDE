@@ -20,7 +20,7 @@ def eprint(*args, **kwargs):
 def return_gridmeta(ids):
     if ids:
         ids_str = '(' + ','.join(map(str, ids)) + ')'
-        query = ("select uid, filename, filesize, filetype, meta_data, date_created, date_inserted"
+        query = ("select uid, filename, filesize, filetype, meta_data, date_created, date_inserted "
                  "from grid_meta where uid in {}".format(ids_str))
     else:
         query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
