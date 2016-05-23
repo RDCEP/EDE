@@ -588,7 +588,7 @@ def return_polymeta(ids):
         query = "select uid, name, attributes from regions_meta"
     try:
         rows = db_session.execute(query)
-    except psycopg2.Error as e:
+    except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("Could not return polymeta with ids: {}".format(ids))
     # The response JSON
@@ -617,7 +617,7 @@ def return_polydata(ids):
         query = "select uid, ST_AsGeoJSON(geom) from regions"
     try:
         rows = db_session.execute(query)
-    except psycopg2.Error as e:
+    except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("Could not return polydata with ids: {}".format(ids))
     # The response JSON
