@@ -3,8 +3,7 @@ import sys
 from datetime import datetime
 import time
 from ede.database import db_session
-import psycopg2
-
+from sqlalchemy.exc import SQLAlchemyError
 
 class RasterExtractionException(Exception):
     """Represents an exception that can occur during the extraction of raster data from the DB.
@@ -27,9 +26,10 @@ def return_gridmeta(ids):
         query = "select uid, filename, filesize, filetype, meta_data, date_created, date_inserted from grid_meta"
     try:
         rows = db_session.execute(query)
-    except psycopg2.Error as e:
+    except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("Could not return gridmeta with ids: {}".format(ids))
+
     # The response JSON
     out = {}
     out['request'] = {}
