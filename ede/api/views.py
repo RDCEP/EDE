@@ -9,6 +9,8 @@ from flask import Blueprint, make_response, request
 from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.extract.extract import *
+from ede.api.utils import ServerError
+from flask import jsonify
 
 cache = Cache(config=CACHE_CONFIG)
 
@@ -19,6 +21,13 @@ CACHE_TIMEOUT = 60 * 60 * 6
 api = Blueprint('ede_api', __name__, url_prefix='/api/{}'.format(API_VERSION))
 
 dthandler = lambda obj: obj.isoformat() if isinstance(obj, date) else None
+
+
+@api.errorhandler(ServerError)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 
 @api.route('/flush-cache')
@@ -40,10 +49,14 @@ def get_gridmeta(ids):
     :param ids:
     :return:
     """
-    status_code = 200
-    data = return_gridmeta(ids)
+    try:
+        data = return_gridmeta(ids)
+    except RasterExtractionException as e:
+        eprint(e)
+        raise ServerError("Could not handle get_gridmeta request with ids: {}".format(ids), status_code=500)
+
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp = make_response(json.dumps(data, default=dthandler), status_code = 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -66,8 +79,8 @@ def get_griddata(meta_id, var_id):
     poly = None
     if content:
         date = content['date']
-        poly_id = content['poly_id'] #TODO: specify in JSON request format
-        poly = content['poly'] #TODO: specify in JSON request format
+        poly_id = content['poly_id']  # TODO: specify in JSON request format
+        poly = content['poly']  # TODO: specify in JSON request format
     if poly_id:
         data = return_griddata_by_id(meta_id, var_id, poly_id, date)
     else:
@@ -95,7 +108,7 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
     poly_id = None
     poly = None
     if content:
-        date = content['dates'] # must be ID = integer, #TODO: specify in JSON request format
+        date = content['dates']  # must be ID = integer, #TODO: specify in JSON request format
         poly_id = content['poly_id']
         poly = content['poly']
     if poly_id:
@@ -116,7 +129,7 @@ def get_griddata_aggregate_temporal(meta_id, var_id):
     poly_id = None
     poly = None
     if content:
-        dates = content['dates'] # must be list of date IDs
+        dates = content['dates']  # must be list of date IDs
         poly_id = content['poly_id']
         poly = content['poly']
     if poly_id:
