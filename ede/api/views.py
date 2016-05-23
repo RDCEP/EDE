@@ -55,8 +55,9 @@ def get_gridmeta(ids):
         eprint(e)
         raise ServerError("Could not handle get_gridmeta request with ids: {}".format(ids), status_code=500)
 
+    status_code = 200
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code = 200)
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
