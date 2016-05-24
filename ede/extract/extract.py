@@ -42,7 +42,7 @@ def return_griddata(meta_id, var_id, poly, date):
                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
                  "from grid_data, grid_dates "
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and grid_data.date=%s) foo) "
+                 "grid_dates.uid = grid_data.date and grid_data.date=%s) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id, date)
     # only poly specified
@@ -54,7 +54,7 @@ def return_griddata(meta_id, var_id, poly, date):
                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
                  "from grid_data, grid_dates "
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date) foo) "
+                 "grid_dates.uid = grid_data.date) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id)
     # only date specified
@@ -67,7 +67,7 @@ def return_griddata(meta_id, var_id, poly, date):
                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
                  "from grid_data, grid_dates "
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and grid_data.date=%s) foo) "
+                 "grid_dates.uid = grid_data.date and grid_data.date=%s) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id, date)
     # neither poly nor date specified
@@ -80,7 +80,7 @@ def return_griddata(meta_id, var_id, poly, date):
                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
                  "from grid_data, grid_dates "
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date) foo) "
+                 "grid_dates.uid = grid_data.date) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id)
     rows = db_session.execute(query)
