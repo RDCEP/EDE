@@ -249,6 +249,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and grid_data.date=grid_dates.uid "
                  "group by grid_dates.date;") % \
                 (poly_str, meta_id, var_id)
+    print query
     rows = db_session.execute(query)
     # the response json
     out = {}
