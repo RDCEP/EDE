@@ -441,10 +441,7 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['data'] = []
-    for row in rows:
-        lon = row[0]
-        lat = row[1]
-        val = row[2]
+    for (lon, lat, val) in rows:
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
@@ -534,10 +531,7 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['data'] = []
-    for row in rows:
-        lon = row[0]
-        lat = row[1]
-        val = row[2]
+    for (lon, lat, val) in rows:
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
