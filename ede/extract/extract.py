@@ -100,6 +100,7 @@ def return_griddata(meta_id, var_id, poly, date):
         new_data_item['properties'] = {'values': vals}
         new_data_item['dates'] = dates
         out['response']['data'].append(new_data_item)
+    out['response']['metadata'] = {}
     out['response']['metadata']['region'] = poly
     query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
