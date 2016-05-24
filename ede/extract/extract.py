@@ -83,6 +83,7 @@ def return_griddata(meta_id, var_id, poly, date):
                  "grid_dates.uid = grid_data.date) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id)
+    print(query)
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -165,6 +166,7 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
                  "grid_dates.uid = grid_data.date) foo "
                  "group by foo.geom;") % \
                 (poly_str, meta_id, var_id)
+    print(query)
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -249,7 +251,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and grid_data.date=grid_dates.uid "
                  "group by grid_dates.date;") % \
                 (poly_str, meta_id, var_id)
-    print query
+    print(query)
     rows = db_session.execute(query)
     # the response json
     out = {}
@@ -337,6 +339,7 @@ def return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly, date):
                  "where grid_data.meta_id=%s and grid_data.var_id=%s and grid_data.date=grid_dates.uid "
                  "group by grid_dates.date;") % \
                 (poly_str, meta_id, var_id)
+    print(query)
     rows = db_session.execute(query)
     # the response JSON
     out = {}
