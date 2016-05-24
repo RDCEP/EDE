@@ -53,7 +53,7 @@ def get_gridmeta(ids):
         data = return_gridmeta(ids)
     except RasterExtractionException as e:
         eprint(e)
-        raise ServerError("Could not handle get_gridmeta request with ids: {}".format(ids), status_code=500)
+        raise ServerError("Could not handle get_gridmeta request with ids", status_code=500, payload=ids)
 
     status_code = 200
     data['request']['url'] = request.path
@@ -73,19 +73,39 @@ def get_griddata(meta_id, var_id):
     :param var_id:
     :return:
     """
-    status_code = 200
     content = request.get_json()
-    date = None
-    poly_id = None
-    poly = None
-    if content:
-        date = content['date']
-        poly_id = content['poly_id']  # TODO: specify in JSON request format
-        poly = content['poly']  # TODO: specify in JSON request format
-    if poly_id:
-        data = return_griddata_by_id(meta_id, var_id, poly_id, date)
-    else:
-        data = return_griddata(meta_id, var_id, poly, date)
+    # if POST, i.e. we have some content
+    try:
+        if content:
+            date = content['date']
+            poly_id = content['poly_id']  # TODO: specify in JSON request format
+            poly = content['poly']  # TODO: specify in JSON request format
+            # if a polygon is specified by both poly_id and directly => return Bad Request Error
+            if poly_id is not None and poly is not None:
+                status_code = 400
+                payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
+                raise ServerError("Cannot specify polygon directly and by id at the same time", status_code, payload)
+            # if polygon is specified by id
+            elif poly_id is not None:
+                data = return_griddata_metaid_varid_polyid_date(meta_id, var_id, poly_id, date)
+            # if polygon is specified directly
+            elif poly is not None:
+                data = return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, date)
+            # if no polygon is specified
+            else:
+                data = return_griddata_metaid_varid_date(meta_id, var_id, date)
+        # if simple GET
+        else:
+            data = return_griddata_metaid_varid_date(meta_id, var_id, None)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
+        raise ServerError("Could not get griddata", status_code, payload)
+    except ServerError:
+        raise
+
+    status_code = 200
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
