@@ -274,7 +274,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
         new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean,
                                        'stddev': stddev, 'min': min, 'max': max}
         new_data_item['date'] = date
-    out['response']['data'].append(new_data_item)
+        out['response']['data'].append(new_data_item)
     out['response']['metadata'] = {}
     out['response']['metadata']['region'] = poly
     query = "select vname from grid_vars where uid=%s" % var_id
