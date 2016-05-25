@@ -242,51 +242,62 @@ def return_griddata(meta_id, var_id, poly, dates):
     return out
 
 
-def return_griddata_by_id(meta_id, var_id, poly, date):
+def return_griddata_by_id(meta_id, var_id, poly, dates):
+    if dates:
+        date_str = '(' + ','.join(map(str, dates)) + ')'
+        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
+                 "grid_dates where uid in {} order by date").format(date_str)
+    else:
+        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
+                 "grid_dates where meta_id={} order by date").format(meta_id)
+    rows = db_session.execute(query)
+    dates_array = []
+    num_dates = 0
+    for row in rows:
+        date_str = str(row[0])
+        dates_array.append(date_str)
+        num_dates += 1
     # poly + date specified
-    if poly and date:
-        query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
-                 "ST_Clip(rast, r.geom, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
-                 "from grid_data, grid_dates, regions"
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and regions.uid=%s and grid_data.date=%s) foo "
-                 "group by foo.geom;") % \
-                (meta_id, var_id, poly, date)
+    if poly and dates:
+        query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, regions.geom, TRUE))).*, date_id "
+                 "from grid_data, grid_dates, regions "
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
+                 "grid_dates.uid = grid_data.date and regions.uid={} and grid_dates.uid in {}) foo "
+                 "group by foo.geom;").format((meta_id, var_id, poly, date_str))
     # only poly specified
     elif poly:
-        query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
-                 "ST_Clip(rast, r.geom, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
-                 "from grid_data, grid_dates, regions"
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and regions.uid=%s) foo "
-                 "group by foo.geom;") % \
-                (meta_id, var_id, poly)
+        query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, regions.geom, TRUE))).*, date_id "
+                 "from grid_data, grid_dates, regions "
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
+                 "grid_dates.uid = grid_data.date and regions.uid={}) foo "
+                 "group by foo.geom;").format(meta_id, var_id, poly)
     # only date specified
-    elif date:
+    elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
-        query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
-                 "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+            poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+        query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and grid_data.date=%s) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id, date)
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
+                 "grid_dates.uid = grid_data.date and grid_dates.uid in {}) foo "
+                 "group by foo.geom;").format(poly_str, meta_id, var_id, date_str)
     # neither poly nor date specified
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
-        query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
-                 "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1],
+            poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+            poly[4][0], poly[4][1])
+        query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
                  "grid_dates.uid = grid_data.date) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id)
+                 "group by foo.geom;").format(poly_str, meta_id, var_id)
     print(query)
     rows = db_session.execute(query)
     # the response JSON
@@ -298,14 +309,19 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['data'] = []
-    for (lon, lat, vals, dates) in rows:
+    for (lon, lat, dateids_vals) in rows:
+        values = num_dates * [None]
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
-        new_data_item['properties'] = {'values': vals}
-        new_data_item['dates'] = dates
+        dateids_vals = [dateid_val.strip('{}').split(';')  for dateid_val in dateids_vals]
+        dateids_vals = [(int(date_id), float(val)) for (date_id, val) in dateids_vals]
+        for (date_id, val) in dateids_vals:
+            values[date_id - 1] = val
+        new_data_item['properties'] = {'values': values}
         out['response']['data'].append(new_data_item)
     out['response']['metadata'] = {}
+    out['response']['metadata']['dates'] = dates_array
     out['response']['metadata']['region'] = poly
     query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
@@ -323,6 +339,89 @@ def return_griddata_by_id(meta_id, var_id, poly, date):
     out['response']['metadata']['units'] = units
     out['response']['metadata']['format'] = 'grid'
     return out
+
+
+# def return_griddata_by_id(meta_id, var_id, poly, date):
+#     # poly + date specified
+#     if poly and date:
+#         query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
+#                  "ST_Clip(rast, r.geom, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+#                  "from grid_data, grid_dates, regions"
+#                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+#                  "grid_dates.uid = grid_data.date and regions.uid=%s and grid_data.date=%s) foo "
+#                  "group by foo.geom;") % \
+#                 (meta_id, var_id, poly, date)
+#     # only poly specified
+#     elif poly:
+#         query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
+#                  "ST_Clip(rast, r.geom, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+#                  "from grid_data, grid_dates, regions"
+#                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+#                  "grid_dates.uid = grid_data.date and regions.uid=%s) foo "
+#                  "group by foo.geom;") % \
+#                 (meta_id, var_id, poly)
+#     # only date specified
+#     elif date:
+#         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
+#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+#                     poly[4][0], poly[4][1])
+#         query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
+#                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+#                  "from grid_data, grid_dates "
+#                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+#                  "grid_dates.uid = grid_data.date and grid_data.date=%s) foo "
+#                  "group by foo.geom;") % \
+#                 (poly_str, meta_id, var_id, date)
+#     # neither poly nor date specified
+#     else:
+#         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
+#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
+#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+#                     poly[4][0], poly[4][1])
+#         query = ("select ST_X(geom), ST_Y(geom), array_agg(val), array_agg(date) from (select(ST_PixelAsCentroids("
+#                  "ST_Clip(rast, %s, TRUE))).*, to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') as date "
+#                  "from grid_data, grid_dates "
+#                  "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+#                  "grid_dates.uid = grid_data.date) foo "
+#                  "group by foo.geom;") % \
+#                 (poly_str, meta_id, var_id)
+#     print(query)
+#     rows = db_session.execute(query)
+#     # the response JSON
+#     out = {}
+#     out['request'] = {}
+#     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+#     out['response'] = {}
+#     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+#     out['response']['status'] = 'OK'
+#     out['response']['status_code'] = 200
+#     out['response']['data'] = []
+#     for (lon, lat, vals, dates) in rows:
+#         new_data_item = {}
+#         new_data_item['type'] = 'Feature'
+#         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
+#         new_data_item['properties'] = {'values': vals}
+#         new_data_item['dates'] = dates
+#         out['response']['data'].append(new_data_item)
+#     out['response']['metadata'] = {}
+#     out['response']['metadata']['region'] = poly
+#     query = "select vname from grid_vars where uid=%s" % var_id
+#     rows = db_session.execute(query)
+#     for row in rows:
+#         vname = row[0]
+#     query = "select meta_data from grid_meta where uid=%s" % meta_id
+#     rows = db_session.execute(query)
+#     for row in rows:
+#         meta_data = row[0]
+#     for var in meta_data['variables']:
+#         if var['name'] == vname:
+#             for attr in var['attributes']:
+#                 if attr['name'] == 'units':
+#                     units = attr['value']
+#     out['response']['metadata']['units'] = units
+#     out['response']['metadata']['format'] = 'grid'
+#     return out
 
 
 def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
