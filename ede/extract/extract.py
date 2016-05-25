@@ -106,6 +106,7 @@ def return_griddata(meta_id, var_id, poly, dates):
     out['response']['status_code'] = 200
     out['response']['data'] = []
     for (lon, lat, dateids_vals) in rows:
+        print("dateids_vals at start: {}".format(dateids_vals))
         values = num_dates * [None]
         new_data_item = {}
         new_data_item['type'] = 'Feature'
