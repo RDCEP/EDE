@@ -35,10 +35,10 @@ def return_gridmeta(ids):
 def return_griddata(meta_id, var_id, poly, dates):
     if dates:
         date_str = '(' + ','.join(map(str, dates)) + ')'
-        query = "select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from grid_dates where uid in %s order by date" \
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid in %s order by date" \
                 % date_str
     else:
-        query = "select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from grid_dates where meta_id=%s order by date" % \
+        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where meta_id=%s order by date" % \
                 (meta_id)
     rows = db_session.execute(query)
     dates = []
