@@ -50,8 +50,8 @@ def return_griddata(meta_id, var_id, poly, dates):
     # poly + date specified
     if poly and dates:
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
-             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+            poly[3][0], poly[3][1], poly[4][0], poly[4][1])
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
                  "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
@@ -61,8 +61,8 @@ def return_griddata(meta_id, var_id, poly, dates):
     # only poly specified
     elif poly:
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
-             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+            poly[3][0], poly[3][1], poly[4][0], poly[4][1])
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
                  "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
@@ -73,8 +73,8 @@ def return_griddata(meta_id, var_id, poly, dates):
     elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
-             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+            poly[3][0], poly[3][1], poly[4][0], poly[4][1])
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
                  "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
@@ -85,9 +85,9 @@ def return_griddata(meta_id, var_id, poly, dates):
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1],
-             poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-             poly[4][0], poly[4][1]))
+            poly[0][0], poly[0][1], poly[1][0], poly[1][1],
+            poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+            poly[4][0], poly[4][1])
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
                  "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
@@ -115,7 +115,7 @@ def return_griddata(meta_id, var_id, poly, dates):
         dateids_vals = [e.split(';') for e in dateids_vals]
         dateids_vals = [(int(date_id), float(val)) for (date_id, val) in dateids_vals]
         for (date_id, val) in dateids_vals:
-            values[date_id-1] = val
+            values[date_id - 1] = val
         new_data_item['properties'] = {'values': values}
         out['response']['data'].append(new_data_item)
     out['response']['metadata'] = {}
