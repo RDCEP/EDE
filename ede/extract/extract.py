@@ -35,11 +35,11 @@ def return_gridmeta(ids):
 def return_griddata(meta_id, var_id, poly, dates):
     if dates:
         date_str = '(' + ','.join(map(str, dates)) + ')'
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid in %s order by date" \
-                % date_str
+        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
+                 "grid_dates where uid in {} order by date").format(date_str)
     else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where meta_id=%s order by date" % \
-                (meta_id)
+        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
+                 "grid_dates where meta_id={} order by date").format(meta_id)
     rows = db_session.execute(query)
     dates = []
     num_dates = 0
@@ -49,54 +49,50 @@ def return_griddata(meta_id, var_id, poly, dates):
         num_dates += 1
     # poly + date specified
     if poly and dates:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
-                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).*, date_id "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and grid_dates.uid in %s) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id, date_str)
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
+                 "grid_dates.uid = grid_data.date and grid_dates.uid in {}) foo "
+                 "group by foo.geom;").format((poly_str, meta_id, var_id, date_str))
     # only poly specified
     elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
-                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).*, date_id "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
                  "grid_dates.uid = grid_data.date) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id)
+                 "group by foo.geom;").format(poly_str, meta_id, var_id)
     # only date specified
     elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
-                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).*, date_id "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
-                 "grid_dates.uid = grid_data.date and grid_dates.uid in %s) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id, date_str)
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
+                 "grid_dates.uid = grid_data.date and grid_dates.uid in {}) foo "
+                 "group by foo.geom;").format(poly_str, meta_id, var_id, date_str)
     # neither poly nor date specified
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-                    poly[4][0], poly[4][1])
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
+             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
-                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).*, date_id "
+                 "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
-                 "where grid_data.meta_id=%s and grid_data.var_id=%s and "
+                 "where grid_data.meta_id={} and grid_data.var_id={} and "
                  "grid_dates.uid = grid_data.date) foo "
-                 "group by foo.geom;") % \
-                (poly_str, meta_id, var_id)
+                 "group by foo.geom;").format(poly_str, meta_id, var_id)
     print(query)
     rows = db_session.execute(query)
     # the response JSON
