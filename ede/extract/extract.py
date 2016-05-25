@@ -49,7 +49,7 @@ def return_griddata(meta_id, var_id, poly, dates):
         num_dates += 1
     # poly + date specified
     if poly and dates:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
             (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
              poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
@@ -60,7 +60,7 @@ def return_griddata(meta_id, var_id, poly, dates):
                  "group by foo.geom;").format((poly_str, meta_id, var_id, date_str))
     # only poly specified
     elif poly:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
             (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
              poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
@@ -72,7 +72,7 @@ def return_griddata(meta_id, var_id, poly, dates):
     # only date specified
     elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
             (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
              poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
@@ -84,7 +84,7 @@ def return_griddata(meta_id, var_id, poly, dates):
     # neither poly nor date specified
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
             (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
              poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
