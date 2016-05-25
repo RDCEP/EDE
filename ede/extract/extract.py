@@ -106,17 +106,12 @@ def return_griddata(meta_id, var_id, poly, dates):
     out['response']['status_code'] = 200
     out['response']['data'] = []
     for (lon, lat, dateids_vals) in rows:
-        print("dateids_vals at start: {}".format(dateids_vals))
         values = num_dates * [None]
         new_data_item = {}
         new_data_item['type'] = 'Feature'
         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
-        dateids_vals = str(dateids_vals)
-        dateids_vals = dateids_vals.strip('{}')
-        dateids_vals = dateids_vals.split(',')
-        dateids_vals = [e.split(';') for e in dateids_vals]
-        print dateids_vals
-        dateids_vals = [(int(float(unicode(date_id))), float(val)) for (date_id, val) in dateids_vals]
+        dateids_vals = [dateid_val.strip('{}').split(';')  for dateid_val in dateids_vals]
+        dateids_vals = [(int(date_id), float(val)) for (date_id, val) in dateids_vals]
         for (date_id, val) in dateids_vals:
             values[date_id - 1] = val
         new_data_item['properties'] = {'values': values}
