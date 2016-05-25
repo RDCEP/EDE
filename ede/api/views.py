@@ -65,13 +65,13 @@ def get_griddata(meta_id, var_id):
     poly_id = None
     poly = None
     if content:
-        date = content['date']
+        dates = content['dates']
         poly_id = content['poly_id'] #TODO: specify in JSON request format
         poly = content['poly'] #TODO: specify in JSON request format
     if poly_id:
-        data = return_griddata_by_id(meta_id, var_id, poly_id, date)
+        data = return_griddata_by_id(meta_id, var_id, poly_id, dates)
     else:
-        data = return_griddata(meta_id, var_id, poly, date)
+        data = return_griddata(meta_id, var_id, poly, dates)
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
