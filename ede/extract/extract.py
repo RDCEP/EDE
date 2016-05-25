@@ -85,8 +85,9 @@ def return_griddata(meta_id, var_id, poly, dates):
     else:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
-             poly[3][0], poly[3][1], poly[4][0], poly[4][1]))
+            (poly[0][0], poly[0][1], poly[1][0], poly[1][1],
+             poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+             poly[4][0], poly[4][1]))
         query = ("select ST_X(geom), ST_Y(geom), array_agg(date_id || ';' || val) "
                  "from (select(ST_PixelAsCentroids(ST_Clip(rast, {}, TRUE))).*, date_id "
                  "from grid_data, grid_dates "
