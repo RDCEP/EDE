@@ -61,7 +61,7 @@ def get_griddata(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    date = None
+    dates = None
     poly_id = None
     poly = None
     if content:
