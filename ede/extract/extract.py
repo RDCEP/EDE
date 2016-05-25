@@ -379,7 +379,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, dates):
                  "group by grid_dates.date;") % \
                 (poly_str, meta_id, var_id)
     # only date specified
-    elif date:
+    elif dates:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
