@@ -114,7 +114,7 @@ def return_griddata(meta_id, var_id, poly, dates):
         dateids_vals = dateids_vals.strip('{}')
         dateids_vals = dateids_vals.split(',')
         dateids_vals = [e.split(';') for e in dateids_vals]
-        dateids_vals = [(int(date_id), float(val)) for (date_id, val) in dateids_vals]
+        dateids_vals = [(int(float(date_id)), float(val)) for (date_id, val) in dateids_vals]
         for (date_id, val) in dateids_vals:
             values[date_id - 1] = val
         new_data_item['properties'] = {'values': values}
