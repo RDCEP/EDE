@@ -41,11 +41,11 @@ def return_griddata(meta_id, var_id, poly, dates):
         query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
                  "grid_dates where meta_id={} order by date").format(meta_id)
     rows = db_session.execute(query)
-    dates = []
+    dates_array = []
     num_dates = 0
     for row in rows:
         date_str = str(row[0])
-        dates.append(date_str)
+        dates_array.append(date_str)
         num_dates += 1
     # poly + date specified
     if poly and dates:
@@ -118,6 +118,7 @@ def return_griddata(meta_id, var_id, poly, dates):
         new_data_item['properties'] = {'values': values}
         out['response']['data'].append(new_data_item)
     out['response']['metadata'] = {}
+    out['response']['metadata']['dates'] = dates_array
     out['response']['metadata']['region'] = poly
     query = "select vname from grid_vars where uid=%s" % var_id
     rows = db_session.execute(query)
