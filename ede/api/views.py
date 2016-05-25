@@ -91,17 +91,17 @@ def get_griddata_aggregate_spatial(meta_id, var_id):
     """
     status_code = 200
     content = request.get_json()
-    date = None
+    dates = None
     poly_id = None
     poly = None
     if content:
-        date = content['dates'] # must be ID = integer, #TODO: specify in JSON request format
+        dates = content['dates']
         poly_id = content['poly_id']
         poly = content['poly']
     if poly_id:
-        data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date)
+        data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, dates)
     else:
-        data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
+        data = return_griddata_aggregate_spatial(meta_id, var_id, poly, dates)
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
