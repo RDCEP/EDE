@@ -341,26 +341,12 @@ def return_griddata_by_id(meta_id, var_id, poly, dates):
     return out
 
 
-def return_griddata_aggregate_spatial(meta_id, var_id, poly, dates):
-    if dates:
-        date_str = '(' + ','.join(map(str, dates)) + ')'
-        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
-                 "grid_dates where uid in {} order by date").format(date_str)
-    else:
-        query = ("select to_char(date, 'YYYY-MM-DD HH24:MI:SS') from "
-                 "grid_dates where meta_id={} order by date").format(meta_id)
-    rows = db_session.execute(query)
-    dates_array = []
-    num_dates = 0
-    for row in rows:
-        date_str = str(row[0])
-        dates_array.append(date_str)
-        num_dates += 1
+def return_griddata_aggregate_spatial(meta_id, var_id, poly, date):
     # poly + date specified
-    if poly and dates:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1],
-            poly[3][0], poly[3][1], poly[4][0], poly[4][1])
+    if poly and date:
+        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
+                   (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
+                    poly[4][0], poly[4][1])
         query = ("select ST_SummaryStats(ST_Union(ST_Clip(grid_data.rast, %s, true))), "
                  "to_char(grid_dates.date, 'YYYY-MM-DD HH24:MI:SS') "
                  "from grid_data, grid_dates "
@@ -379,7 +365,7 @@ def return_griddata_aggregate_spatial(meta_id, var_id, poly, dates):
                  "group by grid_dates.date;") % \
                 (poly_str, meta_id, var_id)
     # only date specified
-    elif dates:
+    elif date:
         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
