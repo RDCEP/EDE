@@ -571,6 +571,7 @@ def return_griddata_aggregate_temporal(meta_id, var_id, poly, dates):
         query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
                              "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
                              "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+    print(query)
     rows = db_session.execute(query)
     # the response JSON
     out = {}
@@ -661,6 +662,7 @@ def return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly, dates):
         query = tmp + '\n' + "SELECT ST_X(geom), ST_Y(geom), val FROM " \
                              "(select (ST_PixelAsCentroids(ST_MapAlgebra((select * from foo)::rastbandarg[], " \
                              "'st_stddev4ma(double precision[], int[], text[])'::regprocedure))).*) foo;"
+    print(query)
     rows = db_session.execute(query)
     # the response JSON
     out = {}
