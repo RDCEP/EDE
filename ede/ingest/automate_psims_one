@@ -1,5 +1,13 @@
 #!/bin/bash           
 
+# Ingest a single PSIMS NetCDF into Postgres
+# run with 'automate_psims_one [absolutepath2psimsnetcdf]
+#
+# Note:
+# This script assumes that EDE is located at /home/sthaler/EDE
+# and postgis is located at /home/sthaler/postgis
+#
+
 FILE_NETCDF=$1
 FILE_TABLEIDS=${FILE_NETCDF}_tableids
 FILE_TEXT=${FILE_NETCDF}_text
