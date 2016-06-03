@@ -1,0 +1,22 @@
+This README explains how to run the ingestion for the full-in-Python version.
+
+Simply run
+
+cmd:		python ingest_netcdf.py —input [path2netcdf] —output [absolutepath2intermediatecsvfile]
+examples:	python ingest_netcdf.py --input /data/psims/papsim_wfdei.cru_hist_fullharm_firr_yield_whe_annual_1979_2012.nc4 --output /home/sthaler/EDE/ede/ingest/simplify_ingest/wkb_out
+		python ingest_netcdf.py --input /data/agmerra/clim_0004_0047.tile.nc4 --output /home/sthaler/EDE/ede/ingest/simplify_ingest/wkb_out
+
+note:		You can give any name to the intermediate csv file, but you have to use an absolute path for it,
+		because it will be ingested using the Postgres copy-from command and that one itself requires an absolute path provided.
+
+The intermediate file that is produced is a csv file very similar to the one produced by the other ingestion approach (the half C/Python ingestion approach).
+The difference is that here the rows in the csv file are contiguous in space whereas in the other ingestion approach they are contiguous in time, i.e.
+we first encounter all tiles for a given timstep before we move to the next timestep:
+
+—————————————————————————————————————————————————————————————————————————————————————————————
+meta_id		var_id		(absolute) date (id)		raster field
+2		2		35				0100000100000000000000E03F00000…
+2		2		35				0100000100000000000000E03F00000…
+2		2		35				0100000100000000000000E03F00000…
+…		…		…				…
+—————————————————————————————————————————————————————————————————————————————————————————————
