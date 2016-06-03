@@ -1,5 +1,14 @@
 This README explains how the ingestion works and which commands need to be issued.
 
+REQUIREMENTS
+
+- 'fix_groupby' branch of	https://github.com/RDCEP/EDE (Python part)
+- 'ingest' 	branch of 	https://github.com/legendOfZelda/postgis (C part)
+
+The postgis ingest branch must be compiled from the top-level directory, i.e. run 'make' inside the top-level postgis directory.
+Further, the 'raster2text' executable must be present, i.e. run 'make raster2text' inside the postgis/raster/loader directory.
+This is already done for you on the .58 dev-machine where these repositories are located at /home/sthaler.
+
 
 INGESTING A SINGLE NETCDF BY DOING THE INDIVIDUAL STEPS MANUALLY
 
