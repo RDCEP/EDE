@@ -2,8 +2,8 @@ This README explains how the ingestion works and which commands need to be issue
 
 REQUIREMENTS
 
-- 'fix_groupby' branch of	https://github.com/RDCEP/EDE (Python part)
-- 'ingest' 	branch of 	https://github.com/legendOfZelda/postgis (C part)
+- 'fix_groupby' branch of   https://github.com/RDCEP/EDE (Python part)
+- 'ingest' 	branch of       https://github.com/legendOfZelda/postgis (C part)
 
 The postgis ingest branch must be compiled from the top-level directory, i.e. run 'make' inside the top-level postgis directory.
 Further, the 'raster2text' executable must be present, i.e. run 'make raster2text' inside the postgis/raster/loader directory.
@@ -19,10 +19,10 @@ example:	python ingest_only_meta.py /data/psims/papsim_wfdei.cru_hist_fullharm_f
 
 This produces a file of this format:
 
-meta_id			the autoincremented uid that resulted when inserting the metadata into the grid_meta table
+meta_id                 the autoincremented uid that resulted when inserting the metadata into the grid_meta table
 number of variables
-var_name, var_id	var_id is the uid of the variable in the grid_vars table
-dateids			the uids of the dates that resulted when inserting the dates into the grid_dates table
+var_name, var_id        var_id is the uid of the variable in the grid_vars table
+dateids                 the uids of the dates that resulted when inserting the dates into the grid_dates table
 
 This file is stored in the same directory as the input netcdf and with the same name, just with the _tableids suffix.
 example:	/data/psims/papsim_wfdei.cru_hist_fullharm_firr_yield_whe_annual_1979_2012.nc4_tableids
@@ -32,8 +32,8 @@ example:	/data/psims/papsim_wfdei.cru_hist_fullharm_firr_yield_whe_annual_1979_2
 command:	./raster2text [path2netcdf] -o [nameofoutfile] -tids [path2tableidsfile]
 example:	./raster2text /data/psims/papsim_wfdei.cru_hist_fullharm_firr_yield_whe_annual_1979_2012.nc4 -o wkb_out -tids /data/psims papsim_wfdei.cru_hist_fullharm_firr_yield_whe_annual_1979_2012.nc4_tableids
 note:		For Agmerra data or generally for netcdfs with subdatasets, i.e. multiple variables, we also have to specify the variable in this command, e.g.
-		./raster2text NETCDF:"/data/agmerra/clim_0004_0054.tile.nc4":pr -o wkb_out -tids /data/agmerra/clim_0004_0054.tile.nc4_tableids
-		(i.e. the ‘pr’ variable here = precipitation I think)
+            ./raster2text NETCDF:"/data/agmerra/clim_0004_0054.tile.nc4":pr -o wkb_out -tids /data/agmerra/clim_0004_0054.tile.nc4_tableids
+		    (i.e. the ‘pr’ variable here = precipitation I think)
 
 This produces a csv file with fields (which can then be ingested with the copy from command)
 
@@ -42,10 +42,10 @@ meta_id		var_id		(absolute) date (id)		raster field
 300		14		1958632				0100000100000000000000E03F00000…
 300		14		1958633				0100000100000000000000E03F00000…
 300		14		1958634				0100000100000000000000E03F00000…
-…		…		…				…
+…		…		…				    …
 —————————————————————————————————————————————————————————————————————————————————————————————
 
-note:		This requires the C-executable raster2text to be present, which is essentially just a modification of PostGIS’ raster2pgsql.
+note:	This requires the C-executable raster2text to be present, which is essentially just a modification of PostGIS’ raster2pgsql.
 		You can get it from 
 		repo:		https://github.com/legendOfZelda/postgis
 		branch:		ingest
@@ -64,10 +64,10 @@ INGESTING A SINGLE / MULTIPLE NETCDF(S) USING SOME HELPER SCRIPTS
 
 Helper scripts are provided to automate the above steps + run it for multiple netcdfs:
 
-automate_psims_one		to ingest a single psims netcdf 						=> cmd: ./automate_psims_one [absolutepath2psimsnetcdf]
+automate_psims_one		to ingest a single psims netcdf 						                => cmd: ./automate_psims_one [absolutepath2psimsnetcdf]
 automate_psims_all		to ingest all psims netcdfs in the hardcoded directory /data/psims		=> cmd: ./automate_psims_all
-automate_agmerra_one		to ingest a single agmerra netcdf						=> cmd: ./automate_agmerra_one [absolutepath2agmerranetcdf]
-automate_agmerra_all		to ingest all agmerra netcdfs in the hardcoded directory /data/agmerra	=> cmd: ./automate_agmerra_all
+automate_agmerra_one	to ingest a single agmerra netcdf						                => cmd: ./automate_agmerra_one [absolutepath2agmerranetcdf]
+automate_agmerra_all	to ingest all agmerra netcdfs in the hardcoded directory /data/agmerra	=> cmd: ./automate_agmerra_all
 
 Essentially, automate_psims/agmerra_one just does the above individual manual steps at once,
 and automate_psims/agmerra_all calls automate_psims/agmerra_one for all netcdfs in the hardcoded directory
@@ -75,22 +75,44 @@ and automate_psims/agmerra_all calls automate_psims/agmerra_one for all netcdfs 
 
 ADD THE ADDITIONAL DATE_ID COLUMN TO THE GRID_DATES TABLE WHICH WAS NEEDED TO BE ABLE TO RETURN NATE’S FORMAT WITH THE NULLS
 
-The following is for the case of Agmerra data because that has many time steps so we need to automate the following steps, i.e. can’t do it by hand.
-For psims I actually did the following by hand because there’s only 34 time steps.
+(1) Add the new date_id column to the grid_dates table
+    psql -U postgres -d ede
+    alter table grid_dates add column date_id integer;
+    \q
 
-(1)	Go into ingest directory and issue
-	psql
+(2)	Go into ingest directory and issue
+	psql -U postgres -d ede
 	\o dates
-	select date from grid_dates where meta_id=269; (or any id which is an agmerra file)
+	For PSIMS:      select date from grid_dates where meta_id=1 order by date;
+    For Agmerra:    select date from grid_dates where meta_id=113 order by date;
+    [Note: You can take the meta_id of any other PSIMS / Agmerra NetCDF because the assumption is,
+    which is satisfied for PSIMS, Agmerra, that they all have the same dates.]
+    [TODO: This assumption might very well not be the case in the future!!]
 	\q
 
-(2)	remove tail and head from ‘dates’ file so you only have the dates, one per line
+(3)	remove tail and head from ‘dates’ file so you only have the dates, one per line
 	cat dates | ./trim > dates_out (trim away the whitespace / tab)
+
+(4) Change the condition on the meta_id in add_column.py as follows:
+    For PSIMS:      1<=meta_id and meta_id<=112
+    For Agmerra:    113<=meta_id
+    And then execute it:
 	python add_column.py dates_out sql_script
 
-(3)	psql
+(5)	psql -U postgres -d ede
 	\i sql_script
 	\q
 
 What these steps do is they fill in the additional date_id column of the grid_dates table.
 This column in turn is used to be able to return the JSON in a format that Nate wanted, i.e. with the NULLs.
+
+Note:   For Agmerra executing the sql_script takes roughly 1hr 15mins.
+
+
+INGESTION OF GADM REGIONS
+
+Just issue:
+cmd:        python ingest_shapes.py [path2shpfile]
+example:    python ingest_shapes.py /data/regions/gadm/gadm28.shp
+
+Note:   Ingesting whole world GADM takes roughly 10mins.
