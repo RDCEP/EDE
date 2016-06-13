@@ -123,7 +123,7 @@ def return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, date):
 
 
 def return_griddata_metaid_varid_date(meta_id, var_id, date):
-    query = ("SELECT rast from grid_data_time_lat_lon where meta_id={} and var_id={} and time_id={}) foo;".format(meta_id, var_id, date))
+    query = ("SELECT rast from grid_data_time_lat_lon where meta_id={} and var_id={} and time_id={};".format(meta_id, var_id, date))
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
