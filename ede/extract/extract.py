@@ -123,67 +123,14 @@ def return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, date):
 
 
 def return_griddata_metaid_varid_date(meta_id, var_id, date):
-    if date:
-        query = ("SELECT ST_X(geom), ST_Y(geom), val from (select (ST_PixelAsCentroids(rast)).* "
-                 "from grid_data where meta_id={} and var_id={} and date={}) foo;".format(meta_id, var_id, date))
-    else:
-        query = ("SELECT ST_X(geom), ST_Y(geom), val from (select (ST_PixelAsCentroids(rast)).* "
-                 "from grid_data where meta_id={} and var_id={}) foo;".format(meta_id, var_id))
+    query = ("SELECT rast from from grid_data_time_lat_lon where meta_id={} and var_id={} and time_id={}) foo;".format(meta_id, var_id, date))
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("") # TODO: improve msg
-    # the response JSON
-    out = {}
-    out['request'] = {}
-    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
-    out['response']['data'] = []
-    for (lon, lat, vals) in rows:
-        new_data_item = {}
-        new_data_item['type'] = 'Feature'
-        new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
-        new_data_item['properties'] = {'values': vals}
-        out['response']['data'].append(new_data_item)
-    if date:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid={}".format(date)
-    else:
-        query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
-    rows = db_session.execute(query)
-    out['response']['metadata'] = {}
-    out['response']['metadata']['dates'] = []
     for row in rows:
-        date_str = str(row[0])
-        out['response']['metadata']['dates'].append(date_str)
-    query = "select vname from grid_vars where uid={}".format(var_id)
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("") # todo: improve msg
-    for row in rows:
-        vname = row[0]
-    query = "select meta_data from grid_meta where uid={}".format(meta_id)
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("") # todo: improve msg
-    for row in rows:
-        meta_data = row[0]
-    for var in meta_data['variables']:
-        if var['name'] == vname:
-            for attr in var['attributes']:
-                if attr['name'] == 'units':
-                    units = attr['value']
-    out['response']['metadata']['units'] = units
-    out['response']['metadata']['format'] = 'grid'
-    return out
-
+        return row[0] # the rast field
 
 # def return_griddata(meta_id, var_id, poly, date):
 #     # poly + date specified

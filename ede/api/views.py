@@ -62,6 +62,51 @@ def get_gridmeta(ids):
     return resp
 
 
+@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
+def get_griddata_time_specified(meta_id, var_id, time_id):
+    """Get values within specific polygon & date, by their IDs.
+
+    If no polygon is specified we default to the entire globe.
+
+    :param meta_id:
+    :param var_id:
+    :param time_id
+    :return:
+    """
+    content = request.get_json()
+    # if POST, i.e. we have some content
+    try:
+        if content:
+            poly_id = content['poly_id']  # TODO: specify in JSON request format
+            poly = content['poly']  # TODO: specify in JSON request format
+            # if a polygon is specified by both poly_id and directly => return Bad Request Error
+            if poly_id is not None and poly is not None:
+                status_code = 400
+                payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
+                raise ServerError("Cannot specify polygon directly and by id at the same time", status_code, payload)
+            # if polygon is specified by id
+            elif poly_id is not None:
+                data = return_griddata_metaid_varid_polyid_date(meta_id, var_id, poly_id, time_id)
+            # if polygon is specified directly
+            elif poly is not None:
+                data = return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, time_id)
+            # if no polygon is specified
+            else:
+                data = return_griddata_metaid_varid_date(meta_id, var_id, time_id)
+        # if simple GET
+        else:
+            data = return_griddata_metaid_varid_date(meta_id, var_id, time_id)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'meta_id': meta_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
+        raise ServerError("Could not get griddata", status_code, payload)
+    except ServerError:
+        raise
+
+    return data
+
+
 @api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
 def get_griddata(meta_id, var_id):
     """Get values within specific polygon & date, by their IDs.
