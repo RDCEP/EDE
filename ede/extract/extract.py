@@ -53,77 +53,17 @@ def return_gridmeta(ids):
     return out
 
 
-def return_griddata_metaid_varid_polyid_date(meta_id, var_id, poly_id, date):
+def return_griddata_datasetid_varid_polyid_timeid(dataset_id, var_id, poly_id, time_id):
     pass
 
 
-def return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, date):
-    # TODO: better handle exception when poly doesnt have 4 points
-    try:
-        poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING({} {}, {} {}, {} {}, {} {}, {} {})'), 4326)".format(
-            (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-             poly[4][0], poly[4][1]))
-        if date:
-            query = ("SELECT ST_X(geom), ST_Y(geom), val from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* "
-                     "from grid_data where meta_id={} and var_id={} and date={}) foo;".format(
-                (poly_str, meta_id, var_id, date)))
-        else:
-            query = ("SELECT ST_X(geom), ST_Y(geom), val from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* "
-                     "from grid_data where meta_id={} and var_id={}) foo;".format(
-                (poly_str, meta_id, var_id)))
-        rows = db_session.execute(query)
-        # the response JSON
-        out = {}
-        out['request'] = {}
-        out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-        out['response'] = {}
-        out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-        out['response']['status'] = 'OK'
-        out['response']['status_code'] = 200
-        out['response']['data'] = []
-        for (lon, lat, vals) in rows:
-            new_data_item = {}
-            new_data_item['type'] = 'Feature'
-            new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
-            new_data_item['properties'] = {'values': vals}
-            out['response']['data'].append(new_data_item)
-        if date:
-            query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid={}".format(date)
-        else:
-            query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
-        rows = db_session.execute(query)
-        out['response']['metadata'] = {}
-        out['response']['metadata']['dates'] = []
-        for (date, ) in rows:
-            date_str = str(date)
-            out['response']['metadata']['dates'].append(date_str)
-        out['response']['metadata']['region'] = poly
-        query = "select vname from grid_vars where uid={}".format(var_id)
-        rows = db_session.execute(query)
-        for row in rows:
-            vname = row[0]
-        query = "select meta_data from grid_meta where uid={}".format(meta_id)
-        rows = db_session.execute(query)
-        for row in rows:
-            meta_data = row[0]
-        for var in meta_data['variables']:
-            if var['name'] == vname:
-                for attr in var['attributes']:
-                    if attr['name'] == 'units':
-                        units = attr['value']
-        out['response']['metadata']['units'] = units
-        out['response']['metadata']['format'] = 'grid'
-        return out
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("Could not return griddata") # TODO: improve message
-    except Exception as e:
-        eprint(e)
-        raise RasterExtractionException("Could not return griddata") # TODO: improve message
+def return_griddata_datasetid_varid_poly_timeid(dataset_id, var_id, poly, time_id):
+    pass
 
 
-def return_griddata_metaid_varid_date(meta_id, var_id, date):
-    query = ("SELECT rast from grid_data_time_lat_lon where meta_id={} and var_id={} and time_id={};".format(meta_id, var_id, date))
+def return_griddata_datasetid_varid_timeid(dataset_id, var_id, time_id):
+    query = ("SELECT rast from grid_data_psims_time_lat_lon where dataset_id={} and var_id={} and time_id={};".
+             format(dataset_id, var_id, time_id))
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
@@ -131,92 +71,6 @@ def return_griddata_metaid_varid_date(meta_id, var_id, date):
         raise RasterExtractionException("") # TODO: improve msg
     for row in rows:
         return row[0] # the rast field
-
-# def return_griddata(meta_id, var_id, poly, date):
-#     # poly + date specified
-#     if poly and date:
-#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-#                     poly[4][0], poly[4][1])
-#         query = "SELECT ST_X(geom), ST_Y(geom), val " \
-#                 "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-#                 "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" % \
-#                 (poly_str, meta_id, var_id, date)
-#     # only poly specified
-#     elif poly:
-#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-#                     poly[4][0], poly[4][1])
-#         query = "SELECT ST_X(geom), ST_Y(geom), val " \
-#                 "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-#                 "grid_data where meta_id=%s and var_id=%s) foo;" % \
-#                 (poly_str, meta_id, var_id)
-#     # only date specified
-#     elif date:
-#         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-#                     poly[4][0], poly[4][1])
-#         query = "SELECT ST_X(geom), ST_Y(geom), val " \
-#                 "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-#                 "grid_data where meta_id=%s and var_id=%s and date=%s) foo;" % \
-#                 (poly_str, meta_id, var_id, date)
-#     # neither poly nor date specified
-#     else:
-#         poly = [[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]
-#         poly_str = "ST_Polygon(ST_GeomFromText('LINESTRING(%s %s, %s %s, %s %s, %s %s, %s %s)'), 4326)" % \
-#                    (poly[0][0], poly[0][1], poly[1][0], poly[1][1], poly[2][0], poly[2][1], poly[3][0], poly[3][1],
-#                     poly[4][0], poly[4][1])
-#         query = "SELECT ST_X(geom), ST_Y(geom), val " \
-#                 "from (select (ST_PixelAsCentroids(ST_Clip(rast, %s, TRUE))).* from " \
-#                 "grid_data where meta_id=%s and var_id=%s) foo;" % \
-#                 (poly_str, meta_id, var_id)
-#     rows = db_session.execute(query)
-#     # the response JSON
-#     out = {}
-#     out['request'] = {}
-#     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-#     out['response'] = {}
-#     out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-#     out['response']['status'] = 'OK'
-#     out['response']['status_code'] = 200
-#     out['response']['data'] = []
-#     for row in rows:
-#         lon = row[0]  # longitude
-#         lat = row[1]  # latitude
-#         vals = row[2]  # array of values, including NULL
-#         new_data_item = {}
-#         new_data_item['type'] = 'Feature'
-#         new_data_item['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
-#         new_data_item['properties'] = {'values': vals}
-#         out['response']['data'].append(new_data_item)
-#     if date:
-#         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates where uid=%s" % (date)
-#     else:
-#         query = "select to_char(date, \'YYYY-MM-DD HH24:MI:SS\') from grid_dates"
-#     rows = db_session.execute(query)
-#     out['response']['metadata'] = {}
-#     out['response']['metadata']['dates'] = []
-#     for row in rows:
-#         date_str = str(row[0])
-#         out['response']['metadata']['dates'].append(date_str)
-#     out['response']['metadata']['region'] = poly
-#     query = "select vname from grid_vars where uid=%s" % var_id
-#     rows = db_session.execute(query)
-#     for row in rows:
-#         vname = row[0]
-#     query = "select meta_data from grid_meta where uid=%s" % meta_id
-#     rows = db_session.execute(query)
-#     for row in rows:
-#         meta_data = row[0]
-#     for var in meta_data['variables']:
-#         if var['name'] == vname:
-#             for attr in var['attributes']:
-#                 if attr['name'] == 'units':
-#                     units = attr['value']
-#     out['response']['metadata']['units'] = units
-#     out['response']['metadata']['format'] = 'grid'
-#     return out
 
 
 def return_griddata_by_id(meta_id, var_id, poly, date):

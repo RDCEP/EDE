@@ -62,13 +62,13 @@ def get_gridmeta(ids):
     return resp
 
 
-@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
-def get_griddata_time_specified(meta_id, var_id, time_id):
-    """Get values within specific polygon & date, by their IDs.
+@api.route('/griddata/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
+def get_griddata(dataset_id, var_id, time_id):
+    """Get values of a specified dataset, variable, time, and within a polygon.
 
     If no polygon is specified we default to the entire globe.
 
-    :param meta_id:
+    :param dataset_id:
     :param var_id:
     :param time_id
     :return:
@@ -82,79 +82,29 @@ def get_griddata_time_specified(meta_id, var_id, time_id):
             # if a polygon is specified by both poly_id and directly => return Bad Request Error
             if poly_id is not None and poly is not None:
                 status_code = 400
-                payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
+                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
                 raise ServerError("Cannot specify polygon directly and by id at the same time", status_code, payload)
             # if polygon is specified by id
             elif poly_id is not None:
-                data = return_griddata_metaid_varid_polyid_date(meta_id, var_id, poly_id, time_id)
+                data = return_griddata_datasetid_varid_polyid_timeid(dataset_id, var_id, poly_id, time_id)
             # if polygon is specified directly
             elif poly is not None:
-                data = return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, time_id)
+                data = return_griddata_datasetid_varid_poly_timeid(dataset_id, var_id, poly, time_id)
             # if no polygon is specified
             else:
-                data = return_griddata_metaid_varid_date(meta_id, var_id, time_id)
+                data = return_griddata_datasetid_varid_timeid(dataset_id, var_id, time_id)
         # if simple GET
         else:
-            data = return_griddata_metaid_varid_date(meta_id, var_id, time_id)
+            data = return_griddata_datasetid_varid_timeid(dataset_id, var_id, time_id)
     except RasterExtractionException as e:
         eprint(e)
         status_code = 500
-        payload = {'meta_id': meta_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
+        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
         raise ServerError("Could not get griddata", status_code, payload)
     except ServerError:
         raise
 
     return data
-
-
-@api.route('/griddata/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
-def get_griddata(meta_id, var_id):
-    """Get values within specific polygon & date, by their IDs.
-
-    If no polygon is specified we default to the entire globe.
-    If no date is specified we default to all dates.
-
-    :param meta_id:
-    :param var_id:
-    :return:
-    """
-    content = request.get_json()
-    # if POST, i.e. we have some content
-    try:
-        if content:
-            date = content['date']
-            poly_id = content['poly_id']  # TODO: specify in JSON request format
-            poly = content['poly']  # TODO: specify in JSON request format
-            # if a polygon is specified by both poly_id and directly => return Bad Request Error
-            if poly_id is not None and poly is not None:
-                status_code = 400
-                payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
-                raise ServerError("Cannot specify polygon directly and by id at the same time", status_code, payload)
-            # if polygon is specified by id
-            elif poly_id is not None:
-                data = return_griddata_metaid_varid_polyid_date(meta_id, var_id, poly_id, date)
-            # if polygon is specified directly
-            elif poly is not None:
-                data = return_griddata_metaid_varid_poly_date(meta_id, var_id, poly, date)
-            # if no polygon is specified
-            else:
-                data = return_griddata_metaid_varid_date(meta_id, var_id, date)
-        # if simple GET
-        else:
-            data = return_griddata_metaid_varid_date(meta_id, var_id, None)
-    except RasterExtractionException as e:
-        eprint(e)
-        status_code = 500
-        payload = {'meta_id': meta_id, 'var_id': var_id, 'content': content}
-        raise ServerError("Could not get griddata", status_code, payload)
-    except ServerError:
-        raise
-
-    status_code = 200
-    data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
 
 
 @api.route('/aggregate/spatial/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
