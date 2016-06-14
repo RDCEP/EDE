@@ -1,0 +1,14 @@
+#!/bin/bash           
+
+B=$1
+DIR=/data/psims
+FNAMES=filenames.txt
+DB_USER=postgres
+DB_NAME=ede
+DB_TABLE=grid_data
+
+while read fname
+do
+	echo "ingest_one_band_into_tmp: ingesting band $B of file $DIR/$fname..."
+	raster2pgsql -s 4326 -a -b $B $DIR/$fname $DB_TABLE | psql -U $DB_USER -d $DB_NAME
+done <$FNAMES

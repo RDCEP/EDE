@@ -1,0 +1,15 @@
+#!/bin/bash           
+
+VAR=$1
+BAND=$2
+DIR=/data/agmerra
+FNAMES=filenames.txt
+DB_USER=postgres
+DB_NAME=ede
+DB_TABLE=grid_data
+
+while read fname
+do
+	echo "ingest_one_var_one_band_into_tmp: ingesting band $BAND of variable $VAR..."
+	raster2pgsql -s 4326 -a -b $BAND NETCDF:"$DIR/$fname":$VAR $DB_TABLE | psql -U $DB_USER -d $DB_NAME
+done <$FNAMES

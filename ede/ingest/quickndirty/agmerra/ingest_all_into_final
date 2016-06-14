@@ -1,0 +1,31 @@
+#!/bin/bash           
+
+BAND_MAX=11323
+DB_USER=postgres
+DB_NAME=ede
+VARS=(pr taxmax tasmin rsds wind hur hurtmax)
+VAR_IDS=(1 2 3 4 5 6 7)
+
+for band in $(seq 1 $BAND_MAX);
+do
+	for var_id in "${VAR_IDS[@]}"
+	do
+		var=${VARS[$((var_id-1))]}
+		echo "ingest_all_into_final: ingesting band $band of AGMERRA variable $var..."	
+		psql -U $DB_USER -d $DB_NAME -a -f create_tmp.sql
+		./ingest_one_var_one_band_into_tmp $var $band
+		#SQL_CMD="INSERT INTO grid_data_agmerra_time_lat_lon(var_id, time_id, rast) SELECT rid, $band, rast FROM grid_data;"
+		#psql -U $DB_USER -d $DB_NAME -a -c "$SQL_CMD"
+		psql -U $DB_USER -d $DB_NAME -a -f delete_tmp.sql
+	done 
+done
+
+#VAR=cropland
+#VAR_ID=8
+
+#echo "ingest_all_into_final: ingesting AGMERRA variable $VAR..."  
+#psql -U $DB_USER -d $DB_NAME -a -f create_tmp.sql
+#./ingest_one_var_into_tmp $VAR
+#SQL_CMD="INSERT INTO grid_data_agmerra_time_lat_lon(var_id, time_id, rast) SELECT rid, $band, rast FROM grid_data;"
+#psql -U $DB_USER -d $DB_NAME -a -c "$SQL_CMD"
+#psql -U $DB_USER -d $DB_NAME -a -f delete_tmp.sql
