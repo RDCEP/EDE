@@ -1,0 +1,12 @@
+#!/bin/bash           
+
+DIR=/data/psims
+FNAMES=filenames.txt
+DB_USER=postgres
+DB_NAME=ede
+
+while read fname
+do
+	echo "ingest_into_grid_vars: ingesting $DIR/$fname into grid_vars..."
+	python ingest_only_meta.py $DIR/$fname
+done <$FNAMES
