@@ -24,7 +24,7 @@ def main(in_filename):
                 var_attrs[attr] = str(var.getncattr(attr))
             print vname
             print var_attrs
-            # cur.execute("insert into grid_vars values (default, 1, \'{}\', \'%s\')".format(vname, Json(var_attrs)))
+            cur.execute("insert into grid_vars values (default, 1, \'{}\', {})".format(vname, Json(var_attrs)))
 
     rootgrp.close()
 
