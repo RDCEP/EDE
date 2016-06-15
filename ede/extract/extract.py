@@ -92,7 +92,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
 
 
 def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids):
-    time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
+    time_ids_str = '(' + ','.join(time_ids) + ')'
     if poly is not None:
         # polygon is specified by id
         if isinstance(poly, int):
