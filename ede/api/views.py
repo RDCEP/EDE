@@ -124,7 +124,11 @@ def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
         status_code = 500
         payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_ids': time_ids, 'content': content}
         raise ServerError("get_griddata_aggregate_spatial: could not aggregate griddata", status_code, payload)
-    return data
+    status_code = 200
+    data['request']['url'] = request.path
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
 
 
 @api.route('/aggregate/temporal/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])
