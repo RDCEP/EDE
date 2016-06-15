@@ -39,22 +39,21 @@ def flush_cache():
     return resp
 
 
-@api.route('/gridmeta', defaults={'ids': None}, methods=['GET'])
-@api.route('/gridmeta/datasets/<intlist:ids>', methods=['GET'])
-def get_gridmeta(ids):
+@api.route('/gridmeta', defaults={'dataset_ids': None}, methods=['GET'])
+@api.route('/gridmeta/dataset/<intlist:dataset_ids>', methods=['GET'])
+def get_gridmeta(dataset_ids):
     """Get metadata of gridded datasets by IDs.
 
     If no list is passed, the metadata of all gridded datasets is returned.
 
-    :param ids:
+    :param dataset_ids:
     :return:
     """
     try:
-        data = return_gridmeta(ids)
+        data = return_gridmeta(dataset_ids)
     except RasterExtractionException as e:
         eprint(e)
-        raise ServerError("Could not handle get_gridmeta request with ids", status_code=500, payload=ids)
-
+        raise ServerError("get_gridmeta: could not handle request with dataset_ids", status_code=500, payload=dataset_ids)
     status_code = 200
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
@@ -64,7 +63,7 @@ def get_gridmeta(ids):
 
 @api.route('/griddata/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
 def get_griddata(dataset_id, var_id, time_id):
-    """Get values of a specified dataset, variable, time, and within a polygon.
+    """Get values of a specified dataset:variable:time, potentially restricted to a polygon provided in the POST body.
 
     If no polygon is specified we default to the entire globe.
 
@@ -74,8 +73,8 @@ def get_griddata(dataset_id, var_id, time_id):
     :return:
     """
     content = request.get_json()
-    # if POST, i.e. we have some content
     try:
+        # we have some content, i.e. POST
         if content:
             poly_id = content['poly_id']  # TODO: specify in JSON request format
             poly = content['poly']  # TODO: specify in JSON request format
@@ -83,96 +82,140 @@ def get_griddata(dataset_id, var_id, time_id):
             if poly_id is not None and poly is not None:
                 status_code = 400
                 payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
-                raise ServerError("Cannot specify polygon directly and by id at the same time", status_code, payload)
+                raise ServerError("get_griddata: cannot specify polygon directly and by id at the same time", status_code, payload)
             # if polygon is specified by id
             elif poly_id is not None:
-                data = return_griddata_datasetid_varid_polyid_timeid(dataset_id, var_id, poly_id, time_id)
+                data = return_griddata(dataset_id, var_id, poly_id, time_id)
             # if polygon is specified directly
             elif poly is not None:
-                data = return_griddata_datasetid_varid_poly_timeid(dataset_id, var_id, poly, time_id)
+                data = return_griddata(dataset_id, var_id, poly, time_id)
             # if no polygon is specified
             else:
-                data = return_griddata_datasetid_varid_timeid(dataset_id, var_id, time_id)
-        # if simple GET
+                data = return_griddata(dataset_id, var_id, None, time_id)
+        # we have no content, i.e. GET
         else:
-            data = return_griddata_datasetid_varid_timeid(dataset_id, var_id, time_id)
+            data = return_griddata(dataset_id, var_id, None, time_id)
     except RasterExtractionException as e:
         eprint(e)
         status_code = 500
         payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
-        raise ServerError("Could not get griddata", status_code, payload)
+        raise ServerError("get_griddata: could not get griddata", status_code, payload)
     except ServerError:
         raise
-
     return data
 
 
-@api.route('/aggregate/spatial/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
-def get_griddata_aggregate_spatial(meta_id, var_id):
-    """Do spatial aggregation over specific polygon & for specific date.
+@api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id/time/<intlist:time_ids>', methods=['GET', 'POST'])
+def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
+    """Do spatial aggregation at specific dates, over a potentially provided polygon.
 
-    If no polygon is passed we default to the entire globe.
-    If no date is passed we default to all dates.
+    If no polygon is provided we default to the entire globe.
 
-    :param meta_id:
+    :param dataset_id:
     :param var_id:
+    :param time_ids:
     :return:
     """
-    status_code = 200
     content = request.get_json()
-    date = None
-    poly_id = None
-    poly = None
-    if content:
-        date = content['dates']  # must be ID = integer, #TODO: specify in JSON request format
-        poly_id = content['poly_id']
-        poly = content['poly']
-    if poly_id:
-        data = return_griddata_aggregate_spatial_by_id(meta_id, var_id, poly_id, date)
-    else:
-        data = return_griddata_aggregate_spatial(meta_id, var_id, poly, date)
-    data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    try:
+        # we have some content, i.e. POST
+        if content:
+            poly_id = content['poly_id']  # TODO: specify in JSON request format
+            poly = content['poly']  # TODO: specify in JSON request format
+            # if a polygon is specified by both poly_id and directly => return Bad Request Error
+            if poly_id is not None and poly is not None:
+                status_code = 400
+                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
+                raise ServerError("get_griddata_aggregate_spatial: cannot specify polygon directly and by id at the same time", status_code, payload)
+            # if polygon is specified by id
+            elif poly_id is not None:
+                data = return_griddata_aggregate_spatial(dataset_id, var_id, poly_id, time_ids)
+            # if polygon is specified directly
+            elif poly is not None:
+                data = return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids)
+            # if no polygon is specified
+            else:
+                data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_ids)
+        # we have no content, i.e. GET
+        else:
+            data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_ids)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_ids': time_ids, 'content': content}
+        raise ServerError("get_griddata_aggregate_spatial: could not aggregate griddata", status_code, payload)
+    return data
 
 
-@api.route('/aggregate/temporal/dataset/<int:meta_id>/var/<int:var_id>', methods=['GET', 'POST'])
-def get_griddata_aggregate_temporal(meta_id, var_id):
-    status_code = 200
+@api.route('/aggregate/temporal/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])
+def get_griddata_aggregate_temporal(dataset_id, var_id, time_ids):
+    """Do temporal aggregation over specified dates, over a potentially provided polygon.
+
+    If no polygon is provided we default to the entire globe.
+
+    :param dataset_id:
+    :param var_id:
+    :param time_ids:
+    :return:
+    """
     content = request.get_json()
-    dates = None
-    poly_id = None
-    poly = None
-    if content:
-        dates = content['dates']  # must be list of date IDs
-        poly_id = content['poly_id']
-        poly = content['poly']
-    if poly_id:
-        data = return_griddata_aggregate_temporal_by_id(meta_id, var_id, poly_id, dates)
-    else:
-        data = return_griddata_aggregate_temporal(meta_id, var_id, poly, dates)
+    try:
+        # we have some content, i.e. POST
+        if content:
+            poly_id = content['poly_id']  # TODO: specify in JSON request format
+            poly = content['poly']  # TODO: specify in JSON request format
+            # if a polygon is specified by both poly_id and directly => return Bad Request Error
+            if poly_id is not None and poly is not None:
+                status_code = 400
+                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
+                raise ServerError("get_griddata_aggregate_temporal: cannot specify polygon directly and by id at the same time", status_code, payload)
+            # if polygon is specified by id
+            elif poly_id is not None:
+                data = return_griddata_aggregate_temporal(dataset_id, var_id, poly_id, time_ids)
+            # if polygon is specified directly
+            elif poly is not None:
+                data = return_griddata_aggregate_temporal(dataset_id, var_id, poly, time_ids)
+            # if no polygon is specified
+            else:
+                data = return_griddata_aggregate_temporal(dataset_id, var_id, None, time_ids)
+        # we have no content, i.e. GET
+        else:
+            data = return_griddata_aggregate_temporal(dataset_id, var_id, None, time_ids)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_ids': time_ids, 'content': content}
+        raise ServerError("get_griddata_aggregate_temporal: could not aggregate griddata", status_code, payload)
+    return data
+
+
+@api.route('/regionmeta', defaults={'regionset_ids': None}, methods=['GET'])
+@api.route('/regionmeta/regionset/<intlist:regionset_ids>', methods=['GET'])
+def get_regionmeta(regionset_ids):
+    try:
+        data = return_regionmeta(regionset_ids)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'regionset_ids': regionset_ids}
+        raise ServerError("get_regionmeta: could not get region metadata", status_code, payload)
+    status_code = 200
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
 
-@api.route('/polymeta', defaults={'ids': None}, methods=['GET'])
-@api.route('/polymeta/<intlist:ids>', methods=['GET'])
-def get_polymeta(ids):
+@api.route('/regiondata/regionset/<int:regionset_id>/region/<int:region_id>', methods=['GET'])
+def get_regiondata(regionset_id, region_id):
+    try:
+        data = return_regiondata(regionset_id, region_id)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'regionset_id': regionset_id, 'region_id': region_id}
+        raise ServerError("get_regiondata: could not get region data", status_code, payload)
     status_code = 200
-    data = return_polymeta(ids)
-    data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
-
-
-@api.route('/polydata/<intlist:ids>', methods=['GET'])
-def get_polydata(ids):
-    status_code = 200
-    data = return_polydata(ids)
     data['request']['url'] = request.path
     resp = make_response(json.dumps(data, default=dthandler), status_code)
     resp.headers['Content-Type'] = 'application/json'
