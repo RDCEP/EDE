@@ -76,18 +76,8 @@ def get_griddata(dataset_id, var_id, time_id):
     try:
         # we have some content, i.e. POST
         if content:
-            poly_id = content['poly_id']  # TODO: specify in JSON request format
             poly = content['poly']  # TODO: specify in JSON request format
-            # if a polygon is specified by both poly_id and directly => return Bad Request Error
-            if poly_id is not None and poly is not None:
-                status_code = 400
-                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
-                raise ServerError("get_griddata: cannot specify polygon directly and by id at the same time", status_code, payload)
-            # if polygon is specified by id
-            elif poly_id is not None:
-                data = return_griddata(dataset_id, var_id, poly_id, time_id)
-            # if polygon is specified directly
-            elif poly is not None:
+            if poly is not None:
                 data = return_griddata(dataset_id, var_id, poly, time_id)
             # if no polygon is specified
             else:
@@ -120,18 +110,8 @@ def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
     try:
         # we have some content, i.e. POST
         if content:
-            poly_id = content['poly_id']  # TODO: specify in JSON request format
             poly = content['poly']  # TODO: specify in JSON request format
-            # if a polygon is specified by both poly_id and directly => return Bad Request Error
-            if poly_id is not None and poly is not None:
-                status_code = 400
-                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
-                raise ServerError("get_griddata_aggregate_spatial: cannot specify polygon directly and by id at the same time", status_code, payload)
-            # if polygon is specified by id
-            elif poly_id is not None:
-                data = return_griddata_aggregate_spatial(dataset_id, var_id, poly_id, time_ids)
-            # if polygon is specified directly
-            elif poly is not None:
+            if poly is not None:
                 data = return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids)
             # if no polygon is specified
             else:
@@ -162,18 +142,8 @@ def get_griddata_aggregate_temporal(dataset_id, var_id, time_ids):
     try:
         # we have some content, i.e. POST
         if content:
-            poly_id = content['poly_id']  # TODO: specify in JSON request format
             poly = content['poly']  # TODO: specify in JSON request format
-            # if a polygon is specified by both poly_id and directly => return Bad Request Error
-            if poly_id is not None and poly is not None:
-                status_code = 400
-                payload = {'dataset_id': dataset_id, 'var_id': var_id, 'content': content}
-                raise ServerError("get_griddata_aggregate_temporal: cannot specify polygon directly and by id at the same time", status_code, payload)
-            # if polygon is specified by id
-            elif poly_id is not None:
-                data = return_griddata_aggregate_temporal(dataset_id, var_id, poly_id, time_ids)
-            # if polygon is specified directly
-            elif poly is not None:
+            if poly is not None:
                 data = return_griddata_aggregate_temporal(dataset_id, var_id, poly, time_ids)
             # if no polygon is specified
             else:
