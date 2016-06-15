@@ -95,7 +95,7 @@ def get_griddata(dataset_id, var_id, time_id):
     return data
 
 
-@api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id/time/<intlist:time_ids>', methods=['GET', 'POST'])
+@api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])
 def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
     """Do spatial aggregation at specific dates, over a potentially provided polygon.
 
