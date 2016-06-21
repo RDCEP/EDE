@@ -9,7 +9,7 @@ do
 	echo "ingest_all_into_final: ingesting band $b of PSIMS data..."	
 	psql -U $DB_USER -d $DB_NAME -a -f create_tmp.sql
 	./ingest_one_band_into_tmp $b
-	SQL_CMD="INSERT INTO grid_data_psims_time_lat_lon(var_id, time_id, rast) SELECT rid, $b, rast FROM grid_data;"
+	SQL_CMD="INSERT INTO grid_data(var_id, time_id, rast) SELECT rid, $b, rast FROM grid_tmp;"
 	psql -U $DB_USER -d $DB_NAME -a -c "$SQL_CMD"
 	psql -U $DB_USER -d $DB_NAME -a -f delete_tmp.sql 
 done

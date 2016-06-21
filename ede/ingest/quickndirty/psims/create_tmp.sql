@@ -1,1 +1,1 @@
-CREATE TABLE "grid_data" ("rid" serial PRIMARY KEY,"rast" raster);
+CREATE TABLE "grid_tmp" ("rid" serial PRIMARY KEY,"rast" raster);

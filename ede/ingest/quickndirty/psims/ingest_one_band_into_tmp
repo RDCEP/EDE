@@ -5,7 +5,7 @@ DIR=/data/psims
 FNAMES=filenames.txt
 DB_USER=postgres
 DB_NAME=ede
-DB_TABLE=grid_data
+DB_TABLE=grid_tmp
 
 while read fname
 do

@@ -1,1 +1,1 @@
-DROP TABLE grid_data;
+DROP TABLE grid_tmp;
