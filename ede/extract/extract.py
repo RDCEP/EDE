@@ -91,6 +91,21 @@ def return_griddata(dataset_id, var_id, poly, time_id):
         return rast
 
 
+def return_griddata_json(dataset_id, var_id, time_id):
+    query = ("SELECT rast from grid_data where dataset_id={} and var_id={} and time_id={}".
+             format(dataset_id, var_id, time_id))
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_griddata_json: could not return griddata with dataset_id: {}, "
+                                        "var_id: {}, time_id: {}".format(dataset_id, var_id, time_id))
+    raster = None
+    for (out,) in rows:
+        raster = out
+    return raster
+
+
 def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids):
     time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
     if poly is not None:
