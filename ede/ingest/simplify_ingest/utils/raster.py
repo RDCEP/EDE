@@ -121,86 +121,80 @@ class Raster(object):
         return b''.join(chunks)
 
     def raster_to_hexwkb(self, endian):
-
-        hexwkb = ''
         wkb = self.raster_to_wkb(endian)
-        hexchars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
-        for byte in bytearray(wkb):
-            hex_1 = hexchars[byte >> 4]
-            hex_2 = hexchars[byte & 0x0F]
-            hexwkb += hex_1
-            hexwkb += hex_2
-        return hexwkb
+        return wkb.encode("hex").upper()
 
 
-def wkb_to_raster(wkb_filename):
-    with open(wkb_filename, 'r') as f:
+def wkb_to_raster(wkb):
+    try:
+        (endian,) = unpack('B', wkb[0])
+    except struct.error as e:
+        eprint(e)
+        raise RasterProcessingException("Could not unpack endianness!")
+
+    if endian == 0:
+        endian = '>'
+    elif endian == 1:
+        endian = '<'
+
+    try:
+        (version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height) = unpack(
+            endian + 'HHddddddiHH',
+            wkb[1:61])
+    except struct.error as e:
+        eprint(e)
+        raise RasterProcessingException("Could not unpack raster header!")
+
+    raster = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height)
+
+    for _ in range(n_bands):
 
         try:
-            (endian,) = unpack('B', f.read(1))
-        except struct.error as e:
+            (bits,) = unpack(endian + 'b', wkb[61])
+        except RasterProcessingException as e:
             eprint(e)
-            raise RasterProcessingException("Could not unpack endianness!")
+            raise RasterProcessingException("Could not unpack band header bits!")
 
-        if endian == 0:
-            endian = '>'
-        elif endian == 1:
-            endian = '<'
+        is_offline = bool(bits & 128)  # first bit
+        has_no_data_value = bool(bits & 64)  # second bit
+        is_no_data_value = bool(bits & 32)  # third bit
 
+        pixtype = (bits & 15) - 1  # bits 4-8 TODO: why's it -1 here?
+
+        fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
+        dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
+        sizes = [1, 1, 1, 1, 1, 2, 2, 4, 4, 4, 8]
+
+        dtype = dtypes[pixtype]
+        size = sizes[pixtype]
+        fmt = fmts[pixtype]
+
+        # Read the nodata value
         try:
-            (version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height) = unpack(
-                endian + 'HHddddddiHH',
-                f.read(60))
+            (nodata,) = unpack(endian + fmt, wkb[62:62+size])
         except struct.error as e:
             eprint(e)
-            raise RasterProcessingException("Could not unpack raster header!")
+            raise RasterProcessingException("Could not unpack band nodata value!")
+        # Note that now data = data[height][width], i.e. height ~ row and width ~ column and
+        # note that the data is filled in row-wise
+        try:
+            data = np.ndarray((height, width),
+                              buffer=wkb[62+size:62+size+width*height*size],
+                              dtype=np.dtype(dtype)
+                              )
+        except Exception as e:
+            eprint(e)
+            raise RasterProcessingException("Could not fill in actual data into numpy array!")
 
-        raster = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y, srid, width, height)
+        band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data)
+        raster.add_band(band)
 
-        for _ in range(n_bands):
+    return raster
 
-            try:
-                (bits,) = unpack(endian + 'b', f.read(1))
-            except RasterProcessingException as e:
-                eprint(e)
-                raise RasterProcessingException("Could not unpack band header bits!")
 
-            is_offline = bool(bits & 128)  # first bit
-            has_no_data_value = bool(bits & 64)  # second bit
-            is_no_data_value = bool(bits & 32)  # third bit
-
-            pixtype = (bits & 15) - 1  # bits 4-8 TODO: why's it -1 here?
-
-            fmts = ['?', 'B', 'B', 'b', 'B', 'h', 'H', 'i', 'I', 'f', 'd']
-            dtypes = ['b1', 'u1', 'u1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'f4', 'f8']
-            sizes = [1, 1, 1, 1, 1, 2, 2, 4, 4, 4, 8]
-
-            dtype = dtypes[pixtype]
-            size = sizes[pixtype]
-            fmt = fmts[pixtype]
-
-            # Read the nodata value
-            try:
-                (nodata,) = unpack(endian + fmt, f.read(size))
-            except struct.error as e:
-                eprint(e)
-                raise RasterProcessingException("Could not unpack band nodata value!")
-
-            # Note that now data = data[height][width], i.e. height ~ row and width ~ column and
-            # note that the data is filled in row-wise
-            try:
-                data = np.ndarray((height, width),
-                                  buffer=f.read(width * height * size),
-                                  dtype=np.dtype(dtype)
-                                  )
-            except Exception as e:
-                eprint(e)
-                raise RasterProcessingException("Could not fill in actual data into numpy array!")
-
-            band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, data)
-            raster.add_band(band)
-
-        return raster
+def hexwkb_to_raster(hexwkb):
+    wkb = hexwkb.decode("hex")
+    return wkb_to_raster(wkb)
 
 
 if __name__ == "__main__":
@@ -208,6 +202,9 @@ if __name__ == "__main__":
     parser.add_argument('--input', help='Input wkb file', required=True)
     parser.add_argument('--output', help='Output wkb file', required=True)
     args = parser.parse_args()
-    raster = wkb_to_raster(args.input)
-    print(raster)
-    raster.raster_to_wkb(args.output, 1)
+    with open(args.input, 'r') as fin:
+        data_in = fin.read()
+        raster = wkb_to_raster(data_in)
+        data_out = raster.raster_to_wkb(1)
+        with open(args.output, 'w') as fout:
+            fout.write(data_out)
