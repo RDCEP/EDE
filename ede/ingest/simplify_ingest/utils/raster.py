@@ -204,7 +204,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.input, 'r') as fin:
         data_in = fin.read()
-        raster = wkb_to_raster(data_in)
-        data_out = raster.raster_to_wkb(1)
+        raster = hexwkb_to_raster(data_in)
+        data_out = raster.raster_to_hexwkb(1)
         with open(args.output, 'w') as fout:
             fout.write(data_out)
