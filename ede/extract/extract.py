@@ -103,6 +103,7 @@ def return_griddata_json(dataset_id, var_id, time_id):
     raster = None
     print(rows)
     print(type(rows))
+    print(rows[0])
     for (out,) in rows:
         raster = out
     return raster
