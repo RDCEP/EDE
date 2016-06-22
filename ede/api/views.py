@@ -81,7 +81,7 @@ def get_griddata(dataset_id, var_id, time_id):
                 data = return_griddata(dataset_id, var_id, poly, time_id)
             # if no polygon is specified
             else:
-                data = return_griddata(dataset_id, var_id, None, time_id)
+                data = return_griddata_json(dataset_id, var_id, None, time_id)
         # we have no content, i.e. GET
         else:
             data = return_griddata(dataset_id, var_id, None, time_id)
