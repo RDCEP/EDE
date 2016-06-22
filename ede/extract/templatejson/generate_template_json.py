@@ -21,6 +21,9 @@ with open('template.json', 'w') as outfile:
 	
 	res['response']['metadata'] = {}
 	res['response']['metadata']['format'] = 'grid'
+	res['response']['region'] = {}
+	res['response']['region']['type'] = 'Polygon'
+	res['response']['region']['coordinates'] = [[ [-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90] ]]
 		
 	res['response']['data'] = []
 	lat_c = lat_start
