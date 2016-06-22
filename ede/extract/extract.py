@@ -101,6 +101,8 @@ def return_griddata_json(dataset_id, var_id, time_id):
         raise RasterExtractionException("return_griddata_json: could not return griddata with dataset_id: {}, "
                                         "var_id: {}, time_id: {}".format(dataset_id, var_id, time_id))
     raster = None
+    print(rows)
+    print(type(rows))
     for (out,) in rows:
         raster = out
     return raster
