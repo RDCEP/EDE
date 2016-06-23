@@ -33,6 +33,7 @@ with open('template.json', 'w') as outfile:
 			new_pt = {}
 			new_pt['type'] = 'Feature'
 			new_pt['geometry'] = {'type': 'Point', 'coordinates': [lon_c, lat_c]}
+			new_pt['properties'] = {}
 			res['response']['data'].append(new_pt)
 			lon_c += lon_step
 		lat_c += lat_step
