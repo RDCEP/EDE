@@ -89,7 +89,10 @@ def return_griddata(dataset_id, var_id, poly, time_id):
         raise RasterExtractionException("return_griddata: could not return griddata with dataset_id: {}, "
                                         "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
     row = rows.first()
-    return row[0]
+    out = {}
+    out['response'] = {}
+    out['response']['data'] = row[0]
+    return out
 
 
 def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_id):

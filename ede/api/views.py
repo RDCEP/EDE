@@ -92,7 +92,6 @@ def get_griddata(dataset_id, var_id, time_id):
         raise ServerError("get_griddata: could not get griddata", status_code, payload)
     except ServerError:
         raise
-    print(type(data))
     return data
 
 
