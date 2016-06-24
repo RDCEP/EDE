@@ -84,7 +84,7 @@ def get_griddata(dataset_id, var_id, time_id):
                 data = return_griddata(dataset_id, var_id, None, time_id)
         # we have no content, i.e. GET
         else:
-            data = return_griddata_json(dataset_id, var_id, time_id)
+            data = return_griddata(dataset_id, var_id, None, time_id)
     except RasterExtractionException as e:
         eprint(e)
         status_code = 500
@@ -92,7 +92,11 @@ def get_griddata(dataset_id, var_id, time_id):
         raise ServerError("get_griddata: could not get griddata", status_code, payload)
     except ServerError:
         raise
-    return data
+    status_code = 200
+    data['request']['url'] = request.path
+    resp = make_response(json.dumps(data, default=dthandler), status_code)
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
 
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])

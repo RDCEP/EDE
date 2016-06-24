@@ -67,46 +67,29 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     if poly is not None:
         # polygon is specified by id
         if isinstance(poly, int):
-            query = ("SELECT ST_Clip(rast, r.geom, TRUE) "
+            query = ("SELECT json_agg(json) "
                      "from grid_data as gd, regions as r "
-                     "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={}").format(dataset_id, var_id, poly, time_id)
+                     "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={} and "
+                     "ST_Contains(r.geom, gd.geom").format(dataset_id, var_id, poly, time_id)
         elif isinstance(poly, list):
             poly_str = ','.join(["{} {}".format(pt[0], pt[1]) for pt in poly])
             geom_str = "ST_Polygon(ST_GeomFromText('LINESTRING({})'), 4326)".format(poly_str)
-            query = ("SELECT ST_Clip(rast, {}, TRUE) "
+            query = ("SELECT json_agg(json) "
                      "from grid_data as gd "
-                     "where gd.dataset_id={} and gd.var_id={} and gd.time_id={}").format(geom_str, dataset_id, var_id, time_id)
+                     "where gd.dataset_id={} and gd.var_id={} and gd.time_id={} and "
+                     "ST_Contains({}, gd.geom").format(dataset_id, var_id, time_id, geom_str)
         else:
             raise RasterExtractionException("return_griddata: type of POST poly field not supported!")
     else:
-        query = ("SELECT rast from grid_data where dataset_id={} and var_id={} and time_id={}".
-                 format(dataset_id, var_id, time_id))
+        query = "select json_agg(json) from grid_data where dataset_id={} and var_id={} and time_id={}".format(dataset_id, var_id, time_id)
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("return_griddata: could not return griddata with dataset_id: {}, "
                                         "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
-    for (rast,) in rows:
-        return rast
-
-
-def return_griddata_json(dataset_id, var_id, time_id):
-    query = ("SELECT rast from grid_data where dataset_id={} and var_id={} and time_id={}".
-             format(dataset_id, var_id, time_id))
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_griddata_json: could not return griddata with dataset_id: {}, "
-                                        "var_id: {}, time_id: {}".format(dataset_id, var_id, time_id))
-    raster = None
-    print(rows)
-    print(type(rows))
-    print(rows[0])
-    for (out,) in rows:
-        raster = out
-    return raster
+    row = rows.next()
+    return row[0]
 
 
 def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids):
