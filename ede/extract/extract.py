@@ -97,7 +97,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     row = cur.fetchone()
     print("type of row[0]: {}".format(type(row[0])))
     print("type of row[0][0]: {}".format(type(row[0][0])))
-    print("keys of dict row[0][0]: {}".format(type(row[0][0].keys())))
+    print("keys of dict row[0][0]: {}".format(row[0][0].keys()))
     # print("type of row[0][0]: {}".format(type(row[0][0])))
     # print("type of row[0]: {}".format(type(row[0].keys())))
     # print("keys: {}".format(row[0].keys()))
