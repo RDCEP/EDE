@@ -4,7 +4,8 @@ from datetime import datetime
 import time
 from ede.database import db_session
 from sqlalchemy.exc import SQLAlchemyError
-
+import psycopg2
+from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 
 class RasterExtractionException(Exception):
     """Represents an exception that can occur during the extraction of raster data from the DB.
@@ -82,17 +83,20 @@ def return_griddata(dataset_id, var_id, poly, time_id):
             raise RasterExtractionException("return_griddata: type of POST poly field not supported!")
     else:
         query = "select jsonb_agg(json) from grid_data where dataset_id={} and var_id={} and time_id={}".format(dataset_id, var_id, time_id)
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_griddata: could not return griddata with dataset_id: {}, "
-                                        "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
+    # try:
+    #     rows = db_session.execute(query)
+    # except SQLAlchemyError as e:
+    #     eprint(e)
+    #     raise RasterExtractionException("return_griddata: could not return griddata with dataset_id: {}, "
+    #                                     "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
+    conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
+    cur = conn.cursor()
+    cur.execute(query)
     # todo: stop the time here
     start_time = time.time()
-    row = rows.first()
+    row = cur.fetchone()
     print("type of row[0]: {}".format(type(row[0])))
-    print("type of row[0][0]: {}".format(type(row[0][0])))
+    # print("type of row[0][0]: {}".format(type(row[0][0])))
     print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
     out = {}
     out['request'] = {}
