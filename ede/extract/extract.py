@@ -92,31 +92,34 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     return row[0]
 
 
-def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids):
-    time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
+def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_id):
     if poly is not None:
         # polygon is specified by id
         if isinstance(poly, int):
-            query = ("SELECT ST_SummaryStats(ST_Clip(rast, r.geom, TRUE)) "
+            query = ("SELECT sum(cast(json->'properties'->'values'->>0 as double precision)) "
                      "from grid_data as gd, regions as r "
-                     "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id in {}").format(dataset_id, var_id, poly, time_ids_str)
+                     "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={} and "
+                     "ST_Contains(r.geom, gd.geom and "
+                     "json->'properties'->'values'->>0 != 'null'").format(dataset_id, var_id, poly, time_id)
         elif isinstance(poly, list):
             poly_str = ','.join(["{} {}".format(pt[0], pt[1]) for pt in poly])
             geom_str = "ST_Polygon(ST_GeomFromText('LINESTRING({})'), 4326)".format(poly_str)
-            query = ("SELECT ST_SummaryStats(ST_Clip(rast, {}, TRUE)) "
+            query = ("SELECT sum(cast(json->'properties'->'values'->>0 as double precision)) "
                      "from grid_data as gd "
-                     "where gd.dataset_id={} and gd.var_id={} and gd.time_id in {}").format(geom_str, dataset_id, var_id, time_ids_str)
+                     "where gd.dataset_id={} and gd.var_id={} and gd.time_id={} and "
+                     "ST_Contains({}, gd.geom and "
+                     "json->'properties'->'values'->>0 != 'null'").format(dataset_id, var_id, time_id, geom_str)
         else:
             raise RasterExtractionException("return_griddata_aggregate_spatial: type of POST poly field not supported!")
     else:
-        query = ("SELECT ST_SummaryStats(rast) from grid_data where dataset_id={} and var_id={} and time_id in {}".
-                 format(dataset_id, var_id, time_ids_str))
+        query = "select sum(cast(json->'properties'->'values'->>0 as double precision)) from grid_data where dataset_id={} and var_id={} and time_id={} and " \
+                "json->'properties'->'values'->>0 != 'null'".format(dataset_id, var_id, time_id)
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
         raise RasterExtractionException("return_griddata_aggregate_spatial: could not spatially-aggregate griddata with dataset_id: {}, "
-                                        "var_id: {}, poly: {}, time_ids: {}".format(dataset_id, var_id, str(poly), time_ids))
+                                        "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
     # the response JSON
     out = {}
     out['request'] = {}
@@ -126,19 +129,13 @@ def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids):
     out['response']['status'] = 'OK'
     out['response']['status_code'] = 200
     out['response']['data'] = []
-    for row in rows:
-        res = row[0].lstrip('(').rstrip(')').split(',')
-        count = int(res[0])
-        sum = float(res[1])
-        mean = float(res[2])
-        stddev = float(res[3])
-        min = float(res[4])
-        max = float(res[5])
-        new_data_item = {}
-        new_data_item['type'] = 'Feature'
-        new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
-        new_data_item['properties'] = {'count': count, 'sum': sum, 'mean': mean, 'stddev': stddev, 'min': min, 'max': max}
-        out['response']['data'].append(new_data_item)
+    row = rows.first()
+    sum = float(row[0])
+    new_data_item = {}
+    new_data_item['type'] = 'Feature'
+    new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
+    new_data_item['properties'] = {'sum': sum}
+    out['response']['data'].append(new_data_item)
     return out
 
 

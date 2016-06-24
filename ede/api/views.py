@@ -95,15 +95,15 @@ def get_griddata(dataset_id, var_id, time_id):
     return data
 
 
-@api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])
-def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
-    """Do spatial aggregation at specific dates, over a potentially provided polygon.
+@api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
+def get_griddata_aggregate_spatial(dataset_id, var_id, time_id):
+    """Do spatial aggregation at specific date, over a potentially provided polygon.
 
     If no polygon is provided we default to the entire globe.
 
     :param dataset_id:
     :param var_id:
-    :param time_ids:
+    :param time_id:
     :return:
     """
     content = request.get_json()
@@ -112,17 +112,17 @@ def get_griddata_aggregate_spatial(dataset_id, var_id, time_ids):
         if content:
             poly = content['poly']  # TODO: specify in JSON request format
             if poly is not None:
-                data = return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_ids)
+                data = return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_id)
             # if no polygon is specified
             else:
-                data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_ids)
+                data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_id)
         # we have no content, i.e. GET
         else:
-            data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_ids)
+            data = return_griddata_aggregate_spatial(dataset_id, var_id, None, time_id)
     except RasterExtractionException as e:
         eprint(e)
         status_code = 500
-        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_ids': time_ids, 'content': content}
+        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_ids': time_id, 'content': content}
         raise ServerError("get_griddata_aggregate_spatial: could not aggregate griddata", status_code, payload)
     status_code = 200
     data['request']['url'] = request.path
