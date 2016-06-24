@@ -4,7 +4,7 @@ B=$1
 DIR=/data/psims
 FNAMES=filenames.txt
 DB_USER=postgres
-DB_NAME=ede
+DB_NAME=new_json_schema
 DB_TABLE=grid_tmp
 
 while read fname

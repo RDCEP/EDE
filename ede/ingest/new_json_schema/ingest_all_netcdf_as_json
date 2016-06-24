@@ -1,0 +1,14 @@
+#!/bin/bash           
+
+DIR=/data/psims
+FNAMES=filenames.txt
+
+var_id=1
+while read fname
+do
+	echo "ingest_all_netcdf_as_json: generating .sql file for $DIR/$fname (var_id: $var_id)..."
+	./ingest_netcdf_as_json.py $DIR/$fname $var_id
+	echo "ingest_all_netcdf_as_json: ingesting .sql file for $DIR/$fname (var_id: $var_id)..."
+	psql -U postgres -d new_json_schema -f out_file.sql
+	var_id=$((var_id+1)) 
+done <$FNAMES

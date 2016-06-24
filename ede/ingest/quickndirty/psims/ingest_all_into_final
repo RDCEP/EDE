@@ -2,7 +2,7 @@
 
 BMAX=34
 DB_USER=postgres
-DB_NAME=ede
+DB_NAME=new_json_schema
 
 for b in $(seq 1 $BMAX);
 do

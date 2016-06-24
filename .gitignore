@@ -50,3 +50,5 @@ coverage.xml
 .pydevproject
 .settings
 .DS_Store
+
+ede/ingest/new_json_schema/out_file.sql

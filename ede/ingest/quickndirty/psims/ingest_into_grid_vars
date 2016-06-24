@@ -2,8 +2,6 @@
 
 DIR=/data/psims
 FNAMES=filenames.txt
-DB_USER=postgres
-DB_NAME=ede
 
 while read fname
 do
