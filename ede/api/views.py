@@ -92,11 +92,7 @@ def get_griddata(dataset_id, var_id, time_id):
         raise ServerError("get_griddata: could not get griddata", status_code, payload)
     except ServerError:
         raise
-    status_code = 200
-    data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code)
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    return data
 
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<intlist:time_ids>', methods=['GET', 'POST'])
