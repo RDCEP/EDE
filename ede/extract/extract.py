@@ -90,7 +90,12 @@ def return_griddata(dataset_id, var_id, poly, time_id):
                                         "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
     row = rows.first()
     out = {}
+    out['request'] = {}
+    out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['status'] = 'OK'
+    out['response']['status_code'] = 200
     out['response']['data'] = row[0]
     return out
 
