@@ -67,21 +67,21 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     if poly is not None:
         # polygon is specified by id
         if isinstance(poly, int):
-            query = ("SELECT jsonb_agg(json) "
+            query = ("SELECT json_agg(json) "
                      "from grid_data as gd, regions as r "
                      "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={} and "
                      "ST_Contains(r.geom, gd.geom").format(dataset_id, var_id, poly, time_id)
         elif isinstance(poly, list):
             poly_str = ','.join(["{} {}".format(pt[0], pt[1]) for pt in poly])
             geom_str = "ST_Polygon(ST_GeomFromText('LINESTRING({})'), 4326)".format(poly_str)
-            query = ("SELECT jsonb_agg(json) "
+            query = ("SELECT json_agg(json) "
                      "from grid_data as gd "
                      "where gd.dataset_id={} and gd.var_id={} and gd.time_id={} and "
                      "ST_Contains({}, gd.geom").format(dataset_id, var_id, time_id, geom_str)
         else:
             raise RasterExtractionException("return_griddata: type of POST poly field not supported!")
     else:
-        query = "select jsonb_agg(json) from grid_data where dataset_id={} and var_id={} and time_id={}".format(dataset_id, var_id, time_id)
+        query = "select json_agg(json) from grid_data where dataset_id={} and var_id={} and time_id={}".format(dataset_id, var_id, time_id)
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
