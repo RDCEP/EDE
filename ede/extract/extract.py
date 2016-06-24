@@ -88,7 +88,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
         eprint(e)
         raise RasterExtractionException("return_griddata: could not return griddata with dataset_id: {}, "
                                         "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
-    row = rows.next()
+    row = rows.first()
     return row[0]
 
 
