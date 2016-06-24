@@ -91,7 +91,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # todo: stop the time here
     start_time = time.time()
     row = rows.first()
-    print("type of row: {}".format(type(row)))
+    print("type of row[0]: {}".format(type(row[0])))
     print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
     out = {}
     out['request'] = {}
