@@ -104,7 +104,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # print("type of row[0][0]: {}".format(type(row[0][0])))
     # print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
     for record in cur:
-        yield record[0]
+        yield "str"
     # out = {}
     # out['request'] = {}
     # out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
