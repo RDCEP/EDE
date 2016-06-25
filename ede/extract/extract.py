@@ -92,6 +92,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     #                                     "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
     conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST, port=DB_PORT)
     cur = conn.cursor("My cursor to fetch the jsons!")
+    print("cur.itersize: {}".format(cur.itersize))
     cur.execute(query)
     # todo: stop the time here
     # start_time = time.time()
