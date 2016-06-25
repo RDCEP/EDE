@@ -74,33 +74,34 @@ def get_griddata(dataset_id, var_id, time_id):
     :return:
     """
     content = request.get_json()
-    def generate():
-        try:
-            # we have some content, i.e. POST
-            if content:
-                poly = content['poly']  # TODO: specify in JSON request format
-                if poly is not None:
-                    return return_griddata(dataset_id, var_id, poly, time_id)
-                # if no polygon is specified
-                else:
-                    return return_griddata(dataset_id, var_id, None, time_id)
-            # we have no content, i.e. GET
+    # def generate():
+    try:
+        # we have some content, i.e. POST
+        if content:
+            poly = content['poly']  # TODO: specify in JSON request format
+            if poly is not None:
+                data = return_griddata(dataset_id, var_id, poly, time_id)
+            # if no polygon is specified
             else:
-                return return_griddata(dataset_id, var_id, None, time_id)
-        except RasterExtractionException as e:
-            eprint(e)
-            status_code = 500
-            payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
-            raise ServerError("get_griddata: could not get griddata", status_code, payload)
-        except ServerError:
-            raise
+                data = return_griddata(dataset_id, var_id, None, time_id)
+        # we have no content, i.e. GET
+        else:
+            data = return_griddata(dataset_id, var_id, None, time_id)
+    except RasterExtractionException as e:
+        eprint(e)
+        status_code = 500
+        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
+        raise ServerError("get_griddata: could not get griddata", status_code, payload)
+    except ServerError:
+        raise
     # status_code = 200
     # data['request']['url'] = request.path
     # start_time = time.time()
     # resp = make_response(json.dumps(data, default=dthandler), status_code)
     # print("--- get_griddata, make response: %s seconds ---" % (time.time() - start_time))
     # resp.headers['Content-Type'] = 'application/json'
-    return Response(stream_with_context(generate()))
+    # return Response(stream_with_context(generate()))
+    return data
 
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
