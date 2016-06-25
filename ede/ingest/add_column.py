@@ -14,7 +14,7 @@ def main(dates_filename, out_file):
 		with open(out_file, 'w') as fout:
 			for i, line in enumerate(content):
 				line = line.strip(' \t\n\r')
-				query = "update grid_dates set date_id={} where meta_id>=113 and date='{}';".format(i+1, line)
+				query = "update grid_dates set date_id={} where 113<=meta_id and date='{}';".format(i+1, line)
 				fout.write(query + '\n')
 				
 if __name__ == "__main__":
