@@ -98,7 +98,6 @@ def get_griddata(dataset_id, var_id, time_id):
     # resp = make_response(json.dumps(data, default=dthandler), status_code)
     # print("--- get_griddata, make response: %s seconds ---" % (time.time() - start_time))
     # resp.headers['Content-Type'] = 'application/json'
-    # return resp
     return data
 
 
