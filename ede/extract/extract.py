@@ -6,6 +6,7 @@ from ede.database import db_session
 from sqlalchemy.exc import SQLAlchemyError
 import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
+import json
 
 class RasterExtractionException(Exception):
     """Represents an exception that can occur during the extraction of raster data from the DB.
@@ -104,7 +105,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # print("type of row[0][0]: {}".format(type(row[0][0])))
     # print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
     for record in cur:
-        yield "str"
+        yield json.dumps(record[0]) + ','
     # out = {}
     # out['request'] = {}
     # out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
