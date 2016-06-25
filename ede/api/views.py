@@ -11,6 +11,7 @@ from ede.config import CACHE_CONFIG
 from ede.extract.extract import *
 from ede.api.utils import ServerError
 from flask import jsonify
+from flask import stream_with_context, Response
 
 cache = Cache(config=CACHE_CONFIG)
 
@@ -73,32 +74,33 @@ def get_griddata(dataset_id, var_id, time_id):
     :return:
     """
     content = request.get_json()
-    try:
-        # we have some content, i.e. POST
-        if content:
-            poly = content['poly']  # TODO: specify in JSON request format
-            if poly is not None:
-                data = return_griddata(dataset_id, var_id, poly, time_id)
-            # if no polygon is specified
+    def generate():
+        try:
+            # we have some content, i.e. POST
+            if content:
+                poly = content['poly']  # TODO: specify in JSON request format
+                if poly is not None:
+                    return return_griddata(dataset_id, var_id, poly, time_id)
+                # if no polygon is specified
+                else:
+                    return return_griddata(dataset_id, var_id, None, time_id)
+            # we have no content, i.e. GET
             else:
-                data = return_griddata(dataset_id, var_id, None, time_id)
-        # we have no content, i.e. GET
-        else:
-            data = return_griddata(dataset_id, var_id, None, time_id)
-    except RasterExtractionException as e:
-        eprint(e)
-        status_code = 500
-        payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
-        raise ServerError("get_griddata: could not get griddata", status_code, payload)
-    except ServerError:
-        raise
+                return return_griddata(dataset_id, var_id, None, time_id)
+        except RasterExtractionException as e:
+            eprint(e)
+            status_code = 500
+            payload = {'dataset_id': dataset_id, 'var_id': var_id, 'time_id': time_id, 'content': content}
+            raise ServerError("get_griddata: could not get griddata", status_code, payload)
+        except ServerError:
+            raise
     # status_code = 200
     # data['request']['url'] = request.path
     # start_time = time.time()
     # resp = make_response(json.dumps(data, default=dthandler), status_code)
     # print("--- get_griddata, make response: %s seconds ---" % (time.time() - start_time))
     # resp.headers['Content-Type'] = 'application/json'
-    return data
+    return Response(stream_with_context(generate()))
 
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['GET', 'POST'])
