@@ -1,14 +1,19 @@
 #!/bin/bash           
 
-DIR=/data/psims
+DATA_DIR=/data/psims
 FNAMES=filenames.txt
+
+pushd `dirname $0` > /dev/null
+CUR_DIR=`pwd -P`
+popd > /dev/null
 
 var_id=1
 while read fname
 do
-	echo "ingest_all_netcdf_as_json: generating .sql file for $DIR/$fname (var_id: $var_id)..."
-	./ingest_netcdf_as_json.py $DIR/$fname $var_id
-	echo "ingest_all_netcdf_as_json: ingesting .sql file for $DIR/$fname (var_id: $var_id)..."
-	psql -U postgres -d new_json_schema -f out_file.sql
+	echo "ingest_all_netcdf_as_json: generating csv file for $DATA_DIR/$fname (var_id: $var_id)..."
+	./ingest_netcdf_as_json.py $DATA_DIR/$fname $var_id
+	echo "ingest_all_netcdf_as_json: ingesting csv file for $DATA_DIR/$fname (var_id: $var_id)..."
+	sql_cmd="COPY grid_data(dataset_id, var_id, time_id, geom, json) FROM '$CUR_DIR/out.csv'"
+	psql -U postgres -d ede -c "$sql_cmd"
 	var_id=$((var_id+1)) 
 done <$FNAMES
