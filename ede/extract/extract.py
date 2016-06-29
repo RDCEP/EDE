@@ -94,8 +94,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # cur = conn.cursor("My cursor to fetch the jsons!")
     # cur.itersize = 10000
     # cur.execute(query)
-    # todo: stop the time here
-    start_time = time.time()
+    # start_time = time.time()
     row = rows.first()
     # print("type of row[0]: {}".format(type(row[0])))
     # print("type of row[0][0]: {}".format(type(row[0][0])))
@@ -104,7 +103,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # print("type of row[0]: {}".format(type(row[0].keys())))
     # print("keys: {}".format(row[0].keys()))
     # print("type of row[0][0]: {}".format(type(row[0][0])))
-    print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
+    # print("--- return_griddata, get result from postgres: %s seconds ---" % (time.time() - start_time))
     # for record in cur:
     #     yield record[0]
     # out = {}
@@ -116,7 +115,12 @@ def return_griddata(dataset_id, var_id, poly, time_id):
     # out['response']['status_code'] = 200
     # out['response']['data'] = row[0]
     # return out
-    return row[0]
+    out = ("{{\"request\": {{\"url\": \"/api/v0/griddata/dataset/{0}/var/{1}/time/{2}\", \"datetime\": \"{3}\"}}, "
+           "\"response\": {{\"status\": \"OK\", \"status_code\": 200, "
+           "\"data\": {4}}}}}".format(dataset_id, var_id, time_id, time.strftime('%Y-%m-%d %H:%M:%S'), row[0]))
+    # return row[0]
+    return out
+
 
 def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_id):
     if poly is not None:
