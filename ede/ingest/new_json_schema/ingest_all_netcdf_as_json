@@ -1,5 +1,20 @@
 #!/bin/bash           
 
+FILE_SYSTEM=/dev/xvda1
+USAGE_THRESHOLD=85
+
+source disk_usage
+
+usage_is_above_threshold () {
+	disk_usage=$(get_disk_usage "$FILE_SYSTEM")
+	if [ "$disk_usage" -gt "$USAGE_THRESHOLD" ]
+	then
+		return 0	
+	else
+		return 1
+	fi
+}
+
 DATA_DIR=/data/psims
 FNAMES=filenames.txt
 
@@ -15,5 +30,9 @@ do
 	echo "ingest_all_netcdf_as_json: ingesting csv file for $DATA_DIR/$fname (var_id: $var_id)..."
 	sql_cmd="COPY grid_data(dataset_id, var_id, time_id, geom, json) FROM '$CUR_DIR/out.csv'"
 	psql -U postgres -d ede -c "$sql_cmd"
-	var_id=$((var_id+1)) 
+	var_id=$((var_id+1))
+	if usage_is_above_threshold;
+	then
+		break
+	fi
 done <$FNAMES

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+get_disk_usage () {
+	disk_usage=$(df -H | awk -v var="$1" '$1 == var {sub(/%/,"",$5); printf $5}')
+	echo "$disk_usage"
+}
