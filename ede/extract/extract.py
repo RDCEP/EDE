@@ -72,6 +72,7 @@ def return_griddata(dataset_id, var_id, poly, time_id):
             query = ("SELECT json_agg(json)::text "
                      "from grid_data as gd, regions as r "
                      "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={} and "
+                     "json->'properties'->'values'->>0 != 'null' and"
                      "ST_Contains(r.geom, gd.geom").format(dataset_id, var_id, poly, time_id)
         elif isinstance(poly, list):
             poly_str = ','.join(["{} {}".format(pt[0], pt[1]) for pt in poly])
@@ -79,11 +80,13 @@ def return_griddata(dataset_id, var_id, poly, time_id):
             query = ("SELECT json_agg(json)::text "
                      "from grid_data as gd "
                      "where gd.dataset_id={} and gd.var_id={} and gd.time_id={} and "
+                     "json->'properties'->'values'->>0 != 'null' and"
                      "ST_Contains({}, gd.geom").format(dataset_id, var_id, time_id, geom_str)
         else:
             raise RasterExtractionException("return_griddata: type of POST poly field not supported!")
     else:
-        query = "select json_agg(json)::text from grid_data where dataset_id={} and var_id={} and time_id={}".format(dataset_id, var_id, time_id)
+        query = "select json_agg(json)::text from grid_data where dataset_id={} and var_id={} and time_id={} and " \
+                "json->'properties'->'values'->>0 != 'null'".format(dataset_id, var_id, time_id)
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:

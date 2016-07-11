@@ -8,6 +8,7 @@ from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter, RectangleConverter
+from flask.ext.compress import Compress
 
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ app.url_map.converters['list'] = ListConverter
 app.url_map.converters['intlist'] = IntListConverter
 app.url_map.converters['rect'] = RectangleConverter
 app.url_map.strict_slashes = False
+Compress(app)
 
 cache = Cache(app, config=CACHE_CONFIG)
 
