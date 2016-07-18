@@ -13,30 +13,33 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-def return_gridmeta(dataset_ids):
-    query = ("select uid, short_name, long_name, lat_start, lat_end, lat_step, num_lats, "
-             "lon_start, lon_end, lon_step, num_lons, time_start, time_end, time_step, num_times, time_unit "
-             "from grid_datasets")
-    if dataset_ids:
-        dataset_ids_str = '(' + ','.join(map(str, dataset_ids)) + ')'
-        query += " where uid in {}".format(dataset_ids_str)
+def return_rastermeta(dataset_id):
+    query = ("SELECT rd.uid, rd.short_name, rd.long_name, "
+             "rd.lon_start, rd.lon_end, rd.lon_step, rd.num_lons, "
+             "rd.lat_start, rd.lat_end, rd.lat_step, rd.num_lats, "
+             "rd.time_start, rd.time_end, rd.time_step, rd.num_times, rd.time_unit, rd.attrs, "
+             "rv.uid, rv.name, rv.attrs"
+             "FROM raster_datasets AS rd, raster_variables AS rv "
+             "WHERE rd.uid=rv.dataset_id "
+             "GROUP BY rv.dataset_id")
+    if dataset_id:
+        query += " AND uid={}".format(dataset_id)
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
-        raise RasterExtractionException("return_gridmeta: could not return gridmeta with dataset_ids: {}".format(dataset_ids))
+        raise RasterExtractionException("return_rastermeta: could not return rastermeta with dataset_id: {}".
+                                        format(dataset_id))
     # The response JSON
     out = {}
     out['request'] = {}
     out['request']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
-    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
     out['response']['data'] = []
-    for (uid, short_name, long_name, lat_start, lat_end, lat_step, num_lats,
+    for (uid, short_name, long_name,
          lon_start, lon_end, lon_step, num_lons,
-         time_start, time_end, time_step, num_times, time_unit) in rows:
+         lat_start, lat_end, lat_step, num_lats,
+         time_start, time_end, time_step, num_times, time_unit, attrs) in rows:
         new_doc = {}
         new_doc['uid'] = uid
         new_doc['short_name'] = short_name
@@ -55,6 +58,7 @@ def return_gridmeta(dataset_ids):
         new_doc['num_times'] = num_times
         new_doc['time_unit'] = time_unit
         out['response']['data'].append(new_doc)
+    out['response']['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S')
     return out
 
 
