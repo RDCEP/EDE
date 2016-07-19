@@ -65,7 +65,7 @@ def get_rastermeta(dataset_id):
 
 
 @api.route('/rasterdata/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['POST'])
-def get_rasterdata(dataset_id, var_id, time_id):
+def get_rasterdata_single_time(dataset_id, var_id, time_id):
     """Get raster data values for a specific dataset:variable:time,
     and restricted to a region provided in the POST body
 
@@ -92,7 +92,7 @@ def get_rasterdata(dataset_id, var_id, time_id):
 
 @api.route('/rasterdata/dataset/<int:dataset_id>/var/<int:var_id>/time/'
            '<int:time_id_start>:<int:time_id_step>:<int:time_id_end>', methods=['POST'])
-def get_rasterdata(dataset_id, var_id, time_id_start, time_id_step, time_id_end):
+def get_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step, time_id_end):
     """Get raster data values for a specific dataset:variable:[time_id_start:time_id_step:time_id_end],
     and restricted to a region provided in the POST body
 
@@ -121,7 +121,7 @@ def get_rasterdata(dataset_id, var_id, time_id_start, time_id_step, time_id_end)
 
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/<int:time_id>', methods=['POST'])
-def get_rasterdata_aggregate_spatial(dataset_id, var_id, time_id):
+def get_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id):
     """Do spatial aggregation over a region provided in the POST body at time time_id
 
     :param dataset_id:
@@ -147,7 +147,7 @@ def get_rasterdata_aggregate_spatial(dataset_id, var_id, time_id):
 
 @api.route('/aggregate/spatial/dataset/<int:dataset_id>/var/<int:var_id>/time/'
            '<int:time_id_start>:<int:time_id_step>:<int:time_id_end>', methods=['POST'])
-def get_rasterdata_aggregate_spatial(dataset_id, var_id, time_id_start, time_id_step, time_id_end):
+def get_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_start, time_id_step, time_id_end):
     """Do spatial aggregation over a region provided in the POST body at times time_id:start:time_id_step:time_id_end
 
     :param dataset_id:

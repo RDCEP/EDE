@@ -3,9 +3,10 @@ import sys
 import psycopg2
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 import json
+import argparse
 
 
-def main(shapefile):
+def process_shapefile(shapefile):
 
     ## Connection to the database ##
     conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
@@ -18,26 +19,24 @@ def main(shapefile):
 
     layer_defn = layer.GetLayerDefn()
     attrs = []
-    for i in range(layer_defn.GetFieldCount()):
-        field_defn = layer_defn.GetFieldDefn(i)
+    for i_field in range(layer_defn.GetFieldCount()):
+        field_defn = layer_defn.GetFieldDefn(i_field)
         attrs.append(field_defn.GetName())
     attrs = '{\"' + '\",\"'.join(attrs) + '\"}'
 
-    # (1) Insert into regions_meta + return uid as meta_id
-    query = "insert into regions_meta (name, attributes) values (\'%s\', \'%s\') returning uid" % (layer_name, attrs)
+    # (1) Insert into regionsets + return uid
+    query = "INSERT INTO regionsets (name, attrs) VALUES (\'{}\', \'{}\') returning uid".format(layer_name, attrs)
     cur.execute(query)
-    rows = cur.fetchall()
-    for row in rows:
-        meta_id = int(row[0])
+    (regionset_id,)= cur.fetchone()
 
     # (2) Iterate over features
-    for i in range(layer.GetFeatureCount()):
-        print "ingesting feature no. %s" % i
-        feature = layer.GetFeature(i).ExportToJson(as_object=True)
+    for i_feature in range(layer.GetFeatureCount()):
+        print "ingesting feature no. {}".format(i_feature)
+        feature = layer.GetFeature(i_feature).ExportToJson(as_object=True)
         geom = feature['geometry']['coordinates']
         depth_fnc = lambda L: isinstance(L, list) and max(map(depth_fnc, L))+1
         depth = depth_fnc(geom)
-        # The case of non-multi-polygons
+        # The case of ordinary, i.e. non-multi polygons
         if depth == 3:
             geom_str = "POLYGON("
             num_rings = len(geom)
@@ -77,17 +76,25 @@ def main(shapefile):
                     geom_str += ','
             geom_str += ')'
         else:
-            sys.exit("got unexpected nestedness depth of %s in feature" % depth)
+            sys.exit("got unexpected nestedness depth of {} in feature".format(depth))
 
-        meta_data = json.dumps(feature['properties'])
-        meta_data = meta_data.replace("'", "''")
+        attrs = json.dumps(feature['properties'])
+        attrs = attrs.replace("'", "''")
 
-        # (2) Ingest the feature with its geom + meta_data into the regions table
-        query = "insert into regions (meta_id, geom, meta_data) values (%s, ST_GeomFromText(\'%s\', 4326), \'%s\')" % (meta_id, geom_str, meta_data)
+        # (2) Ingest the feature with its geom + attrs into the regions table
+        query = ("INSERT INTO regions (regionset_id, geom, attrs) VALUES ({}, ST_GeomFromText(\'{}\', 4326), \'{}\')".
+                 format(regionset_id, geom_str, attrs))
         cur.execute(query)
 
     conn.commit()
 
 if __name__ == "__main__":
-    shapefile = sys.argv[1]
-    main(shapefile)
+    parser = argparse.ArgumentParser(description='Arguments for processing shapefile')
+    parser.add_argument('--input', help='Input shapefile', required=True)
+    args = parser.parse_args()
+    try:
+        process_shapefile(args.input)
+    except Exception as e:
+        print(e)
+        print("Could not process shapefile: {}".format(args.input))
+        sys.exit()
