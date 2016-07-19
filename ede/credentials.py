@@ -6,6 +6,6 @@
 DB_USER = 'postgres'
 DB_PASS = ''
 DB_HOST = ''
-DB_NAME = 'new_json_schema'
+DB_NAME = 'without_raster_type'
 DB_PORT = '5432'
 SECRET_KEY = ''

@@ -1,12 +1,8 @@
 from __future__ import print_function
 import sys
-from datetime import datetime
 import time
 from ede.database import db_session
 from sqlalchemy.exc import SQLAlchemyError
-import psycopg2
-from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
-import json
 from ede.api.utils import RasterExtractionException
 
 def eprint(*args, **kwargs):

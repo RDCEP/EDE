@@ -11,7 +11,6 @@ from ede.config import CACHE_CONFIG
 from ede.extract.extract import *
 from ede.api.utils import RequestFormatException, ServerError
 from flask import jsonify
-from flask import stream_with_context, Response
 
 cache = Cache(config=CACHE_CONFIG)
 

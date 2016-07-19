@@ -1,6 +1,0 @@
-#!/bin/bash           
-
-for filename in ../data/crawler/*; do
-    echo "ingesting..." $filename
-	python ingest.py $filename
-done
