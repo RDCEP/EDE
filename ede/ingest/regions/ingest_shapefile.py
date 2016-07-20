@@ -6,7 +6,7 @@ import json
 import argparse
 
 
-def process_shapefile(shapefile):
+def ingest_shapefile(shapefile):
 
     ## Connection to the database ##
     conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
@@ -89,12 +89,12 @@ def process_shapefile(shapefile):
     conn.commit()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Arguments for processing shapefile')
+    parser = argparse.ArgumentParser(description='Arguments for ingesting shapefile')
     parser.add_argument('--input', help='Input shapefile', required=True)
     args = parser.parse_args()
     try:
-        process_shapefile(args.input)
+        ingest_shapefile(args.input)
     except Exception as e:
         print(e)
-        print("Could not process shapefile: {}".format(args.input))
+        print("Could not ingest shapefile: {}".format(args.input))
         sys.exit()
