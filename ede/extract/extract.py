@@ -280,50 +280,290 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
     return out
 
 
-def return_griddata_aggregate_spatial(dataset_id, var_id, poly, time_id):
-    if poly is not None:
-        # polygon is specified by id
-        if isinstance(poly, int):
-            query = ("SELECT sum(cast(json->'properties'->'values'->>0 as double precision)) "
-                     "from grid_data as gd, regions as r "
-                     "where gd.dataset_id={} and gd.var_id={} and r.uid={} and gd.time_id={} and "
-                     "ST_Contains(r.geom, gd.geom and "
-                     "json->'properties'->'values'->>0 != 'null'").format(dataset_id, var_id, poly, time_id)
-        elif isinstance(poly, list):
-            poly_str = ','.join(["{} {}".format(pt[0], pt[1]) for pt in poly])
-            geom_str = "ST_Polygon(ST_GeomFromText('LINESTRING({})'), 4326)".format(poly_str)
-            query = ("SELECT sum(cast(json->'properties'->'values'->>0 as double precision)) "
-                     "from grid_data as gd "
-                     "where gd.dataset_id={} and gd.var_id={} and gd.time_id={} and "
-                     "ST_Contains({}, gd.geom and "
-                     "json->'properties'->'values'->>0 != 'null'").format(dataset_id, var_id, time_id, geom_str)
-        else:
-            raise RasterExtractionException("return_griddata_aggregate_spatial: type of POST poly field not supported!")
-    else:
-        query = "select sum(cast(json->'properties'->'values'->>0 as double precision)) from grid_data where dataset_id={} and var_id={} and time_id={} and " \
-                "json->'properties'->'values'->>0 != 'null'".format(dataset_id, var_id, time_id)
+def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id, request_body):
+
+    request_args = _parse_json_body(request_body)
+    kind = request_args[0]
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = ("SELECT avg(rd.value) "
+                 "FROM raster_data_single AS rd, regions AS r "
+                 "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL AND r.uid={} "
+                 "AND st_contains(r.geom, rd.geom) GROUP BY rd.time_id".
+                 format(dataset_id, var_id, time_id, region_id))
+    elif kind == 'direct':
+        (_, region) = request_args
+        query = ("SELECT avg(value) "
+                 "FROM raster_data_single "
+                 "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
+                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
+                 format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
-        raise RasterExtractionException("return_griddata_aggregate_spatial: could not spatially-aggregate griddata with dataset_id: {}, "
-                                        "var_id: {}, poly: {}, time_id: {}".format(dataset_id, var_id, str(poly), time_id))
-    # the response JSON
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "rasterdata with dataset_id: {}, var_id: {}, time_id: {}, request_body: {}".
+                                        format(dataset_id, var_id, time_id, json.dumps(request_body)))
+    # The aggregation values
+    (res,) = rows.first()
+
+    # The region as a GeoJSON
+    region_as_geojson = None
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = "SELECT st_asgeojson(geom) FROM regions WHERE uid={}".format(region_id)
+        try:
+            rows = db_session.execute(query)
+        except SQLAlchemyError as e:
+            eprint(e)
+            raise RasterExtractionException("return_rasterdata_aggregate_spatial: could not return geojson"
+                                            "of indirect region with id: {}".format(region_id))
+        (region_as_geojson,) = rows.first()
+    elif kind == 'direct':
+        (_, region) = request_args
+        region_as_geojson = region
+
+    # The response JSON
     out = {}
     out['request'] = {}
     out['request']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     out['response'] = {}
-    out['response']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['status'] = 'OK'
-    out['response']['status_code'] = 200
+    # The actual data
     out['response']['data'] = []
-    row = rows.first()
-    sum = float(row[0])
-    new_data_item = {}
-    new_data_item['type'] = 'Feature'
-    new_data_item['geometry'] = {'type': 'Polygon', 'coordinates': poly}
-    new_data_item['properties'] = {'sum': sum}
-    out['response']['data'].append(new_data_item)
+    data_item = {'type': 'Feature', 'geometry': {}, 'properties': {'mean': None}}
+    data_item['properties']['mean'] = res
+    data_item['geometry'] = region_as_geojson
+    out['response']['data'].append(data_item)
+    # The metadata
+    out['response']['metadata'] = {}
+    out['response']['metadata']['region'] = request_body
+    out['response']['metadata']['format'] = 'region'
+    # The variable's unit
+    query = "SELECT attrs FROM raster_variables WHERE uid={}".format(var_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "the variable's unit for var_id: {}".format(var_id))
+    (attrs,) = rows.first()
+    out['response']['metadata']['units'] = "N/A"
+    try:
+        for attr in attrs:
+            if attr['name'] == 'units':
+                out['response']['metadata']['units'] = attr['value']
+    except KeyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: the attributes field of "
+                                        "variable with var_id: {} stored in the DB is invalid!".format(var_id))
+    # The human-readable time requested
+    query = "SELECT time_start, time_step FROM raster_datasets WHERE uid={}".format(dataset_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "time meta info from raster_datasets for dataset: {}".format(dataset_id))
+    (time_start, time_step) = rows.first()
+    time = time_start + (time_id-1) * time_step
+    out['response']['metadata']['time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return out
+
+
+def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id, request_body):
+
+    request_args = _parse_json_body(request_body)
+    kind = request_args[0]
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = ("SELECT avg(rd.value) "
+                 "FROM raster_data_single AS rd, regions AS r "
+                 "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL AND r.uid={} "
+                 "AND st_contains(r.geom, rd.geom) GROUP BY rd.time_id".
+                 format(dataset_id, var_id, time_id, region_id))
+    elif kind == 'direct':
+        (_, region) = request_args
+        query = ("SELECT avg(value) "
+                 "FROM raster_data_single "
+                 "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
+                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
+                 format(dataset_id, var_id, time_id, json.dumps(region)))
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "rasterdata with dataset_id: {}, var_id: {}, time_id: {}, request_body: {}".
+                                        format(dataset_id, var_id, time_id, json.dumps(request_body)))
+    # The aggregation values
+    (res,) = rows.first()
+
+    # The region as a GeoJSON
+    region_as_geojson = None
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = "SELECT st_asgeojson(geom) FROM regions WHERE uid={}".format(region_id)
+        try:
+            rows = db_session.execute(query)
+        except SQLAlchemyError as e:
+            eprint(e)
+            raise RasterExtractionException("return_rasterdata_aggregate_spatial: could not return geojson"
+                                            "of indirect region with id: {}".format(region_id))
+        (region_as_geojson,) = rows.first()
+    elif kind == 'direct':
+        (_, region) = request_args
+        region_as_geojson = region
+
+    # The response JSON
+    out = {}
+    out['request'] = {}
+    out['request']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    out['response'] = {}
+    # The actual data
+    out['response']['data'] = []
+    data_item = {'type': 'Feature', 'geometry': {}, 'properties': {'mean': None}}
+    data_item['properties']['mean'] = res
+    data_item['geometry'] = region_as_geojson
+    out['response']['data'].append(data_item)
+    # The metadata
+    out['response']['metadata'] = {}
+    out['response']['metadata']['region'] = request_body
+    out['response']['metadata']['format'] = 'region'
+    # The variable's unit
+    query = "SELECT attrs FROM raster_variables WHERE uid={}".format(var_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "the variable's unit for var_id: {}".format(var_id))
+    (attrs,) = rows.first()
+    out['response']['metadata']['units'] = "N/A"
+    try:
+        for attr in attrs:
+            if attr['name'] == 'units':
+                out['response']['metadata']['units'] = attr['value']
+    except KeyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: the attributes field of "
+                                        "variable with var_id: {} stored in the DB is invalid!".format(var_id))
+    # The human-readable time requested
+    query = "SELECT time_start, time_step FROM raster_datasets WHERE uid={}".format(dataset_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
+                                        "time meta info from raster_datasets for dataset: {}".format(dataset_id))
+    (time_start, time_step) = rows.first()
+    time = time_start + (time_id-1) * time_step
+    out['response']['metadata']['time'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    out['response']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return out
+
+
+def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_start, time_id_step,
+                                                            time_id_end, request_body):
+
+    time_ids = range(time_id_start, time_id_end + 1, time_id_step)
+    time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
+    request_args = _parse_json_body(request_body)
+    kind = request_args[0]
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = ("SELECT avg(rd.value) "
+                 "FROM raster_data_single AS rd, regions AS r "
+                 "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id IN {} "
+                 "AND r.uid={} AND st_contains(r.geom, rd.geom) "
+                 "GROUP BY rd.time_id "
+                 "ORDER BY rd.time_id".
+                 format(dataset_id, var_id, time_ids_str, region_id))
+    elif kind == 'direct':
+        (_, region) = request_args
+        query = ("SELECT avg(value) "
+                 "FROM raster_data_single "
+                 "WHERE dataset_id={} AND var_id={} AND time_id IN {} "
+                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) "
+                 "GROUP BY time_id "
+                 "ORDER BY time_id".
+                 format(dataset_id, var_id, time_ids_str, json.dumps(region)))
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_time_range: could not return "
+                                        "rasterdata with dataset_id: {}, var_id: {}, "
+                                        "time_id_start: {}, time_id_step: {}, time_id_end: {}, request_body: {}".
+                                        format(dataset_id, var_id,
+                                               time_id_start, time_id_step, time_id_end, json.dumps(request_body)))
+    # The aggregation values
+    aggr_values = []
+    for (aggr_value,) in rows:
+        aggr_values.append(aggr_value)
+
+    # The region as a GeoJSON
+    region_as_geojson = None
+    if kind == 'indirect':
+        (_, regionset_id, region_id) = request_args
+        query = "SELECT st_asgeojson(geom) FROM regions WHERE uid={}".format(region_id)
+        try:
+            rows = db_session.execute(query)
+        except SQLAlchemyError as e:
+            eprint(e)
+            raise RasterExtractionException("return_rasterdata_aggregate_spatial_time_range: could not return geojson"
+                                            "of indirect region with id: {}".format(region_id))
+        (region_as_geojson,) = rows.first()
+    elif kind == 'direct':
+        (_, region) = request_args
+        region_as_geojson = region
+
+    # The response JSON
+    out = {}
+    out['request'] = {}
+    out['request']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    out['response'] = {}
+    # The actual data
+    out['response']['data'] = []
+    data_item = {'type': 'Feature', 'geometry': {}, 'properties': {'means': None}}
+    data_item['properties']['means'] = aggr_values
+    data_item['geometry'] = region_as_geojson
+    out['response']['data'].append(data_item)
+    # The metadata
+    out['response']['metadata'] = {}
+    out['response']['metadata']['region'] = request_body
+    out['response']['metadata']['format'] = 'region'
+    # The variable's unit
+    query = "SELECT attrs FROM raster_variables WHERE uid={}".format(var_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_time_range: could not return "
+                                        "the variable's unit for var_id: {}".format(var_id))
+    (attrs,) = rows.first()
+    out['response']['metadata']['units'] = "N/A"
+    try:
+        for attr in attrs:
+            if attr['name'] == 'units':
+                out['response']['metadata']['units'] = attr['value']
+    except KeyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_time_range: the attributes field of "
+                                        "variable with var_id: {} stored in the DB is invalid!".format(var_id))
+    # The human-readable times requested
+    query = "SELECT time_start, time_step FROM raster_datasets WHERE uid={}".format(dataset_id)
+    try:
+        rows = db_session.execute(query)
+    except SQLAlchemyError as e:
+        eprint(e)
+        raise RasterExtractionException("return_rasterdata_aggregate_spatial_time_range: could not return "
+                                        "time meta info from raster_datasets for dataset: {}".format(dataset_id))
+    (time_start, time_step) = rows.first()
+    times = [time_start + (time_id - 1) * time_step for time_id in time_ids]
+    out['response']['metadata']['times'] = [time.strftime('%Y-%m-%d %H:%M:%S') for time in times]
+    out['response']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return out
 
 
