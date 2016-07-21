@@ -10,3 +10,9 @@ CREATE INDEX raster_data_single_time_id_idx ON raster_data_single(time_id);
 -- Create indexes on raster_data_series
 CREATE INDEX raster_data_series_dataset_id_var_id_idx ON raster_data_series(dataset_id, var_id);
 CREATE INDEX raster_data_series_geom_idx ON raster_data_series USING GIST (geom);
+
+-- Create user-defined functions needed for queries
+CREATE OR REPLACE FUNCTION array_avg(double precision[])
+RETURNS double precision AS $$
+SELECT avg(v) FROM unnest($1) g(v)
+$$ LANGUAGE sql;
