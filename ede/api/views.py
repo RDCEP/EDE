@@ -77,7 +77,7 @@ def get_rasterdata_single_time(dataset_id, var_id, time_id):
     request_body = request.get_json()
     try:
         start_time = time.time()
-        data = return_rasterdata(dataset_id, var_id, time_id, request_body)
+        data = return_rasterdata_single_time(dataset_id, var_id, time_id, request_body)
         print("--- return_rasterdata took %s seconds ---" % (time.time() - start_time))
     except (RasterExtractionException, RequestFormatException) as e:
         eprint(e)
@@ -106,7 +106,7 @@ def get_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step, t
     request_body = request.get_json()
     try:
         start_time = time.time()
-        data = return_rasterdata(dataset_id, var_id, time_id_start, time_id_step, time_id_end, request_body)
+        data = return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step, time_id_end, request_body)
         print("--- return_rasterdata took %s seconds ---" % (time.time() - start_time))
     except (RasterExtractionException, RequestFormatException) as e:
         eprint(e)
@@ -132,7 +132,7 @@ def get_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id):
     request_body = request.get_json()
     try:
         start_time = time.time()
-        data = return_griddata_aggregate_spatial(dataset_id, var_id, time_id, request_body)
+        data = return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id, request_body)
         print("--- return_rasterdata_aggregate_spatial took %s seconds ---" % (time.time() - start_time))
     except (RasterExtractionException, RequestFormatException) as e:
         eprint(e)
@@ -160,8 +160,8 @@ def get_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_star
     request_body = request.get_json()
     try:
         start_time = time.time()
-        data = return_griddata_aggregate_spatial(dataset_id, var_id, time_id_start, time_id_step, time_id_end,
-                                                 request_body)
+        data = return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_start, time_id_step,
+                                                            time_id_end, request_body)
         print("--- return_rasterdata_aggregate_spatial took %s seconds ---" % (time.time() - start_time))
     except (RasterExtractionException, RequestFormatException) as e:
         eprint(e)
@@ -191,7 +191,7 @@ def get_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time_id
     request_body = request.get_json()
     try:
         start_time = time.time()
-        data = return_griddata_aggregate_temporal(dataset_id, var_id, time_id_start, time_id_step, time_id_end,
+        data = return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time_id_step, time_id_end,
                                                  request_body)
         print("--- return_rasterdata_aggregate_temporal took %s seconds ---" % (time.time() - start_time))
     except (RasterExtractionException, RequestFormatException) as e:

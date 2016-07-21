@@ -1,6 +1,5 @@
 import numpy as np
 import tempfile
-import subprocess
 import os, sys
 from netCDF4 import Dataset
 import argparse
@@ -278,9 +277,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Arguments for ingesting NetCDF')
     parser.add_argument('--input', help='Input NetCDF', required=True)
     args = parser.parse_args()
-    # try:
-    ingest_netcdf(args.input)
-    # except Exception as e:
-    #     print(e)
-    #     print("Could not ingest NetCDF: {}".format(args.input))
-    #     sys.exit()
+    try:
+        ingest_netcdf(args.input)
+    except Exception as e:
+        print(e)
+        print("Could not ingest NetCDF: {}".format(args.input))
+        sys.exit()
