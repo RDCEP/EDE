@@ -5,6 +5,7 @@ try:
 except ImportError:
     import json
 from datetime import date
+import time
 from flask import Blueprint, make_response, request
 from flask.ext.cache import Cache
 from ede.config import CACHE_CONFIG
@@ -59,7 +60,7 @@ def get_rastermeta(dataset_id):
         raise ServerError("get_rastermeta: could not handle request with dataset_id",
                           status_code=500, payload=dataset_id)
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -85,7 +86,7 @@ def get_rasterdata_single_time(dataset_id, var_id, time_id):
                           payload={'dataset_id': dataset_id, 'var_id': var_id,
                                    'time_id': time_id, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -115,7 +116,7 @@ def get_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step, t
                                    'time_id_start': time_id_start, 'time_id_step': time_id_step,
                                    'time_id_end': time_id_end, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -140,7 +141,7 @@ def get_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id):
                           payload={'dataset_id': dataset_id, 'var_id': var_id,
                                    'time_id': time_id, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -170,7 +171,7 @@ def get_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_star
                                    'time_id_start': time_id_start, 'time_id_step': time_id_step,
                                    'time_id_end': time_id_end, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -201,7 +202,7 @@ def get_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time_id
                                    'time_id_start': time_id_start, 'time_id_step': time_id_step,
                                    'time_id_end': time_id_end, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -226,7 +227,7 @@ def get_regionmeta(regionset_id):
         raise ServerError("get_regionmeta: could not handle request with regionset_id",
                           status_code=500, payload=regionset_id)
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
@@ -248,6 +249,6 @@ def get_regiondata(regionset_id):
         raise ServerError("get_regiondata: could not handle request", status_code=500,
                           payload={'regionset_id': regionset_id, 'request_body': request_body})
     data['request']['url'] = request.path
-    resp = make_response(json.dumps(data, default=dthandler), status_code=200)
+    resp = make_response(json.dumps(data, default=dthandler), 200)
     resp.headers['Content-Type'] = 'application/json'
     return resp
