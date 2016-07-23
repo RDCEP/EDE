@@ -31,6 +31,7 @@ def return_rastermeta(dataset_id):
              "rd.time_start, rd.time_end, rd.time_step, rd.num_times, rd.time_unit, rd.attrs".
              format(where_cond))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -144,6 +145,7 @@ def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
                  "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom)".
                  format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -225,6 +227,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                  "AND {}".
                  format(values_select, dataset_id, var_id, json.dumps(region), values_cond))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -299,6 +302,7 @@ def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id,
                  "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
                  format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -391,6 +395,7 @@ def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id,
                  "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
                  format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -490,6 +495,7 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
                  "ORDER BY time_id".
                  format(dataset_id, var_id, time_ids_str, json.dumps(region)))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -597,6 +603,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "AND array_avg(array[{}]) IS NOT NULL".
                  format(values_select, dataset_id, var_id, json.dumps(region), values_select))
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
@@ -692,6 +699,7 @@ def return_regiondata(regionset_id, request_body):
 
     query = "SELECT uid, ST_AsGeoJSON(geom) FROM regions WHERE regionset_id={} {}".format(regionset_id, where_str)
     try:
+        print(query)
         rows = db_session.execute(query)
     except SQLAlchemyError as e:
         eprint(e)
