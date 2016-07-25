@@ -26,12 +26,13 @@ The current version of the schema is: without_raster_type-v0.1.0
 7.  Make some final preparations within the DB:
     psql -U postgres -d without_raster_type -f prepare_db.sql
     This:
-    *   fills raster_data_series from raster_data_single
+    *   creates type + user-defined function needed to fill raster_data_single -> raster_data_series
+    *   fills raster_data_single -> raster_data_series
     *   creates indexes
-    *   creates user-defined functions needed by the queries
+    *   creates user-defined functions needed by some of the queries
     
     Note: For 5 psims files this took (using EXPLAIN ANALYZE whenever that was possible):
-    *   raster_data_single -> raster_data_series: 12 minutes 30 seconds
+    *   raster_data_single -> raster_data_series: 12 minutes 40 seconds
     *   raster_data_single_dataset_id_var_id_idx: 1 minute 45 seconds
     *   raster_data_single_geom_idx: 11 minutes 15 seconds
     *   raster_data_single_time_id_idx: 1 minute 50 seconds

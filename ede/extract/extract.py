@@ -132,7 +132,7 @@ def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
                  "jsonb_set(jsonb_build_object('value',null),'{{value}}',rd.value::text::jsonb))) "
                  "FROM raster_data_single AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL "
-                 "AND r.uid={} AND st_contains(r.geom, rd.geom)".
+                 "AND r.uid={} AND st_intersects(rd.geom, r.geom)".
                  format(dataset_id, var_id, time_id, region_id))
     elif kind == 'direct':
         (_, region) = request_args
@@ -142,7 +142,7 @@ def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
                  "jsonb_set(jsonb_build_object('value',null),'{{value}}',value::text::jsonb))) "
                  "FROM raster_data_single "
                  "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom)".
+                 "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326))".
                  format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
         print(query)
@@ -201,7 +201,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
 
     time_ids = range(time_id_start, time_id_end+1, time_id_step)
     values_select = ','.join(["values[{}]".format(time_id) for time_id in time_ids])
-    values_cond = ' AND '.join(["values[{}] IS NOT NULL".format(time_id) for time_id in time_ids])
+    values_cond_neg = ' AND '.join(["values[{}] IS NULL".format(time_id) for time_id in time_ids])
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
@@ -212,9 +212,9 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                  "jsonb_set(jsonb_build_object('values',null),'{{values}}',jsonb_build_array({})))) "
                  "FROM raster_data_series AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
-                 "AND r.uid={} AND st_contains(r.geom, rd.geom) "
-                 "AND {}".
-                 format(values_select, dataset_id, var_id, region_id, values_cond))
+                 "AND r.uid={} AND st_intersects(rd.geom, r.geom) "
+                 "AND NOT ({})".
+                 format(values_select, dataset_id, var_id, region_id, values_cond_neg))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
@@ -223,9 +223,9 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                  "jsonb_set(jsonb_build_object('values',null),'{{values}}',jsonb_build_array({})))) "
                  "FROM raster_data_series "
                  "WHERE dataset_id={} AND var_id={} "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) "
-                 "AND {}".
-                 format(values_select, dataset_id, var_id, json.dumps(region), values_cond))
+                 "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
+                 "AND NOT ({})".
+                 format(values_select, dataset_id, var_id, json.dumps(region), values_cond_neg))
     try:
         print(query)
         rows = db_session.execute(query)
@@ -292,107 +292,14 @@ def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id,
         query = ("SELECT avg(rd.value) "
                  "FROM raster_data_single AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL AND r.uid={} "
-                 "AND st_contains(r.geom, rd.geom) GROUP BY rd.time_id".
+                 "AND st_intersects(rd.geom, r.geom) GROUP BY rd.time_id".
                  format(dataset_id, var_id, time_id, region_id))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("SELECT avg(value) "
                  "FROM raster_data_single "
                  "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
-                 format(dataset_id, var_id, time_id, json.dumps(region)))
-    try:
-        print(query)
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
-                                        "rasterdata with dataset_id: {}, var_id: {}, time_id: {}, request_body: {}".
-                                        format(dataset_id, var_id, time_id, json.dumps(request_body)))
-    # The aggregation values
-    (res,) = rows.first()
-
-    # The region as a GeoJSON
-    region_as_geojson = None
-    if kind == 'indirect':
-        (_, regionset_id, region_id) = request_args
-        query = "SELECT st_asgeojson(geom) FROM regions WHERE uid={}".format(region_id)
-        try:
-            rows = db_session.execute(query)
-        except SQLAlchemyError as e:
-            eprint(e)
-            raise RasterExtractionException("return_rasterdata_aggregate_spatial: could not return geojson"
-                                            "of indirect region with id: {}".format(region_id))
-        (region_as_geojson,) = rows.first()
-    elif kind == 'direct':
-        (_, region) = request_args
-        region_as_geojson = region
-
-    # The response JSON
-    out = {}
-    out['request'] = {}
-    out['request']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    out['response'] = {}
-    # The actual data
-    out['response']['data'] = []
-    data_item = {'type': 'Feature', 'geometry': {}, 'properties': {'mean': None}}
-    data_item['properties']['mean'] = res
-    data_item['geometry'] = region_as_geojson
-    out['response']['data'].append(data_item)
-    # The metadata
-    out['response']['metadata'] = {}
-    out['response']['metadata']['region'] = request_body
-    out['response']['metadata']['format'] = 'region'
-    # The variable's unit
-    query = "SELECT attrs FROM raster_variables WHERE uid={}".format(var_id)
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
-                                        "the variable's unit for var_id: {}".format(var_id))
-    (attrs,) = rows.first()
-    out['response']['metadata']['units'] = "N/A"
-    try:
-        for attr in attrs:
-            if attr['name'] == 'units':
-                out['response']['metadata']['units'] = attr['value']
-    except KeyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: the attributes field of "
-                                        "variable with var_id: {} stored in the DB is invalid!".format(var_id))
-    # The human-readable time requested
-    query = "SELECT time_start, time_step FROM raster_datasets WHERE uid={}".format(dataset_id)
-    try:
-        rows = db_session.execute(query)
-    except SQLAlchemyError as e:
-        eprint(e)
-        raise RasterExtractionException("return_rasterdata_aggregate_spatial_single_time: could not return "
-                                        "time meta info from raster_datasets for dataset: {}".format(dataset_id))
-    (time_start, time_step) = rows.first()
-    time = time_start + (time_id-1) * time_step
-    out['response']['metadata']['time'] = time.strftime('%Y-%m-%d %H:%M:%S')
-    out['response']['datetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    return out
-
-
-def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id, request_body):
-
-    request_args = _parse_json_body(request_body)
-    kind = request_args[0]
-    if kind == 'indirect':
-        (_, regionset_id, region_id) = request_args
-        query = ("SELECT avg(rd.value) "
-                 "FROM raster_data_single AS rd, regions AS r "
-                 "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL AND r.uid={} "
-                 "AND st_contains(r.geom, rd.geom) GROUP BY rd.time_id".
-                 format(dataset_id, var_id, time_id, region_id))
-    elif kind == 'direct':
-        (_, region) = request_args
-        query = ("SELECT avg(value) "
-                 "FROM raster_data_single "
-                 "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) GROUP BY time_id".
+                 "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) GROUP BY time_id".
                  format(dataset_id, var_id, time_id, json.dumps(region)))
     try:
         print(query)
@@ -474,26 +381,23 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
 
     time_ids = range(time_id_start, time_id_end + 1, time_id_step)
     time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
+    values_select = ','.join(["avg(values[{}])".format(time_id) for time_id in time_ids])
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
-        query = ("SELECT avg(rd.value) "
-                 "FROM raster_data_single AS rd, regions AS r "
-                 "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id IN {} "
-                 "AND r.uid={} AND st_contains(r.geom, rd.geom) "
-                 "GROUP BY rd.time_id "
-                 "ORDER BY rd.time_id".
-                 format(dataset_id, var_id, time_ids_str, region_id))
+        query = ("SELECT ARRAY[{}] "
+                 "FROM raster_data_series AS rd, regions AS r "
+                 "WHERE rd.dataset_id={} AND rd.var_id={} "
+                 "AND r.uid={} AND st_intersects(rd.geom, r.geom)".
+                 format(values_select, dataset_id, var_id, region_id))
     elif kind == 'direct':
         (_, region) = request_args
-        query = ("SELECT avg(value) "
-                 "FROM raster_data_single "
-                 "WHERE dataset_id={} AND var_id={} AND time_id IN {} "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) "
-                 "GROUP BY time_id "
-                 "ORDER BY time_id".
-                 format(dataset_id, var_id, time_ids_str, json.dumps(region)))
+        query = ("SELECT ARRAY[{}] "
+                 "FROM raster_data_series "
+                 "WHERE dataset_id={} AND var_id={} "
+                 "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326))".
+                 format(values_select, dataset_id, var_id, json.dumps(region)))
     try:
         print(query)
         rows = db_session.execute(query)
@@ -505,9 +409,7 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
                                         format(dataset_id, var_id,
                                                time_id_start, time_id_step, time_id_end, json.dumps(request_body)))
     # The aggregation values
-    aggr_values = []
-    for (aggr_value,) in rows:
-        aggr_values.append(aggr_value)
+    (aggr_values,) = rows.first()
 
     # The region as a GeoJSON
     region_as_geojson = None
@@ -576,32 +478,39 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
 def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time_id_step, time_id_end, request_body):
 
     time_ids = range(time_id_start, time_id_end+1, time_id_step)
-    values_select = ','.join(["values[{}]".format(time_id) for time_id in time_ids])
+    values_aggr = '+'.join(["coalesce(values[{}],0)".format(time_id) for time_id in time_ids])
+    num_times = len(time_ids)
+    values_cond_neg = ' AND '.join(["values[{}] IS NULL".format(time_id) for time_id in time_ids])
+    json_template = dict(type='Feature', geometry=dict(type='Point', coordinates=None),
+                         properties=dict(mean=None))
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                "jsonb_build_array(st_x(rd.geom),st_y(rd.geom)))),'{{properties}}',"
-                "jsonb_set(jsonb_build_object('mean',null),'{{mean}}',"
-                "array_avg(array[{}])::text::jsonb))) "
-                "FROM raster_data_series AS rd, regions AS r "
-                "WHERE rd.dataset_id={} AND rd.var_id={} AND r.uid={} "
-                "AND st_contains(r.geom, rd.geom) AND array_avg(array[{}]) IS NOT NULL".
-                 format(values_select, dataset_id, var_id, region_id, values_select))
+        query = ("WITH tmp AS "
+                 "(SELECT st_x(rd.geom) AS lon, st_y(rd.geom) AS lat, "
+                 "({})/{} AS mean "
+                 "FROM raster_data_series AS rd, regions as r "
+                 "WHERE rd.dataset_id={} AND rd.var_id={} AND r.uid={} "
+                 "AND st_intersects(rd.geom, r.geom) AND NOT ({})) "
+                 "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[lon,lat])::jsonb),"
+                 "'{{properties,mean}}',mean::text::jsonb)) from tmp;".
+                 format(values_aggr, num_times, dataset_id, var_id, region_id, values_cond_neg,
+                        json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                 "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                 "jsonb_build_array(st_x(geom),st_y(geom)))),'{{properties}}',"
-                 "jsonb_set(jsonb_build_object('mean',null),'{{mean}}',"
-                 "array_avg(array[{}])::text::jsonb))) "
+        query = ("WITH tmp AS "
+                 "(SELECT st_x(geom) AS lon, st_y(geom) AS lat, "
+                 "({})/{} AS mean "
                  "FROM raster_data_series "
                  "WHERE dataset_id={} AND var_id={} "
-                 "AND st_contains(st_setsrid(st_geomfromgeojson(\'{}\'),4326), geom) "
-                 "AND array_avg(array[{}]) IS NOT NULL".
-                 format(values_select, dataset_id, var_id, json.dumps(region), values_select))
+                 "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) AND NOT ({})) "
+                 "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[lon,lat])::jsonb),"
+                 "'{{properties,mean}}',mean::text::jsonb)) from tmp;".
+                 format(values_aggr, num_times, dataset_id, var_id, json.dumps(region), values_cond_neg,
+                        json.dumps(json_template)))
     try:
         print(query)
         rows = db_session.execute(query)

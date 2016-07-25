@@ -6,4 +6,5 @@ scrapy
 psycopg2
 flask
 flask-cache
+flask-compress
 redis
