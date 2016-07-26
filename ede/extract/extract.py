@@ -122,28 +122,28 @@ def _parse_json_body(request_body):
 
 def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
 
+    json_template = dict(type='Feature', geometry=dict(type='Point', coordinates=None),
+                         properties=dict(value=None))
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                 "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                 "jsonb_build_array(st_x(rd.geom),st_y(rd.geom)))),'{{properties}}',"
-                 "jsonb_set(jsonb_build_object('value',null),'{{value}}',rd.value::text::jsonb))) "
+        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
+                 "'{{properties,value}}',value::text::jsonb)) "
                  "FROM raster_data_single AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL "
                  "AND r.uid={} AND st_intersects(rd.geom, r.geom)".
-                 format(dataset_id, var_id, time_id, region_id))
+                 format(json.dumps(json_template), dataset_id, var_id, time_id, region_id))
     elif kind == 'direct':
         (_, region) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                 "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                 "jsonb_build_array(st_x(geom),st_y(geom)))),'{{properties}}',"
-                 "jsonb_set(jsonb_build_object('value',null),'{{value}}',value::text::jsonb))) "
+        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
+                 "'{{properties,value}}',value::text::jsonb)) "
                  "FROM raster_data_single "
                  "WHERE dataset_id={} AND var_id={} AND time_id={} AND value IS NOT NULL "
                  "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326))".
-                 format(dataset_id, var_id, time_id, json.dumps(region)))
+                 format(json.dumps(json_template), dataset_id, var_id, time_id, json.dumps(region)))
     try:
         print(query)
         rows = db_session.execute(query)
@@ -202,30 +202,31 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
     time_ids = range(time_id_start, time_id_end+1, time_id_step)
     values_select = ','.join(["values[{}]".format(time_id) for time_id in time_ids])
     values_cond_neg = ' AND '.join(["values[{}] IS NULL".format(time_id) for time_id in time_ids])
+    json_template = dict(type='Feature', geometry=dict(type='Point', coordinates=None),
+                         properties=dict(values=None))
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                 "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                 "jsonb_build_array(st_x(rd.geom),st_y(rd.geom)))),'{{properties}}',"
-                 "jsonb_set(jsonb_build_object('values',null),'{{values}}',jsonb_build_array({})))) "
+        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
+                 "'{{properties,values}}',array_to_json(ARRAY[{}])::jsonb)) "
                  "FROM raster_data_series AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND r.uid={} AND st_intersects(rd.geom, r.geom) "
                  "AND NOT ({})".
-                 format(values_select, dataset_id, var_id, region_id, values_cond_neg))
+                 format(json.dumps(json_template), values_select, dataset_id, var_id, region_id, values_cond_neg))
     elif kind == 'direct':
         (_, region) = request_args
-        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(jsonb_build_object('type','Feature'),'{{geometry}}',"
-                 "jsonb_set(jsonb_build_object('type','Point','coordinates',null),'{{coordinates}}',"
-                 "jsonb_build_array(st_x(geom),st_y(geom)))),'{{properties}}',"
-                 "jsonb_set(jsonb_build_object('values',null),'{{values}}',jsonb_build_array({})))) "
+        query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
+                 "'{{properties,values}}',array_to_json(ARRAY[{}])::jsonb)) "
                  "FROM raster_data_series "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(geom, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT ({})".
-                 format(values_select, dataset_id, var_id, json.dumps(region), values_cond_neg))
+                 format(json.dumps(json_template), values_select, dataset_id, var_id, json.dumps(region),
+                        values_cond_neg))
     try:
         print(query)
         rows = db_session.execute(query)
