@@ -4,11 +4,11 @@ except ImportError:
     import json
 from datetime import date
 from flask import Flask, g, make_response
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter, RectangleConverter
-from flask.ext.compress import Compress
+from flask_compress import Compress
 
 
 app = Flask(__name__)

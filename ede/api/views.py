@@ -7,7 +7,7 @@ except ImportError:
 from datetime import date
 import time
 from flask import Blueprint, make_response, request
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.extract.extract import *
 from ede.api.utils import RequestFormatException, ServerError
