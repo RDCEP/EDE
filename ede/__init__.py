@@ -4,10 +4,12 @@ except ImportError:
     import json
 from datetime import date
 from flask import Flask, g, make_response
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter, RectangleConverter
+from flask_compress import Compress
+import time
 
 
 app = Flask(__name__)
@@ -16,6 +18,7 @@ app.url_map.converters['list'] = ListConverter
 app.url_map.converters['intlist'] = IntListConverter
 app.url_map.converters['rect'] = RectangleConverter
 app.url_map.strict_slashes = False
+Compress(app)
 
 cache = Cache(app, config=CACHE_CONFIG)
 
@@ -53,7 +56,7 @@ app.register_blueprint(api_module)
 @app.before_request
 def before_request():
     g.db = engine.dispose()
-
+    g.time = time.time()
 
 @app.teardown_request
 @app.teardown_appcontext
@@ -68,3 +71,8 @@ def shutdown_session(exception=None):
             g.db.close()
         except:
             pass
+
+@app.teardown_request
+def teardown_request(exception=None):
+    diff = time.time() - g.time
+    print("--- request took {} seconds ---".format(diff))

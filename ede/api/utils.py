@@ -49,3 +49,19 @@ class ServerError(Exception):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
+
+
+class RasterExtractionException(Exception):
+    """Represents an exception that can occur during the extraction of raster data from the DB.
+    """
+
+    def __init__(self, message):
+        super(RasterExtractionException, self).__init__(message)
+
+
+class RequestFormatException(Exception):
+    """Is raised when the JSON body in a POST request is misformed.
+    """
+
+    def __init__(self, message):
+        super(RequestFormatException, self).__init__(message)

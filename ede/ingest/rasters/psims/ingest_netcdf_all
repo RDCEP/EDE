@@ -1,0 +1,10 @@
+#!/bin/bash           
+
+DATA_DIR=/data/psims
+FNAMES=filenames.txt
+
+while read fname
+do
+	echo "Ingesting NetCDF $fname..."
+	python ingest_netcdf.py --input $DATA_DIR/$fname
+done <$FNAMES
