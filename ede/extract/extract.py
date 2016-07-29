@@ -129,8 +129,8 @@ def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
-                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
-                 "'{{properties,value}}',value::text::jsonb)) "
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(rd.geom),st_y(rd.geom)])::jsonb),"
+                 "'{{properties,value}}',rd.value::text::jsonb)) "
                  "FROM raster_data_single AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} AND rd.value IS NOT NULL "
                  "AND r.uid={} AND st_intersects(rd.geom, r.geom)".
@@ -209,7 +209,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
-                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
+                 "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(rd.geom),st_y(rd.geom)])::jsonb),"
                  "'{{properties,values}}',array_to_json(ARRAY[{}])::jsonb)) "
                  "FROM raster_data_series AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "

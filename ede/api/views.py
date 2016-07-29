@@ -15,7 +15,7 @@ from flask import jsonify
 
 cache = Cache(config=CACHE_CONFIG)
 
-API_VERSION = 'v0'
+API_VERSION = 'v0.2.2'
 RESPONSE_LIMIT = 1000
 CACHE_TIMEOUT = 60 * 60 * 6
 

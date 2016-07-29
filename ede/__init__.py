@@ -9,6 +9,7 @@ from ede.config import CACHE_CONFIG
 from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter, RectangleConverter
 from flask_compress import Compress
+import time
 
 
 app = Flask(__name__)
@@ -55,7 +56,7 @@ app.register_blueprint(api_module)
 @app.before_request
 def before_request():
     g.db = engine.dispose()
-
+    g.time = time.time()
 
 @app.teardown_request
 @app.teardown_appcontext
@@ -70,3 +71,8 @@ def shutdown_session(exception=None):
             g.db.close()
         except:
             pass
+
+@app.teardown_request
+def teardown_request(exception=None):
+    diff = time.time() - g.time
+    print("--- request took {} seconds ---".format(diff))
