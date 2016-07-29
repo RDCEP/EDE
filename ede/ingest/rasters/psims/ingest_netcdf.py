@@ -1,16 +1,18 @@
-import sys, os
 import argparse
-from netCDF4 import Dataset
-import numpy as np
-import numpy.ma as ma
-from ede.ingest.simplify_ingest.utils.raster import *
+import os
+import sys
 import time
 from datetime import datetime, timedelta
-import psycopg2
-from psycopg2.extras import Json
-from psycopg2 import DatabaseError
-from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from itertools import izip
+
+import numpy as np
+import numpy.ma as ma
+import psycopg2
+from netCDF4 import Dataset
+from psycopg2 import DatabaseError
+from psycopg2.extras import Json
+
+from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 
 
 def insert_get_var_id(cursor, variable):
@@ -533,7 +535,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
 
-    except RasterProcessingException as e:
+    except RasterP rocessingException as e:
         eprint(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
     except Exception as e:
