@@ -26,21 +26,12 @@ CREATE TABLE raster_variables (
   attrs jsonb
 );
 
-CREATE TABLE raster_data_single (
+CREATE TABLE raster_data (
   uid bigserial primary key,
   dataset_id integer,
   var_id integer,
-  geom geometry(Point,4326),
   time_id integer,
-  value double precision
-);
-
-CREATE TABLE raster_data_series (
-  uid bigserial primary key,
-  dataset_id integer,
-  var_id integer,
-  geom geometry(Point,4326),
-  values double precision[]
+  rast raster
 );
 
 CREATE TABLE regionsets (
