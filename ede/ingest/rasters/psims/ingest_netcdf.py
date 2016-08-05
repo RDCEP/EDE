@@ -328,7 +328,7 @@ def get_resolution(array):
         if abs(res_next - res) > eps:
             raise RasterProcessingException("Does not have a uniform resolution at index {}. "
                                             "This case is not supported!".format(i))
-    return res
+    return abs(res)
 
 
 def get_bounding_box(longitudes, latitudes):
@@ -465,7 +465,7 @@ def process_band(band, tile_size_lat, tile_size_lon):
     num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
     for i in range(num_tiles_lat):
         for j in range(num_tiles_lon):
-            yield band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
+            yield i, j, band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
 def process_band_lat_lon(variable, tile_size_lat, tile_size_lon, band_vals):
@@ -612,8 +612,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
 
     version = 0  # Always version = 0
     n_bands = 1  # We ingest unpacked rast fields
-    ip_X = longs[0] - 0.5 * scale_X
-    ip_Y = lats[0] - 0.5 * scale_Y
+    ip_X_raster = min(longs) - 0.5 * scale_X
+    ip_Y_raster = max(lats) + 0.5 * scale_Y
     # TODO: does a netcdf always have 0 skew?
     skew_X = 0.0
     skew_Y = 0.0
@@ -622,6 +622,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
     # TODO: make the tile sizes more easily choosable
     tile_size_lat = 60
     tile_size_lon = 60
+    tile_width = tile_size_lon * scale_X
+    tile_height = tile_size_lat * scale_Y
     is_offline = False
     has_no_data_value = True  # we're assuming there's always a NODATA value! TODO: maybe check if NODATA val is None
     is_no_data_value = False  # we're being conservative here
@@ -649,8 +651,10 @@ def process_netcdf(netcdf_filename, wkb_filename):
             except:
                 nodata = get_nodata_value(pixtype)
             with open(wkb_filename, 'w') as f:
-                for band_id, tile in tiles:
-                    rast = Raster(version, n_bands, scale_X, scale_Y, ip_X, ip_Y, skew_X, skew_Y,
+                for band_id, (lat_tile_id, lon_tile_id, tile) in tiles:
+                    ip_X_tile = ip_X_raster + lon_tile_id * tile_width
+                    ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
+                    rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
                                   srid, tile.shape[1], tile.shape[0])
                     band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                     rast.add_band(band)

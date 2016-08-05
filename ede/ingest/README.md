@@ -27,7 +27,7 @@ The current version of the schema is: with_raster_type_unstacked-v0.1.0
 
 7.  Make some final preparations within the DB:
     psql -U postgres -d with_raster_type_unstacked -f prepare_db.sql
-    This creates indexes.
+    This creates indexes + user-defined types + functions.
     
     Note: For 5 psims files this took (using EXPLAIN ANALYZE whenever that was possible):
     * raster_data_dataset_id_var_id_idx: instantly
