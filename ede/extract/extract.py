@@ -328,22 +328,27 @@ def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id,
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp AS "
-                 "(SELECT st_union(st_clip(rd.rast, r.geom, true)) AS rast "
+                 "(SELECT (st_summarystats(st_clip(rd.rast, r.geom, true))).* "
                  "FROM raster_data AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id={} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
                  "AND NOT st_bandisnodata(rd.rast)) "
-                 "SELECT (st_summarystats(rast)).mean FROM tmp".
+                 "SELECT SUM(sum) / SUM(count) "
+                 "FROM tmp "
+                 "WHERE count != 0".
                  format(dataset_id, var_id, time_id, region_id))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp AS "
-                 "(SELECT st_union(st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true)) AS rast "
+                 "(SELECT (st_summarystats(st_clip(rast, st_setsrid("
+                 "st_geomfromgeojson(\'{}\'),4326), true))).* "
                  "FROM raster_data "
                  "WHERE dataset_id={} AND var_id={} AND time_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast)) "
-                 "SELECT (st_summarystats(rast)).mean FROM tmp".
+                 "SELECT SUM(sum) / SUM(count) "
+                 "FROM tmp "
+                 "WHERE count != 0".
                  format(json.dumps(region), dataset_id, var_id, time_id, json.dumps(region)))
     try:
         print(query)
@@ -437,7 +442,7 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
                  "AND NOT st_bandisnodata(rd.rast)) "
                  "SELECT SUM(sum) / SUM(count) "
                  "FROM tmp "
-                 "WHERE count != 0 GROUP BY time_id ORDER BY time_id;".
+                 "WHERE count != 0 GROUP BY time_id ORDER BY time_id".
                  format(dataset_id, var_id, time_ids_str, region_id))
     elif kind == 'direct':
         (_, region) = request_args
@@ -450,7 +455,7 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
                  "AND NOT st_bandisnodata(rast)) "
                  "SELECT SUM(sum) / SUM(count) "
                  "FROM tmp "
-                 "WHERE count != 0 GROUP BY time_id ORDER BY time_id;".
+                 "WHERE count != 0 GROUP BY time_id ORDER BY time_id".
                  format(json.dumps(region), dataset_id, var_id, time_ids_str, json.dumps(region)))
     try:
         print(query)
@@ -542,7 +547,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_union(st_clip(rd.rast, r.geom),'MEAN') AS rast "
+                 "(SELECT st_union(st_clip(rd.rast, r.geom, true),'MEAN') AS rast "
                  "FROM raster_data AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} AND rd.time_id IN {} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
@@ -558,7 +563,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_union(st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)),'MEAN') AS rast "
+                 "(SELECT st_union(st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true),'MEAN') AS rast "
                  "FROM raster_data "
                  "WHERE dataset_id={} AND var_id={} AND time_id IN {} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
