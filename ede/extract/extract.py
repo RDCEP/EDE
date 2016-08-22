@@ -480,7 +480,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
 
     time_ids = range(time_id_start, time_id_end+1, time_id_step)
     values_aggr = '+'.join(["coalesce(values[{}],0)".format(time_id) for time_id in time_ids])
-    num_times = len(time_ids)
+    num_non_nulls = '(' + '+'.join(["(values[{}] IS NOT NULL)::int".format(time_id) for time_id in time_ids]) + ')'
     values_cond_neg = ' AND '.join(["values[{}] IS NULL".format(time_id) for time_id in time_ids])
     json_template = dict(type='Feature', geometry=dict(type='Point', coordinates=None),
                          properties=dict(mean=None))
@@ -497,7 +497,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[lon,lat])::jsonb),"
                  "'{{properties,mean}}',mean::text::jsonb)) from tmp;".
-                 format(values_aggr, num_times, dataset_id, var_id, region_id, values_cond_neg,
+                 format(values_aggr, num_non_nulls, dataset_id, var_id, region_id, values_cond_neg,
                         json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
@@ -510,7 +510,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[lon,lat])::jsonb),"
                  "'{{properties,mean}}',mean::text::jsonb)) from tmp;".
-                 format(values_aggr, num_times, dataset_id, var_id, json.dumps(region), values_cond_neg,
+                 format(values_aggr, num_non_nulls, dataset_id, var_id, json.dumps(region), values_cond_neg,
                         json.dumps(json_template)))
     try:
         print(query)

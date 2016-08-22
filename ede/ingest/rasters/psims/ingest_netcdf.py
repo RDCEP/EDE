@@ -10,6 +10,15 @@ from datetime import datetime, timedelta
 import json
 
 
+def get_fill_value(variable):
+    fill_value = None
+    for attr in variable['attributes']:
+        if attr['name'] == '_FillValue':
+            fill_value = attr['value']
+            break
+    return fill_value
+
+
 def parse_metadata(filename):
     """Parses the metadata of the NetCDF
 
@@ -131,11 +140,19 @@ def parse_metadata(filename):
                     raise "Got unexpected time unit!"
                 date_start_str = date_fields_str[1].strip()
                 date_start = datetime.strptime(date_start_str, "%Y-%m-%d %H:%M:%S")
-                var_info['time_start'] = date_start.strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    var_info['time_start'] = date_start.strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    # Handle too old dates
+                    var_info['time_start'] = date_start.isoformat(" ").split(".")[0]
                 num_times = var_info['shape'][0]
                 # TODO: this takes into account leap years which we don't want if the unit is 1 year!
                 date_end = date_start + (num_times-1) * date_delta
-                var_info['time_end'] = date_end.strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    var_info['time_end'] = date_end.strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    # Handle too old dates
+                    var_info['time_end'] = date_end.isoformat(" ").split(".")[0]
                 dimensions['time'] = var_info
             elif var.name == 'depth':
                 raise "Depth dimension not yet supported!"
@@ -209,11 +226,11 @@ def ingest_metadata(cur, dataset_metadata):
              "(\'{}\', \'{}\', "
              "{}, {}, {}, {}, "
              "{}, {}, {}, {}, ST_SetSRID(ST_GeomFromGeoJSON(\'{}\'),4326), "
-             "\'{}\', \'{}\', \'{}\', {}, \'{}\', \'{}') RETURNING uid".
+             "\'{}\', \'{}\', \'{}\', {}, \'{}\', \'{}\') RETURNING uid".
              format(short_name, long_name,
                     lon_start, lon_end, lon_step, num_lons,
                     lat_start, lat_end, lat_step, num_lats, bbox,
-                    time_start, time_end, time_step, num_times, time_unit, attrs))
+                    time_start, time_end, time_step, num_times, time_unit, json.dumps(attrs)))
 
     cur.execute(query)
     (dataset_id,) = cur.fetchone()
@@ -229,7 +246,7 @@ def ingest_variable(cur, dataset_id, variable):
     return var_id
 
 
-def ingest_data(cur, filename, dataset_id, var_name, var_id):
+def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
 
     fh = Dataset(filename)
 
@@ -243,7 +260,11 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id):
             time_id = slice_id+1
             for (lat_id, lon_id), value in np.ndenumerate(slice):
                 value = float(value)
-                if value == slice.get_fill_value():
+                try:
+                    fill_value = slice.get_fill_value()
+                except:
+                    fill_value = var_fill_value
+                if fill_value is not None and value == fill_value:
                     value = "\N" # NULL value for Postgres' COPY FROM
                 lat = lats[lat_id]
                 lon = lons[lon_id]
@@ -267,7 +288,8 @@ def ingest_netcdf(filename):
     for variable in dataset_metadata['variables']:
         var_id = ingest_variable(cur, dataset_id, variable)
         var_name = variable['name']
-        ingest_data(cur, filename, dataset_id, var_name, var_id)
+        var_fill_value = get_fill_value(variable)
+        ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value)
 
     conn.commit()
 
