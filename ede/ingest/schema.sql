@@ -1,47 +1,108 @@
-CREATE TABLE raster_datasets (
+CREATE TABLE dataset (
   uid bigserial primary key,
-  short_name text,
-  long_name text,
-  lon_start double precision,
-  lon_end double precision,
-  lon_step double precision,
-  num_lons integer,
-  lat_start double precision,
-  lat_end double precision,
-  lat_step double precision,
-  num_lats integer,
-  bbox geometry(Polygon,4326),
-  time_start timestamp with time zone,
-  time_end timestamp with time zone,
-  time_step interval,
-  num_times integer,
-  time_unit text,
   attrs jsonb
 );
 
-CREATE TABLE raster_variables (
+CREATE TABLE variable (
   uid bigserial primary key,
   dataset_id integer,
   name text,
-  attrs jsonb
-);
+  datatype text,
+  num_dims integer,
+  dims_names text[],
+  dims_sizes integer[],
+  attrs jsonb,
+  min double precision,
+  max double precision,
+  type char(1),
+  axes char(1)[],
+  axes_mins double precision[],
+  axes_maxs double precision[],
+  axes_units text[]
+)
 
-CREATE TABLE raster_data_single (
-  uid bigserial primary key,
-  dataset_id integer,
+CREATE TABLE value_1d (
   var_id integer,
-  geom geometry(Point,4326),
-  time_id integer,
+  index_0 integer,
+  value_0 double precision,
   value double precision
-);
+)
 
-CREATE TABLE raster_data_series (
-  uid bigserial primary key,
-  dataset_id integer,
+CREATE TABLE value_2d (
+  var_id integer,
+  index_0 integer,
+  value_0 double precision,
+  index_1 integer,
+  value_1 double precision,
+  value double precision
+)
+
+CREATE TABLE value_3d (
+  var_id integer,
+  index_0 integer,
+  value_0 double precision,
+  index_1 integer,
+  value_1 double precision,
+  index_2 integer,
+  value_2 double precision,
+  value double precision
+)
+
+CREATE TABLE value_4d (
+  var_id integer,
+  index_0 integer,
+  value_0 double precision,
+  index_1 integer,
+  value_1 double precision,
+  index_2 integer,
+  value_2 double precision,
+  index_3 integer,
+  value_3 double precision,
+  value double precision
+)
+
+CREATE TABLE value_time (
+  var_id integer,
+  time_value double precision,
+  time_stamp timestamp with time zone,
+  value double precision
+)
+
+CREATE TABLE value_vertical (
+  var_id integer,
+  vertical_value double precision,
+  value double precision
+)
+
+CREATE TABLE value_lat_lon (
   var_id integer,
   geom geometry(Point,4326),
-  values double precision[]
-);
+  value double precision
+)
+
+CREATE TABLE value_time_lat_lon (
+  var_id integer,
+  time_value double precision,
+  time_stamp timestamp with time zone,
+  geom geometry(Point,4326),
+  value double precision
+)
+
+CREATE TABLE value_vertical_lat_lon (
+  var_id integer,
+  vertical_value double precision,
+  geom geometry(Point,4326),
+  value double precision
+)
+
+CREATE TABLE time_vertical_lat_lon (
+  var_id integer,
+  time_value double precision,
+  time_stamp timestamp with time zone,
+  vertical_value double precision,
+  geom geometry(Point,4326),
+  value double precision
+)
 
 CREATE TABLE regionsets (
   uid bigserial primary key,
