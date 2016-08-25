@@ -19,14 +19,14 @@ CREATE TABLE variable (
   axes_mins double precision[],
   axes_maxs double precision[],
   axes_units text[]
-)
+);
 
 CREATE TABLE value_1d (
   var_id integer,
   index_0 integer,
   value_0 double precision,
   value double precision
-)
+);
 
 CREATE TABLE value_2d (
   var_id integer,
@@ -35,7 +35,7 @@ CREATE TABLE value_2d (
   index_1 integer,
   value_1 double precision,
   value double precision
-)
+);
 
 CREATE TABLE value_3d (
   var_id integer,
@@ -46,7 +46,7 @@ CREATE TABLE value_3d (
   index_2 integer,
   value_2 double precision,
   value double precision
-)
+);
 
 CREATE TABLE value_4d (
   var_id integer,
@@ -59,26 +59,26 @@ CREATE TABLE value_4d (
   index_3 integer,
   value_3 double precision,
   value double precision
-)
+);
 
 CREATE TABLE value_time (
   var_id integer,
   time_value double precision,
   time_stamp timestamp with time zone,
   value double precision
-)
+);
 
 CREATE TABLE value_vertical (
   var_id integer,
   vertical_value double precision,
   value double precision
-)
+);
 
 CREATE TABLE value_lat_lon (
   var_id integer,
   geom geometry(Point,4326),
   value double precision
-)
+);
 
 CREATE TABLE value_time_lat_lon (
   var_id integer,
@@ -86,23 +86,23 @@ CREATE TABLE value_time_lat_lon (
   time_stamp timestamp with time zone,
   geom geometry(Point,4326),
   value double precision
-)
+);
 
 CREATE TABLE value_vertical_lat_lon (
   var_id integer,
   vertical_value double precision,
   geom geometry(Point,4326),
   value double precision
-)
+);
 
-CREATE TABLE time_vertical_lat_lon (
+CREATE TABLE value_time_vertical_lat_lon (
   var_id integer,
   time_value double precision,
   time_stamp timestamp with time zone,
   vertical_value double precision,
   geom geometry(Point,4326),
   value double precision
-)
+);
 
 CREATE TABLE regionsets (
   uid bigserial primary key,
