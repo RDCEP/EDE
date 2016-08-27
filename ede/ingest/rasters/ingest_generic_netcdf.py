@@ -6,6 +6,7 @@ from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 import json
 import numpy as np
 import datetime
+import tempfile
 
 
 class MyEncoder(json.JSONEncoder):
@@ -105,7 +106,13 @@ def ingest_netcdf(filename):
     batch_size_curr = 0
     batch = ""
 
-    rootgrp = Dataset(filename, "r", format="NETCDF4")
+    try:
+        rootgrp = Dataset(filename, "r", format="NETCDF4")
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(e, exc_type, fname, exc_tb.tb_lineno)
+        raise Exception("ingest_netcdf: Could not open NetCDF File: {}".format(filename))
 
     # Make sure we don't have a multigroup NetCDF
     if rootgrp.groups:
@@ -188,36 +195,39 @@ def ingest_netcdf(filename):
                 coord_var_0 = get_coord_var(rootgrp, dim_0)
                 if coord_var_0 is not None:
                     coord_var_0_values = coord_var_0[:]
-                for (index_0,), value in np.ndenumerate(values):
-                    if ((fill_value is not None and value == fill_value) or
-                            (missing_value is not None and value == missing_value) or
-                            (valid_min is not None and value < valid_min) or
-                            (valid_max is not None and value > valid_max) or
-                            (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
-                        value = "NULL"
-                    else:
-                        if scale_factor:
-                            value *= scale_factor
-                        if add_offset:
-                            value += add_offset
-                    value_0 = None
-                    if coord_var_0 is not None:
-                        value_0 = coord_var_0_values[index_0]
-                    if batch_size_curr == batch_size_max-1:
-                        batch += "({}, {}, {}, {})".format(var_id, index_0, value_0, value)
-                        cur.execute("INSERT INTO value_1d (var_id, index_0, value_0, value) VALUES {}".format(batch))
+                with tempfile.NamedTemporaryFile() as f:
+                    for (index_0,), value in np.ndenumerate(values):
+                        if ((fill_value is not None and value == fill_value) or
+                                (missing_value is not None and value == missing_value) or
+                                (valid_min is not None and value < valid_min) or
+                                (valid_max is not None and value > valid_max) or
+                                (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
+                            value = "\N"
+                        else:
+                            if scale_factor:
+                                value *= scale_factor
+                            if add_offset:
+                                value += add_offset
+                        value_0 = "\N"
+                        if coord_var_0 is not None:
+                            value_0 = coord_var_0_values[index_0]
+                        if batch_size_curr == batch_size_max-1:
+                            batch += "{}\t{}\t{}\t{}\n".format(var_id, index_0, value_0, value)
+                            f.write(batch)
+                            batch = ""
+                            batch_size_curr = 0
+                        else:
+                            batch += "{}\t{}\t{}\t{}\n".format(var_id, index_0, value_0, value)
+                            batch_size_curr += 1
+                        if value != "\N":
+                            values_min = min(values_min, value)
+                            values_max = max(values_max, value)
+                    if batch:
+                        f.write(batch)
+                        f.seek(0)
+                        cur.copy_from(f, 'value_1d', columns=('var_id', 'index_0', 'value_0', 'value'))
                         batch = ""
                         batch_size_curr = 0
-                    else:
-                        batch += "({}, {}, {}, {}),".format(var_id, index_0, value_0, value)
-                        batch_size_curr += 1
-                    if value != "NULL":
-                        values_min = min(values_min, value)
-                        values_max = max(values_max, value)
-                if batch:
-                    cur.execute("INSERT INTO value_1d (var_id, index_0, value_0, value) VALUES {}".format(batch[:-1]))
-                    batch = ""
-                    batch_size_curr = 0
             elif var.ndim == 2:
                 dim_0 = var.dimensions[0]
                 dim_1 = var.dimensions[1]
@@ -227,41 +237,45 @@ def ingest_netcdf(filename):
                     coord_var_0_values = coord_var_0[:]
                 if coord_var_1 is not None:
                     coord_var_1_values = coord_var_1[:]
-                for (index_0, index_1), value in np.ndenumerate(values):
-                    if ((fill_value is not None and value == fill_value) or
-                            (missing_value is not None and value == missing_value) or
-                            (valid_min is not None and value < valid_min) or
-                            (valid_max is not None and value > valid_max) or
-                            (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
-                        value = "NULL"
-                    else:
-                        if scale_factor:
-                            value *= scale_factor
-                        if add_offset:
-                            value += add_offset
-                    value_0 = None
-                    value_1 = None
-                    if coord_var_0 is not None:
-                        value_0 = coord_var_0_values[index_0]
-                    if coord_var_1 is not None:
-                        value_1 = coord_var_1_values[index_1]
-                    if batch_size_curr == batch_size_max-1:
-                        batch += "({}, {}, {}, {}, {}, {})".format(var_id, index_0, value_0, index_1, value_1, value)
-                        cur.execute("INSERT INTO value_2d (var_id, index_0, value_0, index_1, value_1, value) "
-                                    "VALUES {}".format(batch))
+                with tempfile.NamedTemporaryFile() as f:
+                    for (index_0, index_1), value in np.ndenumerate(values):
+                        if ((fill_value is not None and value == fill_value) or
+                                (missing_value is not None and value == missing_value) or
+                                (valid_min is not None and value < valid_min) or
+                                (valid_max is not None and value > valid_max) or
+                                (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
+                            value = "\N"
+                        else:
+                            if scale_factor:
+                                value *= scale_factor
+                            if add_offset:
+                                value += add_offset
+                        value_0 = "\N"
+                        value_1 = "\N"
+                        if coord_var_0 is not None:
+                            value_0 = coord_var_0_values[index_0]
+                        if coord_var_1 is not None:
+                            value_1 = coord_var_1_values[index_1]
+                        if batch_size_curr == batch_size_max-1:
+                            batch += ("{}\t{}\t{}\t{}\t{}\t{}\n".
+                                      format(var_id, index_0, value_0, index_1, value_1, value))
+                            f.write(batch)
+                            batch = ""
+                            batch_size_curr = 0
+                        else:
+                            batch += ("{}\t{}\t{}\t{}\t{}\t{}\n".
+                                      format(var_id, index_0, value_0, index_1, value_1, value))
+                            batch_size_curr += 1
+                        if value != "\N":
+                            values_min = min(values_min, value)
+                            values_max = max(values_max, value)
+                    if batch:
+                        f.write(batch)
+                        f.seek(0)
+                        cur.copy_from(f, 'value_2d',
+                                      columns=('var_id', 'index_0', 'value_0', 'index_1', 'value_1', 'value'))
                         batch = ""
                         batch_size_curr = 0
-                    else:
-                        batch += "({}, {}, {}, {}, {}, {}),".format(var_id, index_0, value_0, index_1, value_1, value)
-                        batch_size_curr += 1
-                    if value != "NULL":
-                        values_min = min(values_min, value)
-                        values_max = max(values_max, value)
-                if batch:
-                    cur.execute("INSERT INTO value_2d (var_id, index_0, value_0, index_1, value_1, value) "
-                                "VALUES {}".format(batch[:-1]))
-                    batch = ""
-                    batch_size_curr = 0
             elif var.ndim == 3:
                 dim_0 = var.dimensions[0]
                 dim_1 = var.dimensions[1]
@@ -275,60 +289,58 @@ def ingest_netcdf(filename):
                     coord_var_1_values = coord_var_1[:]
                 if coord_var_2 is not None:
                     coord_var_2_values = coord_var_2[:]
-                for (index_0, index_1, index_2), value in np.ndenumerate(values):
-                    if ((fill_value is not None and value == fill_value) or
-                            (missing_value is not None and value == missing_value) or
-                            (valid_min is not None and value < valid_min) or
-                            (valid_max is not None and value > valid_max) or
-                            (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
-                        value = "NULL"
-                    else:
-                        if scale_factor:
-                            value *= scale_factor
-                        if add_offset:
-                            value += add_offset
-                    value_0 = None
-                    value_1 = None
-                    value_2 = None
-                    if coord_var_0 is not None:
-                        value_0 = coord_var_0_values[index_0]
-                    if coord_var_1 is not None:
-                        value_1 = coord_var_1_values[index_1]
-                    if coord_var_2 is not None:
-                        value_2 = coord_var_2_values[index_2]
-                    if batch_size_curr == batch_size_max-1:
-                        batch += "({}, {}, {}, {}, {}, {}, {}, {})".format(var_id,
-                                                                           index_0, value_0,
-                                                                           index_1, value_1,
-                                                                           index_2, value_2,
-                                                                           value)
-                        cur.execute("INSERT INTO value_3d (var_id, "
-                                    "index_0, value_0, "
-                                    "index_1, value_1, "
-                                    "index_2, value_2, "
-                                    "value) "
-                                    "VALUES {}".format(batch))
+                with tempfile.NamedTemporaryFile() as f:
+                    for (index_0, index_1, index_2), value in np.ndenumerate(values):
+                        if ((fill_value is not None and value == fill_value) or
+                                (missing_value is not None and value == missing_value) or
+                                (valid_min is not None and value < valid_min) or
+                                (valid_max is not None and value > valid_max) or
+                                (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
+                            value = "\N"
+                        else:
+                            if scale_factor:
+                                value *= scale_factor
+                            if add_offset:
+                                value += add_offset
+                        value_0 = "\N"
+                        value_1 = "\N"
+                        value_2 = "\N"
+                        if coord_var_0 is not None:
+                            value_0 = coord_var_0_values[index_0]
+                        if coord_var_1 is not None:
+                            value_1 = coord_var_1_values[index_1]
+                        if coord_var_2 is not None:
+                            value_2 = coord_var_2_values[index_2]
+                        if batch_size_curr == batch_size_max-1:
+                            batch += "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(var_id,
+                                                                             index_0, value_0,
+                                                                             index_1, value_1,
+                                                                             index_2, value_2,
+                                                                             value)
+                            f.write(batch)
+                            batch = ""
+                            batch_size_curr = 0
+                        else:
+                            batch += "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(var_id,
+                                                                             index_0, value_0,
+                                                                             index_1, value_1,
+                                                                             index_2, value_2,
+                                                                             value)
+                            batch_size_curr += 1
+                        if value != "\N":
+                            values_min = min(values_min, value)
+                            values_max = max(values_max, value)
+                    if batch:
+                        f.write(batch)
+                        f.seek(0)
+                        cur.copy_from(f, 'value_3d',
+                                      columns=('var_id',
+                                               'index_0', 'value_0',
+                                               'index_1', 'value_1',
+                                               'index_2', 'value_2',
+                                               'value'))
                         batch = ""
                         batch_size_curr = 0
-                    else:
-                        batch += "({}, {}, {}, {}, {}, {}, {}, {}),".format(var_id,
-                                                                    index_0, value_0,
-                                                                    index_1, value_1,
-                                                                    index_2, value_2,
-                                                                    value)
-                        batch_size_curr += 1
-                    if value != "NULL":
-                        values_min = min(values_min, value)
-                        values_max = max(values_max, value)
-                if batch:
-                    cur.execute("INSERT INTO value_3d (var_id, "
-                                "index_0, value_0, "
-                                "index_1, value_1, "
-                                "index_2, value_2, "
-                                "value) "
-                                "VALUES {}".format(batch[:-1]))
-                    batch = ""
-                    batch_size_curr = 0
             elif var.ndim == 4:
                 dim_0 = var.dimensions[0]
                 dim_1 = var.dimensions[1]
@@ -346,67 +358,64 @@ def ingest_netcdf(filename):
                     coord_var_2_values = coord_var_2[:]
                 if coord_var_3 is not None:
                     coord_var_3_values = coord_var_3[:]
-                for (index_0, index_1, index_2, index_3), value in np.ndenumerate(values):
-                    if ((fill_value is not None and value == fill_value) or
-                            (missing_value is not None and value == missing_value) or
-                            (valid_min is not None and value < valid_min) or
-                            (valid_max is not None and value > valid_max) or
-                            (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
-                        value = "NULL"
-                    else:
-                        if scale_factor:
-                            value *= scale_factor
-                        if add_offset:
-                            value += add_offset
-                    value_0 = None
-                    value_1 = None
-                    value_2 = None
-                    value_3 = None
-                    if coord_var_0 is not None:
-                        value_0 = coord_var_0_values[index_0]
-                    if coord_var_1 is not None:
-                        value_1 = coord_var_1_values[index_1]
-                    if coord_var_2 is not None:
-                        value_2 = coord_var_2_values[index_2]
-                    if coord_var_3 is not None:
-                        value_3 = coord_var_3_values[index_3]
-                    if batch_size_curr == batch_size_max-1:
-                        batch += "({}, {}, {}, {}, {}, {}, {}, {}, {}, {})".format(var_id,
-                                                                   index_0, value_0,
-                                                                   index_1, value_1,
-                                                                   index_2, value_2,
-                                                                   index_3, value_3,
-                                                                   value)
-                        cur.execute("INSERT INTO value_4d (var_id, "
-                                    "index_0, value_0, "
-                                    "index_1, value_1, "
-                                    "index_2, value_2, "
-                                    "index_3, value_3, "
-                                    "value) "
-                                    "VALUES {}".format(batch))
+                with tempfile.NamedTemporaryFile() as f:
+                    for (index_0, index_1, index_2, index_3), value in np.ndenumerate(values):
+                        if ((fill_value is not None and value == fill_value) or
+                                (missing_value is not None and value == missing_value) or
+                                (valid_min is not None and value < valid_min) or
+                                (valid_max is not None and value > valid_max) or
+                                (valid_range is not None and (value < valid_range[0] or value > valid_range[1]))):
+                            value = "\N"
+                        else:
+                            if scale_factor:
+                                value *= scale_factor
+                            if add_offset:
+                                value += add_offset
+                        value_0 = "\N"
+                        value_1 = "\N"
+                        value_2 = "\N"
+                        value_3 = "\N"
+                        if coord_var_0 is not None:
+                            value_0 = coord_var_0_values[index_0]
+                        if coord_var_1 is not None:
+                            value_1 = coord_var_1_values[index_1]
+                        if coord_var_2 is not None:
+                            value_2 = coord_var_2_values[index_2]
+                        if coord_var_3 is not None:
+                            value_3 = coord_var_3_values[index_3]
+                        if batch_size_curr == batch_size_max-1:
+                            batch += "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(var_id,
+                                                                                       index_0, value_0,
+                                                                                       index_1, value_1,
+                                                                                       index_2, value_2,
+                                                                                       index_3, value_3,
+                                                                                       value)
+                            f.write(batch)
+                            batch = ""
+                            batch_size_curr = 0
+                        else:
+                            batch += "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(var_id,
+                                                                                       index_0, value_0,
+                                                                                       index_1, value_1,
+                                                                                       index_2, value_2,
+                                                                                       index_3, value_3,
+                                                                                       value)
+                            batch_size_curr += 1
+                        if value != "\N":
+                            values_min = min(values_min, value)
+                            values_max = max(values_max, value)
+                    if batch:
+                        f.write(batch)
+                        f.seek(0)
+                        cur.copy_from(f, 'value_4d',
+                                      columns=('var_id'
+                                               'index_0', 'value_0',
+                                               'index_1', 'value_1',
+                                               'index_2', 'value_2',
+                                               'index_3', 'value_3',
+                                               'value'))
                         batch = ""
                         batch_size_curr = 0
-                    else:
-                        batch += "({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),".format(var_id,
-                                                                                   index_0, value_0,
-                                                                                   index_1, value_1,
-                                                                                   index_2, value_2,
-                                                                                   index_3, value_3,
-                                                                                   value)
-                        batch_size_curr += 1
-                    if value != "NULL":
-                        values_min = min(values_min, value)
-                        values_max = max(values_max, value)
-                if batch:
-                    cur.execute("INSERT INTO value_4d (var_id, "
-                                "index_0, value_0, "
-                                "index_1, value_1, "
-                                "index_2, value_2, "
-                                "index_3, value_3, "
-                                "value) "
-                                "VALUES {}".format(batch[:-1]))
-                    batch = ""
-                    batch_size_curr = 0
             else:
                 raise Exception("Variables depending on > 4 dimensions are currently not supported!")
 
@@ -471,198 +480,200 @@ def ingest_netcdf(filename):
                                         [time_var] = coord_vars
                                         time_var_values = time_var[:]
                                         (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                        for (time_id,), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            time_value = time_var_values[time_id]
-                                            time_stamp = (time_ref +
-                                                          datetime.timedelta(
-                                                              seconds=time_value * time_interval.total_seconds()))
-                                            time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += "({}, {}, \'{}\', {})".format(var_id,
-                                                                                       time_value, time_stamp,
-                                                                                       value)
-                                                cur.execute("INSERT INTO value_time "
-                                                            "(var_id, time_value, time_stamp, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (time_id,), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                time_value = time_var_values[time_id]
+                                                time_stamp = (time_ref +
+                                                              datetime.timedelta(
+                                                                  seconds=time_value * time_interval.total_seconds()))
+                                                time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += "{}\t{}\t\"{}\"\t{}\n".format(var_id,
+                                                                                           time_value, time_stamp,
+                                                                                           value)
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += "{}\t{}\t\"{}\"\t{}\n".format(var_id,
+                                                                                           time_value, time_stamp,
+                                                                                           value)
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_time',
+                                                              columns=('var_id', 'time_value', 'time_stamp', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += "({}, {}, \'{}\', {}),".format(var_id,
-                                                                                       time_value, time_stamp,
-                                                                                       value)
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_time "
-                                                        "(var_id, time_value, time_stamp, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     elif coord_vars_types == ["Z"]:
                                         [vertical_var] = coord_vars
                                         vertical_var_values = vertical_var[:]
-                                        for (vertical_id,), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            vertical_value = vertical_var_values[vertical_id]
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += "({}, {}, {})".format(var_id, vertical_value, value)
-                                                cur.execute("INSERT INTO value_vertical "
-                                                            "(var_id, vertical_value, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (vertical_id,), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                vertical_value = vertical_var_values[vertical_id]
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += "{}\t{}\t{}\n".format(var_id, vertical_value, value)
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += "{}\t{}\t{}\n".format(var_id, vertical_value, value)
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_vertical',
+                                                              columns=('var_id', 'vertical_value', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += "({}, {}, {}),".format(var_id, vertical_value, value)
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_vertical "
-                                                        "(var_id, vertical_value, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     elif coord_vars_types == ["Y", "X"]:
                                         [lat_var, lon_var] = coord_vars
                                         lat_var_values = lat_var[:]
                                         lon_var_values = lon_var[:]
-                                        for (lat_id, lon_id), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            lat_value = lat_var_values[lat_id]
-                                            lon_value = lon_var_values[lon_id]
-                                            geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += "({}, {}, {})".format(var_id, geom, value)
-                                                cur.execute("INSERT INTO value_lat_lon "
-                                                            "(var_id, geom, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (lat_id, lon_id), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                lat_value = lat_var_values[lat_id]
+                                                lon_value = lon_var_values[lon_id]
+                                                geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += "{}\t{}\t{}\n".format(var_id, geom, value)
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += "{}\t{}\t{}\n".format(var_id, geom, value)
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_lat_lon',
+                                                              columns=('var_id', 'geom', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += "({}, {}, {}),".format(var_id, geom, value)
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_lat_lon "
-                                                        "(var_id, geom, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     elif coord_vars_types == ["T", "Y", "X"]:
                                         [time_var, lat_var, lon_var] = coord_vars
                                         time_var_values = time_var[:]
                                         lat_var_values = lat_var[:]
                                         lon_var_values = lon_var[:]
                                         (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                        for (time_id, lat_id, lon_id), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            time_value = time_var_values[time_id]
-                                            time_stamp = (time_ref +
-                                                          datetime.timedelta(
-                                                              seconds=time_value * time_interval.total_seconds()))
-                                            time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                            lat_value = lat_var_values[lat_id]
-                                            lon_value = lon_var_values[lon_id]
-                                            geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += ("({}, {}, \'{}\', {}, {})".
-                                                          format(var_id, time_value, time_stamp, geom, value))
-                                                cur.execute("INSERT INTO value_time_lat_lon "
-                                                            "(var_id, time_value, time_stamp, geom, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (time_id, lat_id, lon_id), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                time_value = time_var_values[time_id]
+                                                time_stamp = (time_ref +
+                                                              datetime.timedelta(
+                                                                  seconds=time_value * time_interval.total_seconds()))
+                                                time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                                lat_value = lat_var_values[lat_id]
+                                                lon_value = lon_var_values[lon_id]
+                                                geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += ("{}\t{}\t\"{}\"\t{}\t{}\n".
+                                                              format(var_id, time_value, time_stamp, geom, value))
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += ("{}\t{}\t\"{}\"\t{}\t{}\n".
+                                                              format(var_id, time_value, time_stamp, geom, value))
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_time_lat_lon',
+                                                              columns=('var_id',
+                                                                       'time_value', 'time_stamp',
+                                                                       'geom', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += ("({}, {}, \'{}\', {}, {}),".
-                                                          format(var_id, time_value, time_stamp, geom, value))
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_time_lat_lon "
-                                                        "(var_id, time_value, time_stamp, geom, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     elif coord_vars_types == ["Z", "Y", "X"]:
                                         [vertical_var, lat_var, lon_var] = coord_vars
                                         vertical_var_values = vertical_var[:]
                                         lat_var_values = lat_var[:]
                                         lon_var_values = lon_var[:]
-                                        for (vertical_id, lat_id, lon_id), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            vertical_value = vertical_var_values[vertical_id]
-                                            lat_value = lat_var_values[lat_id]
-                                            lon_value = lon_var_values[lon_id]
-                                            geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += ("({}, {}, {}, {})".
-                                                          format(var_id, vertical_value, geom, value))
-                                                cur.execute("INSERT INTO value_vertical_lat_lon "
-                                                            "(var_id, vertical_value, geom, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (vertical_id, lat_id, lon_id), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                vertical_value = vertical_var_values[vertical_id]
+                                                lat_value = lat_var_values[lat_id]
+                                                lon_value = lon_var_values[lon_id]
+                                                geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += ("{}\t{}\t{}\t{}\n".
+                                                              format(var_id, vertical_value, geom, value))
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += ("{}\t{}\t{}\t{}\n".
+                                                              format(var_id, vertical_value, geom, value))
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_vertical_lat_lon',
+                                                              columns=('var_id', 'vertical_value', 'geom', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += ("({}, {}, {}, {}),".
-                                                          format(var_id, vertical_value, geom, value))
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_vertical_lat_lon "
-                                                        "(var_id, vertical_value, geom, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     elif coord_vars_types == ["T", "Z", "Y", "X"]:
                                         [time_var, vertical_var, lat_var, lon_var] = coord_vars
                                         time_var_values = time_var[:]
@@ -670,54 +681,52 @@ def ingest_netcdf(filename):
                                         lat_var_values = lat_var[:]
                                         lon_var_values = lon_var[:]
                                         (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                        for (time_id, vertical_id, lat_id, lon_id), value in np.ndenumerate(values):
-                                            if ((fill_value is not None and value == fill_value) or
-                                                    (missing_value is not None and value == missing_value) or
-                                                    (valid_min is not None and value < valid_min) or
-                                                    (valid_max is not None and value > valid_max) or
-                                                    (valid_range is not None and (
-                                                            value < valid_range[0] or value > valid_range[1]))):
-                                                value = "NULL"
-                                            else:
-                                                if scale_factor:
-                                                    value *= scale_factor
-                                                if add_offset:
-                                                    value += add_offset
-                                            time_value = time_var_values[time_id]
-                                            time_stamp = (time_ref +
-                                                          datetime.timedelta(
-                                                              seconds=time_value * time_interval.total_seconds()))
-                                            time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                            vertical_value = vertical_var_values[vertical_id]
-                                            lat_value = lat_var_values[lat_id]
-                                            lon_value = lon_var_values[lon_id]
-                                            geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                            if batch_size_curr == batch_size_max - 1:
-                                                batch += ("({}, {}, \'{}\', {}, {}, {})".
-                                                          format(var_id,
-                                                                 time_value, time_stamp,
-                                                                 vertical_value, geom, value))
-                                                cur.execute("INSERT INTO value_time_vertical_lat_lon "
-                                                            "(var_id, "
-                                                            "time_value, time_stamp, "
-                                                            "vertical_value, geom, value) "
-                                                            "VALUES {}".format(batch))
+                                        with tempfile.NamedTemporaryFile() as f:
+                                            for (time_id, vertical_id, lat_id, lon_id), value in np.ndenumerate(values):
+                                                if ((fill_value is not None and value == fill_value) or
+                                                        (missing_value is not None and value == missing_value) or
+                                                        (valid_min is not None and value < valid_min) or
+                                                        (valid_max is not None and value > valid_max) or
+                                                        (valid_range is not None and (
+                                                                value < valid_range[0] or value > valid_range[1]))):
+                                                    value = "\N"
+                                                else:
+                                                    if scale_factor:
+                                                        value *= scale_factor
+                                                    if add_offset:
+                                                        value += add_offset
+                                                time_value = time_var_values[time_id]
+                                                time_stamp = (time_ref +
+                                                              datetime.timedelta(
+                                                                  seconds=time_value * time_interval.total_seconds()))
+                                                time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                                vertical_value = vertical_var_values[vertical_id]
+                                                lat_value = lat_var_values[lat_id]
+                                                lon_value = lon_var_values[lon_id]
+                                                geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                                if batch_size_curr == batch_size_max - 1:
+                                                    batch += ("{}\t{}\t\"{}\"\t{}\t{}\t{}\n".
+                                                              format(var_id,
+                                                                     time_value, time_stamp,
+                                                                     vertical_value, geom, value))
+                                                    f.write(batch)
+                                                    batch = ""
+                                                    batch_size_curr = 0
+                                                else:
+                                                    batch += ("{}\t{}\t\"{}\"\t{}\t{}\t{}\n".
+                                                              format(var_id,
+                                                                     time_value, time_stamp,
+                                                                     vertical_value, geom, value))
+                                                    batch_size_curr += 1
+                                            if batch:
+                                                f.write(batch)
+                                                f.seek(0)
+                                                cur.copy_from(f, 'value_time_vertical_lat_lon',
+                                                              columns=('var_id',
+                                                                       'time_value', 'time_stamp',
+                                                                       'vertical_value', 'geom', 'value'))
                                                 batch = ""
                                                 batch_size_curr = 0
-                                            else:
-                                                batch += ("({}, {}, \'{}\', {}, {}, {}),".
-                                                          format(var_id,
-                                                                 time_value, time_stamp,
-                                                                 vertical_value, geom, value))
-                                                batch_size_curr += 1
-                                        if batch:
-                                            cur.execute("INSERT INTO value_time_vertical_lat_lon "
-                                                        "(var_id, "
-                                                        "time_value, time_stamp, "
-                                                        "vertical_value, geom, value) "
-                                                        "VALUES {}".format(batch[:-1]))
-                                            batch = ""
-                                            batch_size_curr = 0
                                     else:
                                         raise Exception("For data variables only the cases T;Z;Y,X;T,Y,X;Z,Y,X;T,Z,Y,X"
                                                         "are currently supported!")
@@ -788,118 +797,118 @@ def ingest_netcdf(filename):
                                 (time_var, time_deps) = coordinate_vars_sorted[0]
                                 time_var_values = time_var[:]
                                 (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    time_index = tuple([index[i] for i in time_deps])
-                                    time_value = time_var_values[time_index]
-                                    time_stamp = (time_ref +
-                                                  datetime.timedelta(
-                                                      seconds=time_value * time_interval.total_seconds()))
-                                    time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += "({}, {}, \'{}\', {})".format(var_id,
-                                                                               time_value, time_stamp,
-                                                                               value)
-                                        cur.execute("INSERT INTO value_time "
-                                                    "(var_id, time_value, time_stamp, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        time_index = tuple([index[i] for i in time_deps])
+                                        time_value = time_var_values[time_index]
+                                        time_stamp = (time_ref +
+                                                      datetime.timedelta(
+                                                          seconds=time_value * time_interval.total_seconds()))
+                                        time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += "{}\t{}\t\"{}\"\t{}\n".format(var_id,
+                                                                                 time_value, time_stamp,
+                                                                                 value)
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += "{}\t{}\t\"{}\"\t{}\n".format(var_id,
+                                                                                   time_value, time_stamp,
+                                                                                   value)
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_time',
+                                                      columns=('var_id', 'time_value', 'time_stamp', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += "({}, {}, \'{}\', {}),".format(var_id,
-                                                                                time_value, time_stamp,
-                                                                                value)
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_time "
-                                                "(var_id, time_value, time_stamp, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             elif coordinate_vars_type_sorted == ["Z"]:
                                 (vertical_var, vertical_deps) = coordinate_vars_sorted[0]
                                 vertical_var_values = vertical_var[:]
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    vertical_index = tuple([index[i] for i in vertical_deps])
-                                    vertical_value = vertical_var_values[vertical_index]
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += "({}, {}, {})".format(var_id, vertical_value, value)
-                                        cur.execute("INSERT INTO value_vertical "
-                                                    "(var_id, vertical_value, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        vertical_index = tuple([index[i] for i in vertical_deps])
+                                        vertical_value = vertical_var_values[vertical_index]
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += "{}\t{}\t{}\n".format(var_id, vertical_value, value)
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += "{}\t{}\t{}\n".format(var_id, vertical_value, value)
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_vertical',
+                                                      columns=('var_id', 'vertical_value', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += "({}, {}, {}),".format(var_id, vertical_value, value)
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_vertical "
-                                                "(var_id, vertical_value, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             elif coordinate_vars_type_sorted == ["Y", "X"]:
                                 (lat_var, lat_deps) = coordinate_vars_sorted[0]
                                 (lon_var, lon_deps) = coordinate_vars_sorted[1]
                                 lat_var_values = lat_var[:]
                                 lon_var_values = lon_var[:]
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    lat_index = tuple([index[i] for i in lat_deps])
-                                    lon_index = tuple([index[i] for i in lon_deps])
-                                    lat_value = lat_var_values[lat_index]
-                                    lon_value = lon_var_values[lon_index]
-                                    geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += "({}, {}, {})".format(var_id, geom, value)
-                                        cur.execute("INSERT INTO value_lat_lon "
-                                                    "(var_id, geom, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        lat_index = tuple([index[i] for i in lat_deps])
+                                        lon_index = tuple([index[i] for i in lon_deps])
+                                        lat_value = lat_var_values[lat_index]
+                                        lon_value = lon_var_values[lon_index]
+                                        geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += "{}\t{}\t{}\n".format(var_id, geom, value)
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += "{}\t{}\t{}\n".format(var_id, geom, value)
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_lat_lon',
+                                                      columns=('var_id', 'geom', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += "({}, {}, {}),".format(var_id, geom, value)
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_lat_lon "
-                                                "(var_id, geom, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             elif coordinate_vars_type_sorted == ["T", "Y", "X"]:
                                 (time_var, time_deps) = coordinate_vars_sorted[0]
                                 (lat_var, lat_deps) = coordinate_vars_sorted[1]
@@ -908,48 +917,50 @@ def ingest_netcdf(filename):
                                 lat_var_values = lat_var[:]
                                 lon_var_values = lon_var[:]
                                 (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    time_index = tuple([index[i] for i in time_deps])
-                                    time_value = time_var_values[time_index]
-                                    time_stamp = (time_ref +
-                                                  datetime.timedelta(
-                                                      seconds=time_value * time_interval.total_seconds()))
-                                    time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                    lat_index = tuple([index[i] for i in lat_deps])
-                                    lon_index = tuple([index[i] for i in lon_deps])
-                                    lat_value = lat_var_values[lat_index]
-                                    lon_value = lon_var_values[lon_index]
-                                    geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += ("({}, {}, \'{}\', {}, {})".
-                                                  format(var_id, time_value, time_stamp, geom, value))
-                                        cur.execute("INSERT INTO value_time_lat_lon "
-                                                    "(var_id, time_value, time_stamp, geom, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        time_index = tuple([index[i] for i in time_deps])
+                                        time_value = time_var_values[time_index]
+                                        time_stamp = (time_ref +
+                                                      datetime.timedelta(
+                                                          seconds=time_value * time_interval.total_seconds()))
+                                        time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                        lat_index = tuple([index[i] for i in lat_deps])
+                                        lon_index = tuple([index[i] for i in lon_deps])
+                                        lat_value = lat_var_values[lat_index]
+                                        lon_value = lon_var_values[lon_index]
+                                        geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += ("{}\t{}\t\"{}\"\t{}\t{}\n".
+                                                      format(var_id, time_value, time_stamp, geom, value))
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += ("{}\t{}\t\"{}\"\t{}\t{}\n".
+                                                      format(var_id, time_value, time_stamp, geom, value))
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_time_lat_lon',
+                                                      columns=('var_id',
+                                                               'time_value', 'time_stamp',
+                                                                             'geom', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += ("({}, {}, \'{}\', {}, {}),".
-                                                  format(var_id, time_value, time_stamp, geom, value))
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_time_lat_lon "
-                                                "(var_id, time_value, time_stamp, geom, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             elif coordinate_vars_type_sorted == ["Z", "Y", "X"]:
                                 (vertical_var, vertical_deps) = coordinate_vars_sorted[0]
                                 (lat_var, lat_deps) = coordinate_vars_sorted[1]
@@ -957,44 +968,44 @@ def ingest_netcdf(filename):
                                 vertical_var_values = vertical_var[:]
                                 lat_var_values = lat_var[:]
                                 lon_var_values = lon_var[:]
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    vertical_index = tuple([index[i] for i in vertical_deps])
-                                    vertical_value = vertical_var_values[vertical_index]
-                                    lat_index = tuple([index[i] for i in lat_deps])
-                                    lon_index = tuple([index[i] for i in lon_deps])
-                                    lat_value = lat_var_values[lat_index]
-                                    lon_value = lon_var_values[lon_index]
-                                    geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += ("({}, {}, {}, {})".
-                                                  format(var_id, vertical_value, geom, value))
-                                        cur.execute("INSERT INTO value_vertical_lat_lon "
-                                                    "(var_id, vertical_value, geom, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        vertical_index = tuple([index[i] for i in vertical_deps])
+                                        vertical_value = vertical_var_values[vertical_index]
+                                        lat_index = tuple([index[i] for i in lat_deps])
+                                        lon_index = tuple([index[i] for i in lon_deps])
+                                        lat_value = lat_var_values[lat_index]
+                                        lon_value = lon_var_values[lon_index]
+                                        geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += ("{}\t{}\t{}\t{}\n".
+                                                      format(var_id, vertical_value, geom, value))
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += ("{}\t{}\t{}\t{}\n".
+                                                      format(var_id, vertical_value, geom, value))
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_vertical_lat_lon',
+                                                      columns=('var_id', 'vertical_value', 'geom', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += ("({}, {}, {}, {}),".
-                                                  format(var_id, vertical_value, geom, value))
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_vertical_lat_lon "
-                                                "(var_id, vertical_value, geom, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             elif coordinate_vars_type_sorted == ["T", "Z", "Y", "X"]:
                                 (time_var, time_deps) = coordinate_vars_sorted[0]
                                 (vertical_var, vertical_deps) = coordinate_vars_sorted[1]
@@ -1005,58 +1016,56 @@ def ingest_netcdf(filename):
                                 lat_var_values = lat_var[:]
                                 lon_var_values = lon_var[:]
                                 (time_interval, time_ref) = get_time_interval_and_ref(time_var)
-                                for index, value in np.ndenumerate(values):
-                                    if ((fill_value is not None and value == fill_value) or
-                                            (missing_value is not None and value == missing_value) or
-                                            (valid_min is not None and value < valid_min) or
-                                            (valid_max is not None and value > valid_max) or
-                                            (valid_range is not None and (
-                                                    value < valid_range[0] or value > valid_range[1]))):
-                                        value = "NULL"
-                                    else:
-                                        if scale_factor:
-                                            value *= scale_factor
-                                        if add_offset:
-                                            value += add_offset
-                                    time_index = tuple([index[i] for i in time_deps])
-                                    time_value = time_var_values[time_index]
-                                    time_stamp = (time_ref +
-                                                  datetime.timedelta(
-                                                      seconds=time_value * time_interval.total_seconds()))
-                                    time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-                                    vertical_index = tuple([index[i] for i in vertical_deps])
-                                    vertical_value = vertical_var_values[vertical_index]
-                                    lat_index = tuple([index[i] for i in lat_deps])
-                                    lon_index = tuple([index[i] for i in lon_deps])
-                                    lat_value = lat_var_values[lat_index]
-                                    lon_value = lon_var_values[lon_index]
-                                    geom = "ST_GeomFromText('POINT({} {})', 4326)".format(lon_value, lat_value)
-                                    if batch_size_curr == batch_size_max - 1:
-                                        batch += ("({}, {}, \'{}\', {}, {}, {})".
-                                                  format(var_id,
-                                                         time_value, time_stamp,
-                                                         vertical_value, geom, value))
-                                        cur.execute("INSERT INTO value_time_vertical_lat_lon "
-                                                    "(var_id, "
-                                                    "time_value, time_stamp, "
-                                                    "vertical_value, geom, value) "
-                                                    "VALUES {}".format(batch))
+                                with tempfile.NamedTemporaryFile() as f:
+                                    for index, value in np.ndenumerate(values):
+                                        if ((fill_value is not None and value == fill_value) or
+                                                (missing_value is not None and value == missing_value) or
+                                                (valid_min is not None and value < valid_min) or
+                                                (valid_max is not None and value > valid_max) or
+                                                (valid_range is not None and (
+                                                        value < valid_range[0] or value > valid_range[1]))):
+                                            value = "\N"
+                                        else:
+                                            if scale_factor:
+                                                value *= scale_factor
+                                            if add_offset:
+                                                value += add_offset
+                                        time_index = tuple([index[i] for i in time_deps])
+                                        time_value = time_var_values[time_index]
+                                        time_stamp = (time_ref +
+                                                      datetime.timedelta(
+                                                          seconds=time_value * time_interval.total_seconds()))
+                                        time_stamp = time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                                        vertical_index = tuple([index[i] for i in vertical_deps])
+                                        vertical_value = vertical_var_values[vertical_index]
+                                        lat_index = tuple([index[i] for i in lat_deps])
+                                        lon_index = tuple([index[i] for i in lon_deps])
+                                        lat_value = lat_var_values[lat_index]
+                                        lon_value = lon_var_values[lon_index]
+                                        geom = "SRID=4326;POINT({} {})".format(lon_value, lat_value)
+                                        if batch_size_curr == batch_size_max - 1:
+                                            batch += ("{}\t{}\t\"{}\"\t{}\t{}\t{}\n".
+                                                      format(var_id,
+                                                             time_value, time_stamp,
+                                                             vertical_value, geom, value))
+                                            f.write(batch)
+                                            batch = ""
+                                            batch_size_curr = 0
+                                        else:
+                                            batch += ("{}\t{}\t\"{}\"\t{}\t{}\t{}\n".
+                                                      format(var_id,
+                                                             time_value, time_stamp,
+                                                             vertical_value, geom, value))
+                                            batch_size_curr += 1
+                                    if batch:
+                                        f.write(batch)
+                                        f.seek(0)
+                                        cur.copy_from(f, 'value_time_vertical_lat_lon',
+                                                      columns=('var_id',
+                                                               'time_value', 'time_stamp',
+                                                               'vertical_value', 'geom', 'value'))
                                         batch = ""
                                         batch_size_curr = 0
-                                    else:
-                                        batch += ("({}, {}, \'{}\', {}, {}, {}),".
-                                                  format(var_id,
-                                                         time_value, time_stamp,
-                                                         vertical_value, geom, value))
-                                        batch_size_curr += 1
-                                if batch:
-                                    cur.execute("INSERT INTO value_time_vertical_lat_lon "
-                                                "(var_id, "
-                                                "time_value, time_stamp, "
-                                                "vertical_value, geom, value) "
-                                                "VALUES {}".format(batch[:-1]))
-                                    batch = ""
-                                    batch_size_curr = 0
                             else:
                                 raise Exception("Variable {} has the :coordinates attribute but it does not lead to"
                                                 "either of the cases T;Z;Y,X;Z,Y,X;T,Y,X;T,Z,Y,X".
