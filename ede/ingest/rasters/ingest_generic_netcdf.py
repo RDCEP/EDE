@@ -61,7 +61,8 @@ def get_coord_type_of_var(var):
                 units_comps = map(str.strip, map(str, units.split("since")))
                 if len(units_comps) == 2:
                     (time_units, time_ref) = units_comps
-                    time_units_valid = time_units in ["d", "day", "days",
+                    time_units_valid = time_units in ["growing seasons",
+                                                      "d", "day", "days",
                                                       "h", "hr", "hour", "hrs", "hours",
                                                       "min", "minute", "mins", "minutes",
                                                       "s", "sec", "second", "secs", "seconds"]
@@ -89,6 +90,8 @@ def get_time_interval_and_ref(time_var):
             time_interval = datetime.timedelta(minutes=1)
         elif time_units in ["s", "sec", "second", "secs", "seconds"]:
             time_interval = datetime.timedelta(seconds=1)
+        elif time_units in ["growing seasons"]:
+            time_interval = datetime.timedelta(days=365)
         else:
             raise Exception("get_time_interval_and_ref: got unexpected time_units!!")
         return (time_interval, time_ref)
@@ -449,7 +452,8 @@ def ingest_netcdf(filename):
                         units_comps = map(str.strip, map(str, units.split("since")))
                         if len(units_comps) == 2:
                             (time_units, time_ref) = units_comps
-                            time_units_valid = time_units in ["d", "day", "days",
+                            time_units_valid = time_units in ["growing seasons",
+                                                              "d", "day", "days",
                                                               "h", "hr", "hour", "hrs", "hours",
                                                               "min", "minute", "mins", "minutes",
                                                               "s", "sec", "second", "secs", "seconds"]
