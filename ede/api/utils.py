@@ -65,3 +65,11 @@ class RequestFormatException(Exception):
 
     def __init__(self, message):
         super(RequestFormatException, self).__init__(message)
+
+
+class UnsupportedCaseException(Exception):
+    """Is raised when a case is reached which is not yet supported.
+    """
+
+    def __init__(self, message):
+        super(RequestFormatException, self).__init__(message)

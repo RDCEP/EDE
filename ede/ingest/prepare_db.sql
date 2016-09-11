@@ -94,3 +94,20 @@ CREATE INDEX value_time_vertical_lat_lon_var_id_geom_time_value_vertical_value_i
 USING GIST (var_id, geom, time_value, vertical_value);
 CREATE INDEX value_time_vertical_lat_lon_var_id_geom_time_stamp_vertical_value_idx ON value_time_vertical_lat_lon
 USING GIST (var_id, geom, time_stamp, vertical_value);
+
+-- Some helper functions needed by certain queries
+CREATE TYPE double_tuple AS (
+    c1 double precision,
+    c2 double precision
+);
+
+CREATE OR REPLACE FUNCTION array_double_tuple_sort(double_tuple[])
+RETURNS double precision[] AS $$
+ SELECT ARRAY(SELECT (tup).c2 FROM (SELECT unnest($1) AS tup) AS foo ORDER BY (tup).c1)
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION array_sort (ANYARRAY)
+RETURNS ANYARRAY LANGUAGE SQL
+AS $$
+SELECT ARRAY(SELECT unnest($1) ORDER BY 1)
+$$;
