@@ -6,6 +6,6 @@
 DB_USER = 'postgres'
 DB_PASS = ''
 DB_HOST = ''
-DB_NAME = 'ede'
+DB_NAME = 'with_raster_type_stacked'
 DB_PORT = '5432'
 SECRET_KEY = ''

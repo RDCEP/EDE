@@ -583,7 +583,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
             "Could not get latitude resolutions of netcdf file: {}".format(netcdf_filename))
 
     version = 0  # Always version = 0
-    n_bands = 1  # We ingest unpacked rast fields
+    n_bands = 34  # We ingest packed rast fields
     ip_X_raster = min(longs) - 0.5 * scale_X
     ip_Y_raster = max(lats) + 0.5 * scale_Y
     # TODO: does a netcdf always have 0 skew?
@@ -594,11 +594,14 @@ def process_netcdf(netcdf_filename, wkb_filename):
     # TODO: make the tile sizes more easily choosable
     tile_size_lat = 60
     tile_size_lon = 60
+    num_tiles_lat = ceil_integer_division(360, tile_size_lat) # for now code only works if divisible, TODO
+    num_tiles_lon = ceil_integer_division(720, tile_size_lon) # for now code only works if divisible, TODO
     tile_width = tile_size_lon * scale_X
     tile_height = tile_size_lat * scale_Y
     is_offline = False
     has_no_data_value = True  # we're assuming there's always a NODATA value! TODO: maybe check if NODATA val is None
     is_no_data_value = False  # we're being conservative here
+    num_times = 34 # hardcoded for PSIMS!
 
     conn = psycopg2.connect(database=DB_NAME, user=DB_USER, password=DB_PASS,
                             host=DB_HOST, port=DB_PORT)
@@ -617,30 +620,28 @@ def process_netcdf(netcdf_filename, wkb_filename):
             variable = next(v for v in dataset_metadata['variables'] if v['name'] == var.name)
             var_id = ingest_variable(cur, dataset_id, variable)
             pixtype = get_pixtype(var)
-            tiles = process_variable(var, tile_size_lat, tile_size_lon, time_ids, None)
             try:
                 nodata = var._FillValue
             except:
                 nodata = get_nodata_value(pixtype)
             with open(wkb_filename, 'w') as f:
-                num_bands_added = 0
-                for lat_tile_id, lon_tile_id, band_id, tile in tiles:
-                    ip_X_tile = ip_X_raster + lon_tile_id * tile_width
-                    ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
-                    rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
-                                  srid, tile.shape[1], tile.shape[0])
-                    band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
-                    rast.add_band(band)
-                    num_bands_added += 1
-                    if num_bands_added == 34:
+                for lat_tile_id in range(num_tiles_lat):
+                    for lon_tile_id in range(num_tiles_lon):
+                        ip_X_tile = ip_X_raster + lon_tile_id * tile_width
+                        ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
+                        rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
+                                      srid, tile_size_lon, tile_size_lat)
+                        for time in range(num_times):
+                            tile = variable[time][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
+                                           lon_tile_id * tile_size_lon: (lon_tile_id + 1) * tile_size_lon]
+                            band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
+                            rast.add_band(band)
                         hexwkb = rast.raster_to_hexwkb(1)
                         row = compose_fields(dataset_id, var_id, None, hexwkb)
                         f.write(row + '\n')
-                        num_bands_added = 0
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
-
     except RasterProcessingException as e:
         print(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
