@@ -451,23 +451,6 @@ def get_metadata(dataset, netcdf_filename, bbox):
     }
 
 
-def process_band(band, tile_size_lat, tile_size_lon):
-    """Processes a single band
-
-    Note that we are assuming band = band[lat][lon]
-
-    :param band:
-    :param band_dim:
-    :return:
-    """
-    band_shape = band.shape
-    num_tiles_lat = ceil_integer_division(band_shape[0], tile_size_lat)
-    num_tiles_lon = ceil_integer_division(band_shape[1], tile_size_lon)
-    for i in range(num_tiles_lat):
-        for j in range(num_tiles_lon):
-            yield i, j, band[i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
-
-
 def process_band_lat_lon(variable, tile_size_lat, tile_size_lon, band_vals):
     """Processes a variable that depends on (lon,lat,depth)
 
@@ -479,24 +462,12 @@ def process_band_lat_lon(variable, tile_size_lat, tile_size_lon, band_vals):
     :return:
     """
     assert (len(variable) == len(band_vals))
-    for band_val, band in izip(band_vals, variable):
-        tiles = process_band(band, tile_size_lat, tile_size_lon)
-        for tile in tiles:
-            yield band_val, tile
-
-
-def process_lat_lon(variable, tile_size_lat, tile_size_lon):
-    """Processes a variable that depends on (lon,lat)
-
-    TODO: Make sure to handle both (lon,lat) and (lat,lon) correctly
-    Right now we're assuming (lat,lon)
-
-    :param variable:
-    :return:
-    """
-    tiles = process_band(variable[:], tile_size_lat, tile_size_lon)
-    for tile in tiles:
-        yield None, tile
+    num_tiles_lat = ceil_integer_division(360, tile_size_lat) # hardcoded to 360
+    num_tiles_lon = ceil_integer_division(720, tile_size_lon) # hardcoded to 720
+    for i in range(num_tiles_lat):
+        for j in range(num_tiles_lon):
+            for k in band_vals:
+                yield i, j, k, variable[k][i * tile_size_lat: (i + 1) * tile_size_lat, j * tile_size_lon: (j + 1) * tile_size_lon]
 
 
 def process_variable(variable, tile_size_lat, tile_size_lon, times, depths):
@@ -519,7 +490,8 @@ def process_variable(variable, tile_size_lat, tile_size_lon, times, depths):
     elif num_dims == 2:
         # TODO: get the lon,lat strings at the very beginning when reading the file's metadata
         if 'lon' in dims and 'lat' in dims:
-            return process_lat_lon(variable, tile_size_lat, tile_size_lon)
+            # return process_lat_lon(variable, tile_size_lat, tile_size_lon)
+            pass
         else:
             print("Variable {} depends on {} and {} which are not both spatial dimensions. "
                    "This case is not supported!"
@@ -651,17 +623,20 @@ def process_netcdf(netcdf_filename, wkb_filename):
             except:
                 nodata = get_nodata_value(pixtype)
             with open(wkb_filename, 'w') as f:
-                for band_id, (lat_tile_id, lon_tile_id, tile) in tiles:
+                num_bands_added = 0
+                for lat_tile_id, lon_tile_id, band_id, tile in tiles:
                     ip_X_tile = ip_X_raster + lon_tile_id * tile_width
                     ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
                     rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
                                   srid, tile.shape[1], tile.shape[0])
                     band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                     rast.add_band(band)
-                    # TODO: make it return wkb byte buffer instead of already writing to file => be agnostic
-                    hexwkb = rast.raster_to_hexwkb(1)
-                    row = compose_fields(dataset_id, var_id, band_id, hexwkb)
-                    f.write(row + '\n')
+                    num_bands_added += 1
+                    if num_bands_added == 34:
+                        hexwkb = rast.raster_to_hexwkb(1)
+                        row = compose_fields(dataset_id, var_id, None, hexwkb)
+                        f.write(row + '\n')
+                        num_bands_added = 0
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
