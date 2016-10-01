@@ -29,3 +29,5 @@ BEGIN
 	RETURN array_out;
 END;
 $$ LANGUAGE plpgsql;
+
+UPDATE raster_data SET rast = ST_SetBandIsNoData(rast) where ST_BandIsNoData(rast, TRUE);
