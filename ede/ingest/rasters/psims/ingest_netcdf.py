@@ -257,7 +257,7 @@ def ingest_lat_lon(wkb_filename, cursor):
 
 def ingest_time_lat_lon(wkb_filename, cursor):
     try:
-        cursor.execute("copy raster_data(dataset_id, var_id, time_id, rast) from \'{}\'".format(wkb_filename))
+        cursor.execute("copy raster_data(dataset_id, var_id, rast) from \'{}\'".format(wkb_filename))
     except Exception as e:
         print(e)
         raise RasterProcessingException("Could not ingest var(time,lat,lon)!")
@@ -632,7 +632,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                         rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
                                       srid, tile_size_lon, tile_size_lat)
                         for time in range(num_times):
-                            tile = variable[time][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
+                            tile = var[time][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
                                            lon_tile_id * tile_size_lon: (lon_tile_id + 1) * tile_size_lon]
                             band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                             rast.add_band(band)
