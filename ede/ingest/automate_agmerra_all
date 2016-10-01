@@ -1,9 +1,0 @@
-#!/bin/bash           
-
-AGMERRA_DIR=/data/agmerra
-
-for filename in ${AGMERRA_DIR}/*;
-do
-        echo "ingesting..." $filename
-        ./automate_agmerra_one $filename
-done
