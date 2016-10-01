@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DATA_DIR=/data/psims
+FNAMES=filenames.txt
+OUT_FILE=/var/www/EDE/ede/ingest/rasters/psims/wkb_out
+
+while read fname
+do
+	echo "Ingesting NetCDF $fname..."
+	python ingest_netcdf.py --input $DATA_DIR/$fname --output $OUT_FILE
+done <$FNAMES
