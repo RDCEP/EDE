@@ -36,3 +36,31 @@ UPDATE raster_data SET rast = ST_SetBandIsNoData(rast, 31) where ST_BandIsNoData
 UPDATE raster_data SET rast = ST_SetBandIsNoData(rast, 32) where ST_BandIsNoData(rast, 32, TRUE);
 UPDATE raster_data SET rast = ST_SetBandIsNoData(rast, 33) where ST_BandIsNoData(rast, 33, TRUE);
 UPDATE raster_data SET rast = ST_SetBandIsNoData(rast, 34) where ST_BandIsNoData(rast, 34, TRUE);
+
+CREATE TYPE int_double_tuple AS(
+	id integer,
+	val double precision
+);
+
+CREATE FUNCTION fill_up_with_nulls(
+array_in int_double_tuple[],time_id_start int,
+time_id_step int,num_times int)
+RETURNS double precision[] AS $$
+DECLARE
+	array_out double precision[];
+	x int_double_tuple;
+	i int;
+	j int;
+BEGIN
+	FOR i IN 1..num_times
+	LOOP
+		array_out[i]:=NULL;
+	END LOOP;
+	FOREACH x IN ARRAY array_in
+	LOOP
+		j:=(x.id-time_id_start)/time_id_step+1;
+		array_out[j]:=x.val;
+	END LOOP;
+	RETURN array_out;
+END;
+$$ LANGUAGE plpgsql;
