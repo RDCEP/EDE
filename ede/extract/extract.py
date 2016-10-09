@@ -218,7 +218,6 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                          properties=dict(values=None))
     time_ids = range(time_id_start, time_id_end + 1, time_id_step)
     num_times = len(time_ids)
-    time_ids_str = '(' + ','.join(map(str, time_ids)) + ')'
     request_args = _parse_json_body(request_body)
     kind = request_args[0]
     if kind == 'indirect':
@@ -242,7 +241,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                  "array_to_json(values)::jsonb)) "
                  "FROM tmp3".
                  format(time_id_start, time_id_end, time_id_step, dataset_id, var_id, region_id,
-                        time_id_start, time_id_end, time_id_step, json.dumps(json_template)))
+                        time_id_start, time_id_step, num_times, json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp1 AS "
