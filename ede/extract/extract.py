@@ -454,7 +454,7 @@ def return_rasterdata_aggregate_spatial_time_range(dataset_id, var_id, time_id_s
                  "generate_series({}, {}, {}) AS band "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
-                 "AND NOT st_bandisnodata(rd.rast, band, false)) "
+                 "AND NOT st_bandisnodata(rast, band, false)) "
                  "SELECT SUM(sum) / SUM(count) "
                  "FROM tmp "
                  "WHERE count != 0 GROUP BY band ORDER BY band".
