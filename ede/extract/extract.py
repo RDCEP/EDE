@@ -248,7 +248,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
         query = ("WITH tmp1 AS "
                  "(SELECT band, st_clip(rast, band, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
                  "FROM raster_data CROSS JOIN generate_series({}, {}, {}) AS band "
-                 "WHERE rd.dataset_id={} AND rd.var_id={} "
+                 "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, band, false)), "
                  "tmp2 AS "
