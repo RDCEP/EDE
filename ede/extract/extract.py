@@ -557,12 +557,12 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "tmp2 AS "
                  "(SELECT st_union(rast,'MEAN') AS rast "
                  "FROM tmp1 "
-                 "GROUP BY st_envelope(rast) "
-                 "(SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
+                 "GROUP BY st_envelope(rast)) "
+                 "tmp3 AS (SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,mean}}',val::text::jsonb)) "
-                 "FROM tmp2".
+                 "FROM tmp3".
                  format(time_id_start, time_id_end, time_id_step, dataset_id, var_id, region_id,
                         json.dumps(json_template)))
     elif kind == 'direct':
@@ -576,12 +576,12 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "tmp2 AS "
                  "(SELECT st_union(rast,'MEAN') AS rast "
                  "FROM tmp1 "
-                 "GROUP BY st_envelope(rast) "
-                 "(SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
+                 "GROUP BY st_envelope(rast)), "
+                 "tmp3 AS (SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,mean}}',val::text::jsonb)) "
-                 "FROM tmp2".
+                 "FROM tmp3".
                  format(json.dumps(region), time_id_start, time_id_end, time_id_step, dataset_id, var_id,
                         json.dumps(region), json.dumps(json_template)))
     try:
