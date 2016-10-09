@@ -3,6 +3,8 @@ CREATE INDEX raster_data_dataset_id_var_id_idx ON raster_data(dataset_id, var_id
 CREATE INDEX raster_data_time_id_idx ON raster_data(time_id);
 CREATE INDEX raster_data_rast_idx ON raster_data USING GIST (ST_ConvexHull(rast));
 
+UPDATE raster_data SET rast = ST_SetBandIsNoData(rast) where ST_BandIsNoData(rast, TRUE);
+
 -- Helper type + function, needed by the selection time range query
 CREATE TYPE int_double_tuple AS (
     id integer,
