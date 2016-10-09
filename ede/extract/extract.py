@@ -263,7 +263,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
                  "array_to_json(values)::jsonb)) "
                  "FROM tmp3".
                  format(json.dumps(region), time_id_start, time_id_end, time_id_step, dataset_id, var_id,
-                        json.dumps(region), time_id_start, time_id_end, time_id_step, json.dumps(json_template)))
+                        json.dumps(region), time_id_start, time_id_step, num_times, json.dumps(json_template)))
     try:
         print(query)
         rows = db_session.execute(query)
