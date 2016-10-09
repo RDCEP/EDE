@@ -557,7 +557,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "tmp2 AS "
                  "(SELECT st_union(rast,'MEAN') AS rast "
                  "FROM tmp1 "
-                 "GROUP BY st_envelope(rast)) "
+                 "GROUP BY st_envelope(rast)), "
                  "tmp3 AS (SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
