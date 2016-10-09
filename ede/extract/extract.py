@@ -225,7 +225,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
                  "(SELECT band, st_clip(rd.rast, band, r.geom, true) AS rast "
-                 "FROM raster_data AS rd, regions AS r CROSS JOIN generate_series({}, {}, {}) AS band"
+                 "FROM raster_data AS rd, regions AS r CROSS JOIN generate_series({}, {}, {}) AS band "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
                  "AND NOT st_bandisnodata(rd.rast, band, false)), "
@@ -247,7 +247,7 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
         (_, region) = request_args
         query = ("WITH tmp1 AS "
                  "(SELECT band, st_clip(rast, band, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
-                 "FROM raster_data CROSS JOIN generate_series({}, {}, {}) AS band"
+                 "FROM raster_data CROSS JOIN generate_series({}, {}, {}) AS band "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, band, false)), "
@@ -550,7 +550,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
                  "(SELECT st_clip(rd.rast, band, r.geom, true) AS rast "
-                 "FROM raster_data AS rd, regions AS r CROSS JOIN generate_series({}, {}, {})"
+                 "FROM raster_data AS rd, regions AS r CROSS JOIN generate_series({}, {}, {}) AS band "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
                  "AND NOT st_bandisnodata(rd.rast, band, false)), "
@@ -569,7 +569,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
         (_, region) = request_args
         query = ("WITH tmp1 AS "
                  "(SELECT st_clip(rast, band, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
-                 "FROM raster_data CROSS JOIN generate_series({}, {}, {})"
+                 "FROM raster_data CROSS JOIN generate_series({}, {}, {}) AS band "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, band, false)), "
