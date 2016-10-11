@@ -300,9 +300,6 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
                 # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
                 # correctly later within the DB using SQL which is way slower
                 values_array_converted_str = '{' + ','.join(str(v) for v in values_array_converted) + '}'
-                to_be_inserted = ("{}\t{}\tSRID=4326;POINT({} {})\t{}\n".
-                        format(1, var_id, lon, lat, values_array_converted_str))
-                print(to_be_inserted)
                 # TODO: instead of 1, use the correct dataset_id here
                 f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\n".
                         format(1, var_id, lon, lat, values_array_converted_str))
