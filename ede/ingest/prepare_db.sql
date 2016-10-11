@@ -10,9 +10,10 @@ RETURNS double precision[] AS $$
 $$ LANGUAGE sql;
 
 -- Fill raster_data_series from raster_data_single
-INSERT INTO raster_data_series(dataset_id, var_id, geom, values)
-SELECT dataset_id, var_id, geom, array_int_double_sort(array_agg((time_id, value)::int_double_tuple))
-FROM raster_data_single GROUP BY dataset_id, var_id, geom;
+-- no longer needed since we're doing it (hardcodedly) in the ingestion script!!
+-- INSERT INTO raster_data_series(dataset_id, var_id, geom, values)
+-- SELECT dataset_id, var_id, geom, array_int_double_sort(array_agg((time_id, value)::int_double_tuple))
+-- FROM raster_data_single GROUP BY dataset_id, var_id, geom;
 
 -- Create indexes on raster_data_single
 CREATE INDEX raster_data_single_dataset_id_var_id_idx ON raster_data_single(dataset_id, var_id);
