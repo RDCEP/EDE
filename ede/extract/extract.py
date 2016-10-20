@@ -129,35 +129,42 @@ def return_rasterdata_single_time(dataset_id, var_id, time_id, request_body):
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_clip(rd.rast, {}, r.geom, true) AS rast "
+                 "(SELECT st_band(rd.rast, {}) AS rast "
                  "FROM raster_data AS rd, regions AS r "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
                  "AND NOT st_bandisnodata(rd.rast, {}, false)), "
                  "tmp2 AS "
+                 "(SELECT st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
+                 "FROM tmp1), "
+                 "tmp3 AS "
                  "(SELECT (st_pixelascentroids(rast)).* "
-                 "FROM tmp1) "
+                 "FROM tmp2) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,value}}',val::text::jsonb)) "
-                 "FROM tmp2".
-                 format(time_id, dataset_id, var_id, region_id, time_id, json.dumps(json_template)))
+                 "FROM tmp3".
+                 format(time_id, dataset_id, var_id, json.dumps(region), time_id, json.dumps(region),
+                        json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_clip(rast, {}, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
+                 "(SELECT st_band(rast, {}) AS rast "
                  "FROM raster_data "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, {}, false)), "
                  "tmp2 AS "
+                 "(SELECT st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
+                 "FROM tmp1), "
+                 "tmp3 AS "
                  "(SELECT (st_pixelascentroids(rast)).* "
-                 "FROM tmp1) "
+                 "FROM tmp2) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,value}}',val::text::jsonb)) "
-                 "FROM tmp2".
-                 format(time_id, json.dumps(region), dataset_id, var_id, json.dumps(region), time_id,
+                 "FROM tmp3".
+                 format(time_id, dataset_id, var_id, json.dumps(region), time_id, json.dumps(region),
                         json.dumps(json_template)))
     try:
         print(query)
@@ -223,47 +230,56 @@ def return_rasterdata_time_range(dataset_id, var_id, time_id_start, time_id_step
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT band, st_clip(rd.rast, band, r.geom, true) AS rast "
+                 "(SELECT band, st_band(rd.rast, band) AS rast "
                  "FROM raster_data AS rd, regions AS r, generate_series({}, {}, {}) AS band "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
-                 "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
-                 "AND NOT st_bandisnodata(rd.rast, band, false)), "
+                 "AND st_intersects(rd.rast, r.geom) "
+                 "AND r.uid={} AND NOT st_bandisnodata(rd.rast, band, false)), "
                  "tmp2 AS "
-                 "(SELECT band, (st_pixelascentroids(rast)).* "
-                 "FROM tmp1), "
+                 "(SELECT band, st_clip(rd.rast, r.geom) AS rast "
+                 "FROM tmp1 AS rd, regions AS r "
+                 "WHERE r.uid={}), "
                  "tmp3 AS "
+                 "(SELECT band, (st_pixelascentroids(rast)).* "
+                 "FROM tmp2), "
+                 "tmp4 AS "
                  "(SELECT st_x(geom) AS lon, st_y(geom) AS lat, "
                  "fill_up_with_nulls(array_agg((band, val)::int_double_tuple), {}, {}, {}) AS values "
-                 "FROM tmp2 "
+                 "FROM tmp3 "
                  "GROUP BY geom) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\','{{geometry,coordinates}}',"
                  "array_to_json(ARRAY[lon,lat])::jsonb),'{{properties,values}}',"
                  "array_to_json(values)::jsonb)) "
-                 "FROM tmp3".
-                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id, region_id,
-                        time_id_start, time_id_step, num_times, json.dumps(json_template)))
+                 "FROM tmp4".
+                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id,
+                        region_id, region_id, time_id_start, time_id_step, num_times,
+                        json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT band, st_clip(rast, band, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
+                 "(SELECT band, st_band(rast, band) AS rast "
                  "FROM raster_data, generate_series({}, {}, {}) AS band "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, band, false)), "
                  "tmp2 AS "
-                 "(SELECT band, (st_pixelascentroids(rast)).* "
+                 "(SELECT band, st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) AS rast "
                  "FROM tmp1), "
                  "tmp3 AS "
+                 "(SELECT band, (st_pixelascentroids(rast)).* "
+                 "FROM tmp2), "
+                 "tmp4 AS "
                  "(SELECT st_x(geom) AS lon, st_y(geom) AS lat, "
                  "fill_up_with_nulls(array_agg((band, val)::int_double_tuple), {}, {}, {}) AS values "
-                 "FROM tmp2 "
+                 "FROM tmp3 "
                  "GROUP BY geom) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\','{{geometry,coordinates}}',"
                  "array_to_json(ARRAY[lon,lat])::jsonb),'{{properties,values}}',"
                  "array_to_json(values)::jsonb)) "
-                 "FROM tmp3".
-                 format(json.dumps(region), time_id_start, time_id_end, time_id_step, dataset_id, var_id,
-                        json.dumps(region), time_id_start, time_id_step, num_times, json.dumps(json_template)))
+                 "FROM tmp4".
+                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id,
+                        json.dumps(region), json.dumps(region), time_id_start, time_id_step, num_times,
+                        json.dumps(json_template)))
     try:
         print(query)
         rows = db_session.execute(query)
@@ -546,41 +562,52 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
     if kind == 'indirect':
         (_, regionset_id, region_id) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_clip(rd.rast, band, r.geom, true) AS rast "
+                 "(SELECT st_band(rd.rast, band) AS rast "
                  "FROM raster_data AS rd, regions AS r, generate_series({}, {}, {}) AS band "
                  "WHERE rd.dataset_id={} AND rd.var_id={} "
                  "AND r.uid={} AND st_intersects(rd.rast, r.geom) "
                  "AND NOT st_bandisnodata(rd.rast, band, false)), "
                  "tmp2 AS "
+                 "(SELECT st_clip(rd.rast, r.geom) AS rast "
+                 "FROM tmp1 AS rd, regions AS r "
+                 "WHERE r.uid={}), "
+                 "tmp3 AS "
                  "(SELECT st_union(rast,'MEAN') AS rast "
-                 "FROM tmp1 "
+                 "FROM tmp2 "
                  "GROUP BY st_envelope(rast)), "
-                 "tmp3 AS (SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
+                 "tmp4 AS "
+                 "(SELECT (st_pixelascentroids(rast)).* "
+                 "FROM tmp3) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,mean}}',val::text::jsonb)) "
-                 "FROM tmp3".
-                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id, region_id,
-                        json.dumps(json_template)))
+                 "FROM tmp4".
+                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id,
+                        region_id, region_id, json.dumps(json_template)))
     elif kind == 'direct':
         (_, region) = request_args
         query = ("WITH tmp1 AS "
-                 "(SELECT st_clip(rast, band, st_setsrid(st_geomfromgeojson(\'{}\'),4326), true) AS rast "
+                 "(SELECT st_band(rast, band) AS rast "
                  "FROM raster_data, generate_series({}, {}, {}) AS band "
                  "WHERE dataset_id={} AND var_id={} "
                  "AND st_intersects(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) "
                  "AND NOT st_bandisnodata(rast, band, false)), "
                  "tmp2 AS "
+                 "(SELECT st_clip(rast, st_setsrid(st_geomfromgeojson(\'{}\'),4326)) AS rast "
+                 "FROM tmp1), "
+                 "tmp3 AS "
                  "(SELECT st_union(rast,'MEAN') AS rast "
-                 "FROM tmp1 "
+                 "FROM tmp2 "
                  "GROUP BY st_envelope(rast)), "
-                 "tmp3 AS (SELECT (st_pixelascentroids(rast)).* FROM tmp2) "
+                 "tmp4 AS "
+                 "(SELECT (st_pixelascentroids(rast)).* "
+                 "FROM tmp3) "
                  "SELECT jsonb_agg(jsonb_set(jsonb_set(\'{}\',"
                  "'{{geometry,coordinates}}',array_to_json(ARRAY[st_x(geom),st_y(geom)])::jsonb),"
                  "'{{properties,mean}}',val::text::jsonb)) "
-                 "FROM tmp3".
-                 format(json.dumps(region), time_id_start, time_id_end, time_id_step, dataset_id, var_id,
-                        json.dumps(region), json.dumps(json_template)))
+                 "FROM tmp4".
+                 format(time_id_start, time_id_end, time_id_step, dataset_id, var_id,
+                        json.dumps(region), json.dumps(region), json.dumps(json_template)))
     try:
         print(query)
         rows = db_session.execute(query)
