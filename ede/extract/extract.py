@@ -382,7 +382,7 @@ def return_rasterdata_aggregate_spatial_single_time(dataset_id, var_id, time_id,
                  "SELECT SUM(sum) / SUM(count) "
                  "FROM tmp3 "
                  "WHERE count != 0".
-                 format(time_id, dataset_id, var_id, json.dump(region), time_id,
+                 format(time_id, dataset_id, var_id, json.dumps(region), time_id,
                         json.dumps(region)))
     try:
         print(query)
@@ -652,7 +652,7 @@ def return_rasterdata_aggregate_temporal(dataset_id, var_id, time_id_start, time
                  "'{{properties,mean}}',val::text::jsonb)) "
                  "FROM tmp5".
                  format(time_ids_str, dataset_id, var_id, json.dumps(region),
-                        json.dump(region), 1, num_times, 1, json.dumps(json_template)))
+                        json.dumps(region), 1, num_times, 1, json.dumps(json_template)))
     try:
         print(query)
         rows = db_session.execute(query)
