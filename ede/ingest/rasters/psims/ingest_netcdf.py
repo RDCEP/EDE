@@ -642,6 +642,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
+                print("size of CSV file: {}".format(os.path.getsize(wkb_filename)))
     except RasterProcessingException as e:
         print(e)
         raise RasterProcessingException("process_netcdf: Could not process variables!")
