@@ -13,7 +13,6 @@ from psycopg2.extras import Json
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from ede.utils.raster import RasterProcessingException, Raster, Band
 import json
-import cProfile
 
 
 def parse_metadata(filename):
@@ -657,8 +656,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
 
 
 if __name__ == "__main__":
-    pr = cProfile.Profile()
-    pr.enable()
     parser = argparse.ArgumentParser(description='Parse raster processing parameters.')
     parser.add_argument('--input', help='Input netcdf filename', required=True)
     parser.add_argument('--output', help='Output wkb filename', required=True)
@@ -671,5 +668,3 @@ if __name__ == "__main__":
         print(e)
         print("Could not process netcdf file: {}".format(args.input))
         sys.exit()
-    pr.disable()
-    pr.print_stats(sort='time')
