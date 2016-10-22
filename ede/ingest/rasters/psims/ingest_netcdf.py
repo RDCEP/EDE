@@ -272,6 +272,11 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
                 # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
                 # correctly later within the DB using SQL which is way slower
                 # TODO: instead of 1, use the correct dataset_id here
+                print("type of var_id: {}".format(type(var_id)))
+                print("type of lon: {}".format(type(lon)))
+                print("type of lat: {}".format(type(lat)))
+                print("type of time_id: {}".format(type(time_id)))
+                print("type of value: {}".format(type(value)))
                 str_format_out = "{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value)
                 str_percent_out = "1\t%d\tSRID=4326;POINT(%f %f)\t%d\t%f\n" % (var_id, lon, lat, time_id, value)
                 print("string built by format: %s" % str_format_out)
