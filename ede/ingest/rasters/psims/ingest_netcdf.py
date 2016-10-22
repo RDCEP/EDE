@@ -641,6 +641,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
                         hexwkb = rast.raster_to_hexwkb(1)
                         row = compose_fields(dataset_id, var_id, None, hexwkb)
                         f.write(row + '\n')
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
                 ingest_actual_data(wkb_filename, cur, var)
                 print("size of CSV file: {}".format(os.path.getsize(wkb_filename)))
 
