@@ -619,7 +619,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
     try:
         for var in proper_vars:
             variable = next(v for v in dataset_metadata['variables'] if v['name'] == var.name)
-            var_data = variable[:]
+            var_data = var[:]
             var_id = ingest_variable(cur, dataset_id, variable)
             pixtype = get_pixtype(var)
             try:
