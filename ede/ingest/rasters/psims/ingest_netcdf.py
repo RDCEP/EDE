@@ -8,6 +8,7 @@ import psycopg2
 import datetime
 from datetime import datetime, timedelta
 import json
+import cProfile
 
 
 def get_fill_value(variable):
@@ -250,6 +251,8 @@ def ingest_variable(cur, dataset_id, variable):
 
 
 def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
+    pr = cProfile.Profile()
+    pr.enable()
 
     fh = Dataset(filename)
 
@@ -309,6 +312,8 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
         f.seek(0)
         cur.copy_from(f, 'raster_data_series', columns=('dataset_id', 'var_id', 'geom', 'values'))
         print("size of CSV file ingested into raster_data_series: {}".format(os.path.getsize(f.name)))
+        pr.disable()
+        pr.print_stats(sort='time')
 
 
 def ingest_netcdf(filename):
