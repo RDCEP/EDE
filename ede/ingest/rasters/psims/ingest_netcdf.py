@@ -274,9 +274,9 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
                 # TODO: instead of 1, use the correct dataset_id here
                 str_format_out = "{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value)
                 if isinstance(value, basestring):
-                    str_percent_out = "1\t%d\tSRID=4326;POINT(%f %f)\t%d\t%f\n" % (var_id, lon, lat, time_id, value)
-                else:
                     str_percent_out = "1\t%d\tSRID=4326;POINT(%f %f)\t%d\t%s\n" % (var_id, lon, lat, time_id, value)
+                else:
+                    str_percent_out = "1\t%d\tSRID=4326;POINT(%f %f)\t%d\t%f\n" % (var_id, lon, lat, time_id, value)
                 print("string built by format: %s" % str_format_out)
                 print("string built by percent: %s" % str_percent_out)
                 f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value))
