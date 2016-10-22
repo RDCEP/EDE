@@ -277,6 +277,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
         # TODO: protect this better
         f.seek(0)
         cur.copy_from(f, 'raster_data_single', columns=('dataset_id', 'var_id', 'geom', 'time_id', 'value'))
+        print("size of CSV file ingested into raster_data_single: {}".format(os.path.getsize(f.name)))
 
     # also ingest into raster_data_series here instead of doing it later within DB which is much slower
     with tempfile.NamedTemporaryFile() as f:
@@ -307,6 +308,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
         # TODO: protect this better
         f.seek(0)
         cur.copy_from(f, 'raster_data_series', columns=('dataset_id', 'var_id', 'geom', 'values'))
+        print("size of CSV file ingested into raster_data_series: {}".format(os.path.getsize(f.name)))
 
 
 def ingest_netcdf(filename):
