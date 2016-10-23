@@ -111,7 +111,8 @@ class Raster(object):
 
             # Write out actual data
             try:
-                buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *band.data.flatten())
+                flattened_data = band.data.flatten()
+                buff = pack('{}{}{}'.format(endian, num_pixels, fmt), *flattened_data)
             except struct.error as e:
                 eprint(e)
                 raise RasterProcessingException("Could not pack actual band data!")

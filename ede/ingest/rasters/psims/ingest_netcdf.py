@@ -13,6 +13,7 @@ from psycopg2.extras import Json
 from ede.credentials import DB_NAME, DB_PASS, DB_PORT, DB_USER, DB_HOST
 from ede.utils.raster import RasterProcessingException, Raster, Band
 import json
+import time
 
 
 def parse_metadata(filename):
@@ -664,8 +665,11 @@ def process_netcdf(netcdf_filename, wkb_filename):
                     f.write(row + '\n')
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
-                ingest_actual_data(wkb_filename, cur, var)
                 print("size of CSV file: {}".format(os.path.getsize(wkb_filename)))
+                start_time = time.time()
+                ingest_actual_data(wkb_filename, cur, var)
+                print("duration of copy_from: {}".format(time.time() - start_time))
+
 
     except RasterProcessingException as e:
         print(e)
