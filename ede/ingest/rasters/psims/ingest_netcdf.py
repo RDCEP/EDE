@@ -282,7 +282,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
             for i_lon in range(num_lons):
                 lon = lons[i_lon]
                 values_slab = values[:, i_lat, i_lon]
-                values_slab_conv = ["\N" if isinstance(mval, np.ma.core.MaskedConstant) else str(mval) for mval in values_slab]
+                values_slab_conv = ["NULL" if isinstance(mval, np.ma.core.MaskedConstant) else str(mval) for mval in values_slab]
                 # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
                 # correctly later within the DB using SQL which is way slower
                 values_array_converted_str = ','.join(values_slab_conv)
