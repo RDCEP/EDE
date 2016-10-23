@@ -259,7 +259,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
     values = fh.variables[var_name][:]
 
     with tempfile.NamedTemporaryFile() as f:
-        for slice_id, slice in enumerate(values):
+        for slice_id, slice in np.ndenumerate(values):
             time_id = slice_id+1
             slice_filled = slice.filled()
             fill_value = slice.fill_value
