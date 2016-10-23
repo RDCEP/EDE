@@ -668,7 +668,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 print("size of CSV file: {}".format(os.path.getsize(wkb_filename)))
                 start_time = time.time()
                 ingest_actual_data(wkb_filename, cur, var)
-                print("duration of copy_from: {}".format(time.time() - start_time))
+                print("duration of copy_from: {} seconds".format(time.time() - start_time))
 
 
     except RasterProcessingException as e:
