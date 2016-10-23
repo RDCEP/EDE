@@ -300,9 +300,9 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
                     values_array_converted[idx] = val
                 # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
                 # correctly later within the DB using SQL which is way slower
-                values_array_converted_str = '{' + ','.join(str(v) for v in values_array_converted) + '}'
+                values_array_converted_str = ','.join(str(v) for v in values_array_converted)
                 # TODO: instead of 1, use the correct dataset_id here
-                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\n".
+                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{{{}}}\n".
                         format(1, var_id, lon, lat, values_array_converted_str))
         # if this is not here, the copy_from below will succeed yet not ingest anything, very bad
         # TODO: protect this better
