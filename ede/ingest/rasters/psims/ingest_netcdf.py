@@ -311,10 +311,8 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
     # also ingest into raster_data_series here instead of doing it later within DB which is much slower
     with tempfile.NamedTemporaryFile() as f:
         fill_value = values.fill_value
-        num_lats = values.shape[1]
-        num_lons = values.shape[2]
-        for (i_lat, ), lat in range(num_lats):
-            for (i_lon, ), lon in range(num_lons):
+        for (i_lat, ), lat in np.ndenumerate(lats):
+            for (i_lon, ), lon in np.ndenumerate(lons):
                 values_slab = values[:, i_lat, i_lon]
                 values_slab_conv = [ "NULL" if val == fill_value else str(val) for _, val in np.ndenumerate(values_slab)]
                 values_array_converted_str = ','.join(values_slab_conv)
