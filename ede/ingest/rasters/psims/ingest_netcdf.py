@@ -268,7 +268,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
             if value == fill_value:
                 f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, "\N"))
             else:
-                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value))
+                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, str(value)))
         f.seek(0)
         print("size of CSV file ingested into raster_data_single: {}".format(os.path.getsize(f.name)))
         start_time = time.time()
