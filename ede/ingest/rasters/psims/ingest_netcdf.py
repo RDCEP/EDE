@@ -633,8 +633,8 @@ def process_netcdf(netcdf_filename, wkb_filename):
                         ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
                         rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
                                       srid, tile_size_lon, tile_size_lat)
-                        for time in range(num_times):
-                            tile = var_data[time][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
+                        for time_id in range(num_times):
+                            tile = var_data[time_id][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
                                            lon_tile_id * tile_size_lon: (lon_tile_id + 1) * tile_size_lon]
                             band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                             rast.add_band(band)
