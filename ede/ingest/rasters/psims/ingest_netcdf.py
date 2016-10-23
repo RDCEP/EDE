@@ -260,55 +260,71 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
 
     with tempfile.NamedTemporaryFile() as f:
         for slice_id, slice in enumerate(values):
-            time_id = slice_id+1
-            slice_filled = slice.filled()
-            fill_value = slice.fill_value
-            for (lat_id, lon_id), value in np.ndenumerate(slice_filled):
-                value = float(value)
-                if value == fill_value:
-                    value = "\N" # NULL value for Postgres' COPY FROM
+            time_id = slice_id + 1
+            for lat_id, slab in enumerate(slice):
                 lat = lats[lat_id]
-                lon = lons[lon_id]
-                # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
-                # correctly later within the DB using SQL which is way slower
-                # TODO: instead of 1, use the correct dataset_id here
-                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value))
-        # if this is not here, the copy_from below will succeed yet not ingest anything, very bad
-        # TODO: protect this better
+                for lon_id, mval in enumerate(slab):
+                    lon = lons[lon_id]
+                    if isinstance(mval, np.ma.core.MaskedConstant):
+                        f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, "\N"))
+                    else:
+                        f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, mval))
         f.seek(0)
         cur.copy_from(f, 'raster_data_single', columns=('dataset_id', 'var_id', 'geom', 'time_id', 'value'))
         print("size of CSV file ingested into raster_data_single: {}".format(os.path.getsize(f.name)))
 
-    # also ingest into raster_data_series here instead of doing it later within DB which is much slower
-    with tempfile.NamedTemporaryFile() as f:
-        num_times = values.shape[0]
-        num_lats = values.shape[1]
-        num_lons = values.shape[2]
-        for i_lat in range(num_lats):
-            for i_lon in range(num_lons):
-                lat = lats[i_lat]
-                lon = lons[i_lon]
-                # don't forget to fill, otherwise NaN values which don't equal fill_value of 1e+20
-                values_array = values[:, i_lat, i_lon]
-                values_array_filled = values_array.filled()
-                fill_value = values_array.fill_value
-                values_array_converted = ["crap"] * num_times
-                for idx, val in enumerate(values_array_filled):
-                    val = float(val)
-                    if val == fill_value:
-                        val = "NULL"  # NULL value for Postgres' COPY FROM
-                    values_array_converted[idx] = val
-                # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
-                # correctly later within the DB using SQL which is way slower
-                values_array_converted_str = ','.join(str(v) for v in values_array_converted)
-                # TODO: instead of 1, use the correct dataset_id here
-                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{{{}}}\n".
-                        format(1, var_id, lon, lat, values_array_converted_str))
-        # if this is not here, the copy_from below will succeed yet not ingest anything, very bad
-        # TODO: protect this better
-        f.seek(0)
-        cur.copy_from(f, 'raster_data_series', columns=('dataset_id', 'var_id', 'geom', 'values'))
-        print("size of CSV file ingested into raster_data_series: {}".format(os.path.getsize(f.name)))
+
+
+        # for slice_id, slice in enumerate(values):
+        #     time_id = slice_id+1
+        #     slice_filled = slice.filled()
+        #     fill_value = slice.fill_value
+        #     for (lat_id, lon_id), value in np.ndenumerate(slice_filled):
+        #         value = float(value)
+        #         if value == fill_value:
+        #             value = "\N" # NULL value for Postgres' COPY FROM
+        #         lat = lats[lat_id]
+        #         lon = lons[lon_id]
+        #         # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
+        #         # correctly later within the DB using SQL which is way slower
+        #         # TODO: instead of 1, use the correct dataset_id here
+        #         f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value))
+        # # if this is not here, the copy_from below will succeed yet not ingest anything, very bad
+        # # TODO: protect this better
+        # f.seek(0)
+        # cur.copy_from(f, 'raster_data_single', columns=('dataset_id', 'var_id', 'geom', 'time_id', 'value'))
+        # print("size of CSV file ingested into raster_data_single: {}".format(os.path.getsize(f.name)))
+
+    # # also ingest into raster_data_series here instead of doing it later within DB which is much slower
+    # with tempfile.NamedTemporaryFile() as f:
+    #     num_times = values.shape[0]
+    #     num_lats = values.shape[1]
+    #     num_lons = values.shape[2]
+    #     for i_lat in range(num_lats):
+    #         for i_lon in range(num_lons):
+    #             lat = lats[i_lat]
+    #             lon = lons[i_lon]
+    #             # don't forget to fill, otherwise NaN values which don't equal fill_value of 1e+20
+    #             values_array = values[:, i_lat, i_lon]
+    #             values_array_filled = values_array.filled()
+    #             fill_value = values_array.fill_value
+    #             values_array_converted = ["crap"] * num_times
+    #             for idx, val in enumerate(values_array_filled):
+    #                 val = float(val)
+    #                 if val == fill_value:
+    #                     val = "NULL"  # NULL value for Postgres' COPY FROM
+    #                 values_array_converted[idx] = val
+    #             # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
+    #             # correctly later within the DB using SQL which is way slower
+    #             values_array_converted_str = ','.join(str(v) for v in values_array_converted)
+    #             # TODO: instead of 1, use the correct dataset_id here
+    #             f.write("{}\t{}\tSRID=4326;POINT({} {})\t{{{}}}\n".
+    #                     format(1, var_id, lon, lat, values_array_converted_str))
+    #     # if this is not here, the copy_from below will succeed yet not ingest anything, very bad
+    #     # TODO: protect this better
+    #     f.seek(0)
+    #     cur.copy_from(f, 'raster_data_series', columns=('dataset_id', 'var_id', 'geom', 'values'))
+    #     print("size of CSV file ingested into raster_data_series: {}".format(os.path.getsize(f.name)))
 
 
 def ingest_netcdf(filename):
