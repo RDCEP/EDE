@@ -249,7 +249,6 @@ def ingest_variable(cur, dataset_id, variable):
     return var_id
 
 
-@profile
 def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
 
     fh = Dataset(filename)
