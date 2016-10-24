@@ -268,7 +268,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
             if value == fill_value:
                 f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, "\N"))
             else:
-                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, str(value)))
+                f.write("{}\t{}\tSRID=4326;POINT({} {})\t{}\t{}\n".format(1, var_id, lon, lat, time_id, value))
         f.seek(0)
         print("size of CSV file ingested into raster_data_single: {}".format(os.path.getsize(f.name)))
         start_time = time.time()
@@ -281,7 +281,7 @@ def ingest_data(cur, filename, dataset_id, var_name, var_id, var_fill_value):
         for (i_lat, ), lat in np.ndenumerate(lats):
             for (i_lon, ), lon in np.ndenumerate(lons):
                 values_slab = values[:, i_lat, i_lon]
-                values_slab_conv = [ "NULL" if val == fill_value else str(val) for _, val in np.ndenumerate(values_slab)]
+                values_slab_conv = [ "NULL" if val == fill_value else "{}".format(val) for _, val in np.ndenumerate(values_slab)]
                 values_array_converted_str = ','.join(values_slab_conv)
                 # the dataset_id is hardcoded to 1 here in order to prevent having to set the dataset_id
                 # correctly later within the DB using SQL which is way slower
