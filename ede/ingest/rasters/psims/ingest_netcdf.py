@@ -636,7 +636,6 @@ def process_netcdf(netcdf_filename, wkb_filename):
                         for time_id in range(num_times):
                             tile = var_data[time_id][lat_tile_id * tile_size_lat: (lat_tile_id + 1) * tile_size_lat,
                                            lon_tile_id * tile_size_lon: (lon_tile_id + 1) * tile_size_lon]
-                            tile = tile.filled()
                             band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
                             rast.add_band(band)
                         hexwkb = rast.raster_to_hexwkb(1)
