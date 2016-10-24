@@ -655,6 +655,7 @@ def process_netcdf(netcdf_filename, wkb_filename):
                 for band_id, (lat_tile_id, lon_tile_id, tile) in tiles:
                     ip_X_tile = ip_X_raster + lon_tile_id * tile_width
                     ip_Y_tile = ip_Y_raster - lat_tile_id * tile_height
+                    tile = tile.filled()
                     rast = Raster(version, n_bands, scale_X, -scale_Y, ip_X_tile, ip_Y_tile, skew_X, skew_Y,
                                   srid, tile.shape[1], tile.shape[0])
                     band = Band(is_offline, has_no_data_value, is_no_data_value, pixtype, nodata, tile)
