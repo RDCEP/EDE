@@ -10,6 +10,10 @@ from ede.database import engine, db_session
 from ede.api.utils import ListConverter, IntListConverter, RectangleConverter
 from flask_compress import Compress
 import time
+import cProfile
+import StringIO
+import pstats
+import contextlib
 
 
 app = Flask(__name__)
@@ -57,6 +61,12 @@ app.register_blueprint(api_module)
 def before_request():
     g.db = engine.dispose()
     g.time = time.time()
+    """
+    pr = cProfile.Profile()
+    pr.enable()
+    g.pr = pr
+    """
+
 
 @app.teardown_request
 @app.teardown_appcontext
@@ -76,3 +86,13 @@ def shutdown_session(exception=None):
 def teardown_request(exception=None):
     diff = time.time() - g.time
     print("--- request took {} seconds ---".format(diff))
+    """"
+    pr = g.pr
+    pr.disable()
+    s = StringIO.StringIO()
+    ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+    ps.print_stats()
+    # uncomment this to see who's calling what
+    # ps.print_callers()
+    print(s.getvalue())
+    """
